@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "purpose": "Sparse public corpus that simulates messy client uploads for Exergy Analyst development.",
+  "download_root": "corpus/raw",
+  "items": [
+    {
+      "id": "xai4heat_l4_processed_csv",
+      "filename": "district_heating/xai4heat_2024-25_L4.csv",
+      "url": "https://raw.githubusercontent.com/xai4heat/xai4heat/main/datasets/xai4heat_2024-25_L4.csv",
+      "mode": "download",
+      "application": "district_heating_scada",
+      "file_type": "csv",
+      "why_it_matters": "Real district-heating substation telemetry with heat delivery and temperature fields.",
+      "expected_agent_tasks": [
+        "clean messy SCADA labels",
+        "compute dynamic thermal Exergy Factors",
+        "identify high useful-work branches",
+        "flag missing comfort and hydraulic context"
+      ],
+      "source_page": "https://github.com/xai4heat/xai4heat",
+      "license_note": "Public GitHub repository; retain upstream provenance."
+    },
+    {
+      "id": "xai4heat_l17_raw_csv",
+      "filename": "district_heating/xai4heat_scada_L17.csv",
+      "url": "https://raw.githubusercontent.com/xai4heat/xai4heat/main/datasets/xai4heat_scada_L17.csv",
+      "mode": "download",
+      "application": "district_heating_scada",
+      "file_type": "csv",
+      "why_it_matters": "Rawer SCADA-style district-heating data for ingestion robustness tests.",
+      "expected_agent_tasks": [
+        "infer useful columns",
+        "handle sparse or noisy intervals",
+        "compare raw and processed files"
+      ],
+      "source_page": "https://github.com/xai4heat/xai4heat",
+      "license_note": "Public GitHub repository; retain upstream provenance."
+    },
+    {
+      "id": "cobra_overview_csv",
+      "filename": "lab_heat_pump/cobra_overview_experiments.csv",
+      "url": "https://zenodo.org/api/records/15862451/files/overview_experiments.csv/content",
+      "mode": "download",
+      "application": "lab_protocol_and_sensor_data",
+      "file_type": "csv",
+      "why_it_matters": "Table of high-temperature heat-pump demonstrator test days and experiment metadata.",
+      "expected_agent_tasks": [
+        "summarize experiment campaign",
+        "match protocols to sensor files",
+        "recommend which test day to analyze first"
+      ],
+      "source_page": "https://zenodo.org/records/15862451",
+      "license_note": "Zenodo open dataset; check record metadata before redistribution."
+    },
+    {
+      "id": "cobra_preview_protocol_pdf",
+      "filename": "lab_heat_pump/Preview_protocol_CoBra20241125.pdf",
+      "url": "https://zenodo.org/api/records/15862451/files/Preview_protocol_CoBra20241125.pdf/content",
+      "mode": "download",
+      "application": "lab_protocol_and_sensor_data",
+      "file_type": "pdf",
+      "why_it_matters": "Scanned test protocol for a high-temperature heat-pump experiment.",
+      "expected_agent_tasks": [
+        "extract protocol conditions",
+        "separate planned vs observed test conditions",
+        "identify missing calibration metadata"
+      ],
+      "source_page": "https://zenodo.org/records/15862451",
+      "license_note": "Zenodo open dataset; check record metadata before redistribution."
+    },
+    {
+      "id": "cobra_preview_pid_pdf",
+      "filename": "lab_heat_pump/Preview_PID_CoBra20241015.pdf",
+      "url": "https://zenodo.org/api/records/15862451/files/Preview_PID_CoBra20241015.pdf/content",
+      "mode": "download",
+      "application": "engineering_diagram",
+      "file_type": "pdf",
+      "why_it_matters": "Piping and instrumentation diagram for the heat-pump demonstrator.",
+      "expected_agent_tasks": [
+        "extract equipment and sensor tags",
+        "map sensor names to CSV columns",
+        "identify measurement gaps"
+      ],
+      "source_page": "https://zenodo.org/records/15862451",
+      "license_note": "Zenodo open dataset; check record metadata before redistribution."
+    },
+    {
+      "id": "heatset_workbook",
+      "filename": "industrial_heat/HEATset-v-10.xlsb",
+      "url": "https://www.caelp.org/s/HEATset-v-10.xlsb",
+      "mode": "download",
+      "application": "industrial_heat_inventory",
+      "file_type": "xlsb",
+      "why_it_matters": "Public industrial heat/emissions/temperature workbook across energy-intensive subsectors.",
+      "expected_agent_tasks": [
+        "ingest spreadsheet workbook",
+        "rank sectors and facilities by heat temperature bands",
+        "surface data-quality limitations"
+      ],
+      "source_page": "https://www.caelp.org/heatset",
+      "license_note": "Public CAELP download; retain attribution and avoid assuming open-source license beyond public access."
+    },
+    {
+      "id": "heatset_overview_pdf",
+      "filename": "industrial_heat/HEATset-Overview-and-Methodology.pdf",
+      "url": "https://www.caelp.org/s/HEATset-Overview-and-Methodology.pdf",
+      "mode": "download",
+      "application": "industrial_heat_methodology",
+      "file_type": "pdf",
+      "why_it_matters": "Methodology and findings deck for interpreting HEATset workbook fields.",
+      "expected_agent_tasks": [
+        "extract assumptions",
+        "connect workbook columns to methodology",
+        "identify unsupported interpretations"
+      ],
+      "source_page": "https://www.caelp.org/heatset",
+      "license_note": "Public CAELP download; retain attribution."
+    },
+    {
+      "id": "fied_sample_csv",
+      "filename": "industrial_facilities/fied_sample_first_1000_rows.csv",
+      "url": "https://data.openei.org/files/6158/foundational_industry_data_2017.csv",
+      "mode": "head_lines",
+      "line_limit": 1001,
+      "application": "industrial_facility_energy",
+      "file_type": "csv_sample",
+      "why_it_matters": "Sample from a large unit-level industrial energy/emissions dataset.",
+      "expected_agent_tasks": [
+        "infer facility/unit identity",
+        "handle large file sampling",
+        "join data dictionary and estimate useful screening fields"
+      ],
+      "source_page": "https://github.com/NREL/foundational-industry-energy-data",
+      "license_note": "Open Energy Data Initiative file; this corpus stores a small sample for development."
+    },
+    {
+      "id": "fied_datafields_yml",
+      "filename": "industrial_facilities/FIED_datafields.yml",
+      "url": "https://raw.githubusercontent.com/NREL/foundational-industry-energy-data/main/FIED_datafields.yml",
+      "mode": "download",
+      "application": "industrial_facility_energy",
+      "file_type": "yaml",
+      "why_it_matters": "Data dictionary for FIED fields.",
+      "expected_agent_tasks": [
+        "explain unfamiliar columns",
+        "map facility/unit fields",
+        "audit required data for a client question"
+      ],
+      "source_page": "https://github.com/NREL/foundational-industry-energy-data",
+      "license_note": "Public GitHub repository; retain upstream provenance."
+    },
+    {
+      "id": "hplib_database_csv",
+      "filename": "heat_pump_specs/hplib_database.csv",
+      "url": "https://raw.githubusercontent.com/FZJ-IEK3-VSA/hplib/main/hplib/hplib_database.csv",
+      "mode": "download",
+      "application": "heat_pump_product_specs",
+      "file_type": "csv",
+      "why_it_matters": "Heat-pump model database derived from public Heat Pump KEYMARK data.",
+      "expected_agent_tasks": [
+        "compare equipment options",
+        "normalize product specs",
+        "identify performance-envelope gaps"
+      ],
+      "source_page": "https://github.com/FZJ-IEK3-VSA/hplib",
+      "license_note": "Public GitHub repository; check upstream license and Heat Pump KEYMARK source constraints."
+    },
+    {
+      "id": "hplib_model_curve_csv",
+      "filename": "heat_pump_specs/aermec_BHP_040_060_W.csv",
+      "url": "https://raw.githubusercontent.com/FZJ-IEK3-VSA/hplib/main/input/csv/_AERMEC_S.p.A.BHP_040_060_W.csv",
+      "mode": "download",
+      "application": "heat_pump_product_specs",
+      "file_type": "csv",
+      "why_it_matters": "Manufacturer-specific performance curve file with messy naming and operating points.",
+      "expected_agent_tasks": [
+        "parse equipment curve tables",
+        "interpolate COP/capacity",
+        "warn about extrapolation"
+      ],
+      "source_page": "https://github.com/FZJ-IEK3-VSA/hplib",
+      "license_note": "Public GitHub repository; check upstream license and source constraints."
+    },
+    {
+      "id": "when2heat_cop_parameters_csv",
+      "filename": "heat_demand/when2heat_cop_parameters.csv",
+      "url": "https://raw.githubusercontent.com/oruhnau/when2heat/master/input/cop/cop_parameters.csv",
+      "mode": "download",
+      "application": "heat_demand_and_cop_modeling",
+      "file_type": "csv",
+      "why_it_matters": "Heat-pump COP model parameters for energy-system modeling.",
+      "expected_agent_tasks": [
+        "explain model coefficients",
+        "connect weather and sink temperatures to COP",
+        "identify model assumptions"
+      ],
+      "source_page": "https://github.com/oruhnau/when2heat",
+      "license_note": "MIT-licensed code repository per publication; retain attribution."
+    },
+    {
+      "id": "when2heat_daily_demand_csv",
+      "filename": "heat_demand/when2heat_daily_demand.csv",
+      "url": "https://raw.githubusercontent.com/oruhnau/when2heat/master/input/bgw_bdew/daily_demand.csv",
+      "mode": "download",
+      "application": "heat_demand_and_cop_modeling",
+      "file_type": "csv",
+      "why_it_matters": "Daily heat-demand profile factors used in open heat-demand modeling.",
+      "expected_agent_tasks": [
+        "interpret demand profile factors",
+        "build synthetic load cases",
+        "detect missing localization data"
+      ],
+      "source_page": "https://github.com/oruhnau/when2heat",
+      "license_note": "MIT-licensed code repository per publication; retain attribution."
+    },
+    {
+      "id": "atb_biopower_lcoe_csv",
+      "filename": "project_diligence/atb_biopower_lcoe.csv",
+      "url": "https://raw.githubusercontent.com/NREL/ATB-calc/main/tests/data/Biopower/Market/20/df_lcoe.csv",
+      "mode": "download",
+      "application": "techno_economic_analysis",
+      "file_type": "csv",
+      "why_it_matters": "NREL ATB-derived LCOE test data for project diligence and cost benchmarking.",
+      "expected_agent_tasks": [
+        "compare cost assumptions",
+        "generate diligence questions",
+        "separate screening-grade from investment-grade claims"
+      ],
+      "source_page": "https://github.com/NREL/ATB-calc",
+      "license_note": "Public GitHub repository; retain upstream provenance."
+    },
+    {
+      "id": "atb_biopower_capex_csv",
+      "filename": "project_diligence/atb_biopower_capex.csv",
+      "url": "https://raw.githubusercontent.com/NREL/ATB-calc/main/tests/data/Biopower/Market/20/df_capex.csv",
+      "mode": "download",
+      "application": "techno_economic_analysis",
+      "file_type": "csv",
+      "why_it_matters": "Capital-cost assumptions paired with ATB LCOE data.",
+      "expected_agent_tasks": [
+        "trace LCOE drivers",
+        "flag unsupported capex assumptions",
+        "run sensitivity analysis"
+      ],
+      "source_page": "https://github.com/NREL/ATB-calc",
+      "license_note": "Public GitHub repository; retain upstream provenance."
+    },
+    {
+      "id": "h2a_current_central_pem_xlsm",
+      "filename": "project_diligence/h2a_current_central_pem_electrolysis.xlsm",
+      "url": "https://www.nlr.gov/docs/libraries/hydrogen/current-central-pem-electrolysis-v3-101.xlsm",
+      "mode": "download",
+      "application": "hydrogen_tea_financial_model",
+      "file_type": "xlsm",
+      "why_it_matters": "Macro-enabled H2A hydrogen production model workbook for TEA-style ingestion tests.",
+      "expected_agent_tasks": [
+        "inspect workbook sheets",
+        "extract TEA assumptions",
+        "identify drivers and missing finance context"
+      ],
+      "source_page": "https://www.nrel.gov/hydrogen/h2a-production-archive",
+      "license_note": "Public NREL/NLR-hosted model; retain attribution and do not modify original workbook silently."
+    },
+    {
+      "id": "openstudio_small_office_osm",
+      "filename": "building_models/openstudio_SmallOffice.osm",
+      "url": "https://raw.githubusercontent.com/NREL/OpenStudio-resources/develop/measures/create_typical_building_from_model/tests/SmallOffice.osm",
+      "mode": "download",
+      "application": "building_energy_model",
+      "file_type": "osm",
+      "why_it_matters": "OpenStudio building model file for CAD/BEM-style parsing and context extraction.",
+      "expected_agent_tasks": [
+        "summarize building model contents",
+        "extract HVAC and geometry clues",
+        "connect model assumptions to energy analysis"
+      ],
+      "source_page": "https://github.com/NREL/OpenStudio-resources",
+      "license_note": "Public GitHub repository; retain upstream provenance."
+    },
+    {
+      "id": "energyplus_rooftop_heatpump_idf",
+      "filename": "building_models/EnergyPlus_RooftopPackagedHeatPump.idf",
+      "url": "https://raw.githubusercontent.com/NREL/EnergyPlus/develop/datasets/RooftopPackagedHeatPump.idf",
+      "mode": "download",
+      "application": "building_energy_model",
+      "file_type": "idf",
+      "why_it_matters": "EnergyPlus HVAC dataset for equipment/performance-model parsing.",
+      "expected_agent_tasks": [
+        "extract equipment performance curves",
+        "map IDF objects to business-readable assumptions",
+        "flag model-vs-field-data limits"
+      ],
+      "source_page": "https://github.com/NREL/EnergyPlus",
+      "license_note": "Public GitHub repository; retain upstream provenance."
+    },
+    {
+      "id": "mesaba_eis_chapter4_pdf",
+      "filename": "environmental_assessment/Mesaba_DEIS_Chapter_4.pdf",
+      "url": "https://netl.doe.gov/sites/default/files/environmental-policy/eis-mesaba/Mesaba_DEIS_Chapter_4.pdf",
+      "mode": "download",
+      "application": "environmental_assessment",
+      "file_type": "pdf",
+      "why_it_matters": "Environmental consequences chapter from a DOE/NETL energy-project EIS.",
+      "expected_agent_tasks": [
+        "extract environmental impact categories",
+        "summarize mitigation commitments",
+        "connect environmental claims to project diligence"
+      ],
+      "source_page": "https://netl.doe.gov/node/7503",
+      "license_note": "Public DOE/NETL document."
+    }
+  ]
+}
