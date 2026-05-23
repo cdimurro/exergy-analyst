@@ -613,6 +613,22 @@
       ],
       "source_page": "https://zenodo.org/records/17206511",
       "license_note": "Zenodo open dataset; check record metadata before redistribution."
+    },
+    {
+      "id": "fischer_tropsch_saf_tea_xlsm",
+      "filename": "synthetic_fuels/Fischer_Tropsch_TEA_v3_1.xlsm",
+      "url": "https://rex.libraries.wsu.edu/view/fileRedirect?download=true&filePid=13425998930001842&instCode=01ALLIANCE_WSU",
+      "mode": "download",
+      "application": "synthetic_fuels_tea",
+      "file_type": "xlsm",
+      "why_it_matters": "Open-access Fischer-Tropsch techno-economic model for greenfield alternative jet-fuel facility scenarios.",
+      "expected_agent_tasks": [
+        "inspect macro-enabled TEA workbook assumptions",
+        "extract capital-cost and policy-support sensitivities",
+        "separate financial model outputs from validated plant performance"
+      ],
+      "source_page": "https://rex.libraries.wsu.edu/esploro/outputs/model/Fischer-Tropsch-techno-economic-analysis-v-31/99900620482301842",
+      "license_note": "Open-access Washington State University Research Exchange model; retain DOI and source metadata."
     }
   ]
 }

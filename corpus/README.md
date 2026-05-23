@@ -39,6 +39,7 @@ agent tasks each file should exercise.
 - EV charging demand and city metadata
 - Petrochemical process fault workbooks
 - Hydrocarbon market-data spreadsheets
+- Synthetic-fuels techno-economic workbooks
 - Plastics life-cycle inventory workbooks
 - Medicine product-registry archives
 - Materials-property prediction records
