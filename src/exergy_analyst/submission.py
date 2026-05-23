@@ -7,7 +7,7 @@ import io
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from statistics import mean
+from statistics import mean, median
 
 
 @dataclass(frozen=True)
@@ -67,8 +67,18 @@ def analyze_submission(prompt: str, paths: list[Path]) -> SubmissionResult:
                 csv_insights, csv_limits, csv_steps = _analyze_steel_energy(rows)
             elif "LV ActivePower (kW)" in headers and "Theoretical_Power_Curve (KWh)" in headers:
                 csv_insights, csv_limits, csv_steps = _analyze_wind_scada(rows)
-            elif "Year" in headers and len(headers) > 50 and "United States of America" in headers:
+            elif "Year" in headers and len(headers) > 50:
                 csv_insights, csv_limits, csv_steps = _analyze_cement_emissions(rows)
+            elif {"Name", "Manufacturer", "Technology", "STC", "PTC", "A_c"} <= headers:
+                csv_insights, csv_limits, csv_steps = _analyze_solar_modules(rows)
+            elif {"Voltage_measured", "Temperature_measured", "Capacity", "id_cycle", "Battery"} <= headers:
+                csv_insights, csv_limits, csv_steps = _analyze_battery_aging(rows)
+            elif {"z_real", "z_img", "applied_voltage", "set"} <= headers:
+                csv_insights, csv_limits, csv_steps = _analyze_fuel_cell_impedance(rows)
+            elif {"city", "total_chargers", "total_sites", "total_volume", "avg_power"} <= headers:
+                csv_insights, csv_limits, csv_steps = _analyze_ev_charging_info(rows)
+            elif len(headers) > 100 and "" in headers:
+                csv_insights, csv_limits, csv_steps = _analyze_ev_charging_volume(rows)
             else:
                 csv_insights, csv_limits, csv_steps = _analyze_generic_csv(rows, lower_name)
             insights.extend(csv_insights)
@@ -96,35 +106,34 @@ def analyze_submission(prompt: str, paths: list[Path]) -> SubmissionResult:
 
 
 def render_submission_brief(result: SubmissionResult) -> str:
-    """Render a client-facing submission brief."""
+    """Render a client-facing one-page memo."""
 
     lines = [
-        "# Client Submission Brief",
+        "# Client Analysis Memo",
         "",
-        "## Client Question",
+        "## Question Received",
         result.prompt.strip() or "No prompt provided.",
         "",
-        "## Direct Answer",
+        "## Bottom Line",
         _direct_answer(result),
         "",
-        "## What I Found",
+        "## Analysis",
     ]
     for index, insight in enumerate(result.insights, start=1):
         lines.extend(
             [
                 f"{index}. **{insight.title}**",
-                f"   Evidence: {insight.evidence}",
-                f"   Recommendation: {insight.recommendation}",
+                f"   {insight.evidence} {insight.recommendation}",
             ]
         )
-    lines.extend(["", "## Uploaded Files"])
+    lines.extend(["", "## Data Reviewed"])
     for file in result.files:
         lines.append(
             f"- `{file.path.name}` ({file.file_type}, {_format_bytes(file.size_bytes)}): {file.readable_summary}"
         )
-    lines.extend(["", "## What This Does Not Prove"])
+    lines.extend(["", "## What I Would Not Claim Yet"])
     lines.extend(f"- {item}" for item in result.limits)
-    lines.extend(["", "## Next Actions"])
+    lines.extend(["", "## Recommended Next Actions"])
     lines.extend(f"- {item}" for item in result.next_steps)
     return "\n".join(lines) + "\n"
 
@@ -353,13 +362,13 @@ def _analyze_gas_turbine(rows: list[dict[str, str]], file_count: int) -> tuple[l
 
 
 def _analyze_cement_emissions(rows: list[dict[str, str]]) -> tuple[list[ClientInsight], list[str], list[str]]:
-    recent = [row for row in rows if _number(row.get("Year")) is not None and _number(row.get("Year")) >= 2000]
     latest = max(rows, key=lambda row: _number(row.get("Year")) or -1)
-    countries = [key for key in latest if key != "Year"]
+    countries = [key for key in latest if key not in {"Year", "Global"}]
     latest_values = [(country, _number(latest.get(country))) for country in countries]
     latest_values = [(country, value) for country, value in latest_values if value is not None and value > 0]
     top = sorted(latest_values, key=lambda item: item[1], reverse=True)[:5]
     total_latest = sum(value for _, value in latest_values)
+    global_latest = _number(latest.get("Global"))
     top_text = ", ".join(f"{country}: {value:,.0f}" for country, value in top)
     return (
         [
@@ -367,18 +376,292 @@ def _analyze_cement_emissions(rows: list[dict[str, str]]) -> tuple[list[ClientIn
                 title="Cement process emissions are concentrated enough to prioritize by country",
                 evidence=(
                     f"The latest year in the file is {latest.get('Year')}. The top five positive entries are {top_text}; "
-                    f"all positive country entries sum to {total_latest:,.0f} in the dataset units."
+                    f"positive country entries sum to {total_latest:,.0f} in the dataset units."
                 ),
                 recommendation=(
                     "Use this file for country-level screening, then pair it with plant-level clinker ratio, kiln fuel, and capture-readiness data."
                 ),
             )
+            if global_latest is None
+            else ClientInsight(
+                title="Cement process emissions are concentrated enough to prioritize by country",
+                evidence=(
+                    f"The latest year in the file is {latest.get('Year')}. The file lists a separate Global aggregate "
+                    f"of {global_latest:,.0f}; excluding that aggregate, the top country entries are {top_text}."
+                ),
+                recommendation=(
+                    "Use the country rows for prioritization and keep the Global row as a check total; do not add Global back into the country sum. "
+                    "Then pair priority countries with plant-level clinker ratio, kiln fuel, and capture-readiness data."
+                ),
+            ),
+            ClientInsight(
+                title="This file is a screening map, not a project pipeline",
+                evidence=(
+                    f"Positive country rows sum to {total_latest:,.0f} in the dataset units, but the file has no plant IDs, kiln types, clinker ratios, fuels, or retrofit costs."
+                ),
+                recommendation=(
+                    "Pair the country screen with plant-level data before ranking capture, fuel-switching, or clinker-substitution projects."
+                ),
+            ),
         ],
         [
             "This is process-emissions data; it does not include fuel-combustion emissions, plant retrofit cost, or product-level EPD values.",
         ],
         [
             "Join country-level cement emissions to plant locations and production volumes before ranking project sites.",
+        ],
+    )
+
+
+def _analyze_solar_modules(rows: list[dict[str, str]]) -> tuple[list[ClientInsight], list[str], list[str]]:
+    modules = [
+        row
+        for row in rows
+        if _number(row.get("STC")) is not None and _number(row.get("PTC")) is not None and _number(row.get("A_c")) is not None
+    ]
+    manufacturers = {row.get("Manufacturer") for row in modules if row.get("Manufacturer")}
+    technologies: dict[str, int] = {}
+    scored: list[tuple[float, float, float, str, str]] = []
+    bifacial_count = 0
+    for row in modules:
+        stc = _number(row.get("STC")) or 0.0
+        ptc = _number(row.get("PTC")) or 0.0
+        area = _number(row.get("A_c")) or 0.0
+        technology = row.get("Technology") or "Unknown"
+        technologies[technology] = technologies.get(technology, 0) + 1
+        if row.get("Bifacial") in {"1", "true", "True"}:
+            bifacial_count += 1
+        if area > 0.0 and stc > 0.0:
+            scored.append((stc / area, ptc / stc if stc > 0 else 0.0, stc, row.get("Name") or "Unknown module", technology))
+
+    best = max(scored, key=lambda item: item[0]) if scored else (0.0, 0.0, 0.0, "Unknown module", "Unknown")
+    median_density = median(item[0] for item in scored) if scored else 0.0
+    median_ptc_stc = median(item[1] for item in scored) if scored else 0.0
+    top_technologies = sorted(technologies.items(), key=lambda item: item[1], reverse=True)[:3]
+    technology_text = ", ".join(f"{name} ({count:,})" for name, count in top_technologies)
+
+    return (
+        [
+            ClientInsight(
+                title="The PV module file is useful for screening, not procurement by itself",
+                evidence=(
+                    f"After skipping header/unit rows, {len(modules):,} module records were usable across "
+                    f"{len(manufacturers):,} manufacturers. The largest technology groups are {technology_text}."
+                ),
+                recommendation=(
+                    "Use it to narrow module families by technology and power density, then require current datasheets, warranty terms, and bankability checks before vendor selection."
+                ),
+            ),
+            ClientInsight(
+                title="Power density and field-rating ratio are the first useful filters",
+                evidence=(
+                    f"Median STC power density is {median_density:.0f} W/m2 and median PTC/STC ratio is {median_ptc_stc:.2f}. "
+                    f"The highest-density listed module is `{best[3]}` at {best[0]:.0f} W/m2."
+                ),
+                recommendation=(
+                    "Filter modules against roof/land area constraints first, then compare PTC/STC ratio for expected field performance."
+                ),
+            ),
+        ],
+        [
+            "The CEC library does not prove current commercial availability, delivered price, warranty strength, degradation rate, or site-specific energy yield.",
+        ],
+        [
+            "Join candidate modules to current vendor quotes, warranty documents, degradation assumptions, and site irradiance before making a procurement recommendation.",
+            f"Review bifacial assumptions separately; {bifacial_count:,} usable records are marked bifacial in this library.",
+        ],
+    )
+
+
+def _analyze_battery_aging(rows: list[dict[str, str]]) -> tuple[list[ClientInsight], list[str], list[str]]:
+    cycle_capacity: dict[tuple[str, int], float] = {}
+    cycle_temp: dict[tuple[str, int], list[float]] = {}
+    for row in rows:
+        battery = row.get("Battery") or "Unknown"
+        cycle_float = _number(row.get("id_cycle"))
+        capacity = _number(row.get("Capacity"))
+        temp = _number(row.get("Temperature_measured"))
+        if cycle_float is None:
+            continue
+        key = (battery, int(cycle_float))
+        if capacity is not None:
+            cycle_capacity[key] = capacity
+        if temp is not None:
+            cycle_temp.setdefault(key, []).append(temp)
+
+    batteries = sorted({battery for battery, _ in cycle_capacity})
+    fade_summaries: list[tuple[str, float, float, float, int]] = []
+    for battery in batteries:
+        cycles = sorted(cycle for b, cycle in cycle_capacity if b == battery)
+        if len(cycles) < 2:
+            continue
+        first = cycle_capacity[(battery, cycles[0])]
+        last = cycle_capacity[(battery, cycles[-1])]
+        if first > 0.0:
+            fade_summaries.append((battery, first, last, (first - last) / first, len(cycles)))
+    worst = max(fade_summaries, key=lambda item: item[3]) if fade_summaries else ("Unknown", 0.0, 0.0, 0.0, 0)
+    avg_temps = [mean(values) for values in cycle_temp.values() if values]
+    max_avg_temp = max(avg_temps) if avg_temps else 0.0
+
+    return (
+        [
+            ClientInsight(
+                title="The battery file supports degradation triage at the cell/cycle level",
+                evidence=(
+                    f"Parsed {len(rows):,} discharge measurements across {len(batteries)} battery label(s). "
+                    f"The strongest fade signal is `{worst[0]}`: {worst[1]:.2f} Ah to {worst[2]:.2f} Ah across {worst[4]} cycles, a {worst[3]:.0%} drop."
+                ),
+                recommendation=(
+                    "Use this as a cell-aging diagnostic first; do not extrapolate directly to pack warranty without pack thermal, balancing, and duty-cycle data."
+                ),
+            ),
+            ClientInsight(
+                title="Temperature context is present but not enough to explain fade alone",
+                evidence=(
+                    f"The highest cycle-average measured temperature in the parsed data is {max_avg_temp:.1f} C."
+                ),
+                recommendation=(
+                    "Segment capacity fade by temperature and current profile before blaming chemistry, controls, or cooling design."
+                ),
+            ),
+        ],
+        [
+            "This converted discharge dataset does not include full pack configuration, cell manufacturing variation, real vehicle duty cycle, or warranty thresholds.",
+        ],
+        [
+            "Create per-battery capacity-vs-cycle curves and flag cycles where voltage or temperature behavior changes abruptly.",
+            "Add charge data and ambient/thermal-control metadata before making a product-life claim.",
+        ],
+    )
+
+
+def _analyze_fuel_cell_impedance(rows: list[dict[str, str]]) -> tuple[list[ClientInsight], list[str], list[str]]:
+    z_real = [_number(row.get("z_real")) for row in rows]
+    z_img = [_number(row.get("z_img")) for row in rows]
+    voltages = sorted({value for value in (_number(row.get("applied_voltage")) for row in rows) if value is not None})
+    valid_real = [value for value in z_real if value is not None]
+    valid_img = [value for value in z_img if value is not None]
+    min_real = min(valid_real) if valid_real else 0.0
+    max_real = max(valid_real) if valid_real else 0.0
+    max_abs_img = max((abs(value) for value in valid_img), default=0.0)
+
+    return (
+        [
+            ClientInsight(
+                title="The fuel-cell file is an impedance experiment, not a system performance report",
+                evidence=(
+                    f"Parsed {len(rows):,} impedance points at {len(voltages)} applied-voltage setting(s): "
+                    f"{', '.join(f'{value:.2f} V' for value in voltages[:8])}. z_real spans {min_real:.4f} to {max_real:.4f}."
+                ),
+                recommendation=(
+                    "Use this to compare electrochemical condition across test settings; request polarization curves and gas/humidity conditions before estimating stack efficiency."
+                ),
+            ),
+            ClientInsight(
+                title="The impedance range is measurable enough for quality-control comparisons",
+                evidence=f"The largest absolute imaginary impedance value is {max_abs_img:.4f} in the file units.",
+                recommendation=(
+                    "Compare repeated tests or MEA variants on the same instrument before interpreting the curve as degradation."
+                ),
+            ),
+        ],
+        [
+            "The file does not include full operating context such as membrane condition, gas stoichiometry, humidity, pressure, or calibration traceability.",
+        ],
+        [
+            "Use the companion `.names` metadata and test protocol so the curve can be interpreted against the actual MEA and operating conditions.",
+            "Add polarization and durability data before making an efficiency or lifetime claim.",
+        ],
+    )
+
+
+def _analyze_ev_charging_info(rows: list[dict[str, str]]) -> tuple[list[ClientInsight], list[str], list[str]]:
+    row = rows[0] if rows else {}
+    chargers = _number(row.get("total_chargers")) or 0.0
+    sites = _number(row.get("total_sites")) or 0.0
+    volume = _number(row.get("total_volume")) or 0.0
+    duration = _number(row.get("total_duration")) or 0.0
+    avg_power = _number(row.get("avg_power")) or 0.0
+    chargers_per_site = chargers / sites if sites else 0.0
+    volume_per_charger = volume / chargers if chargers else 0.0
+    return (
+        [
+            ClientInsight(
+                title="The EV charging metadata gives a useful city-scale baseline",
+                evidence=(
+                    f"{row.get('city', 'The city')} has {chargers:,.0f} chargers across {sites:,.0f} sites, "
+                    f"or {chargers_per_site:.2f} chargers per site. Average power is listed as {avg_power:.2f}."
+                ),
+                recommendation=(
+                    "Use this as the portfolio-level denominator, then analyze hourly volume by station before recommending new chargers."
+                ),
+            ),
+            ClientInsight(
+                title="Energy-throughput intensity can be screened before siting work",
+                evidence=(
+                    f"Total recorded volume is {volume:,.0f}; that is {volume_per_charger:,.0f} per charger in the dataset units."
+                ),
+                recommendation=(
+                    "Rank stations by utilization and dwell behavior before choosing between pricing changes, reliability fixes, or expansion."
+                ),
+            ),
+        ],
+        [
+            "The metadata file alone does not identify congestion, failed sessions, charger power class, or grid interconnection constraints.",
+        ],
+        [
+            "Pair this file with station-level hourly volume, site metadata, reliability events, and local tariff data.",
+        ],
+    )
+
+
+def _analyze_ev_charging_volume(rows: list[dict[str, str]]) -> tuple[list[ClientInsight], list[str], list[str]]:
+    totals_by_station: dict[str, float] = {}
+    total = 0.0
+    nonzero_intervals = 0
+    interval_count = len(rows)
+    for row in rows:
+        row_total = 0.0
+        for key, value in row.items():
+            if key == "":
+                continue
+            numeric = _number(value) or 0.0
+            totals_by_station[key] = totals_by_station.get(key, 0.0) + numeric
+            row_total += numeric
+        total += row_total
+        if row_total > 0.0:
+            nonzero_intervals += 1
+    active_stations = sum(1 for value in totals_by_station.values() if value > 0.0)
+    top_station = max(totals_by_station.items(), key=lambda item: item[1]) if totals_by_station else ("Unknown", 0.0)
+    active_share = active_stations / len(totals_by_station) if totals_by_station else 0.0
+    return (
+        [
+            ClientInsight(
+                title="The EV charging volume table is sparse and wide",
+                evidence=(
+                    f"The sample contains {interval_count:,} hourly rows and {len(totals_by_station):,} station columns. "
+                    f"Only {active_stations:,} stations show nonzero volume in this sample ({active_share:.0%})."
+                ),
+                recommendation=(
+                    "Convert this table from wide format to station-hour records before modeling utilization or forecasting load."
+                ),
+            ),
+            ClientInsight(
+                title="Utilization is concentrated in a small part of the sample",
+                evidence=(
+                    f"The highest-volume station column is `{top_station[0]}` with {top_station[1]:,.1f}; "
+                    f"{nonzero_intervals:,} of {interval_count:,} hours have any recorded charging volume."
+                ),
+                recommendation=(
+                    "Start with the active station subset; treating all station columns as equally informative will dilute the operational signal."
+                ),
+            ),
+        ],
+        [
+            "This is only the first sampled block of the larger volume table, so it should not be used for annual utilization or investment sizing.",
+        ],
+        [
+            "Load the full table or a statistically valid time window, then join station metadata, prices, weather, and failed-session logs.",
         ],
     )
 

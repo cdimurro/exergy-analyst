@@ -58,3 +58,85 @@ Useful output should:
 - ask for permit limits, fuel composition, startup flags, and maintenance state before making a compliance recommendation
 
 Unhelpful output would treat the zip as opaque or report a fleet average without segmenting by operating regime.
+
+## Case 4: Solar Module Procurement Screen
+
+Prompt:
+
+> We are reviewing a solar procurement list and need to know what is worth shortlisting before calling vendors.
+
+Files:
+
+- `corpus/raw/solar_pv/CEC_Modules.csv`
+
+Useful output should:
+
+- skip unit/header rows and analyze usable module records
+- compare module families by technology, power density, and PTC/STC ratio
+- avoid claiming current price, warranty strength, or vendor bankability from the library alone
+
+## Case 5: Battery Aging and Warranty Risk
+
+Prompt:
+
+> We have some battery discharge data. Can you tell whether it supports any useful aging or warranty conclusion?
+
+Files:
+
+- `corpus/raw/batteries/nasa_li_ion_discharge.csv`
+
+Useful output should:
+
+- detect capacity fade by battery/cycle
+- treat the data as cell-level aging evidence, not a pack warranty model
+- ask for pack design, charge data, thermal controls, and duty-cycle context
+
+## Case 6: EV Charging Expansion
+
+Prompt:
+
+> We are evaluating EV charging expansion in Amsterdam. These files are messy; what can we infer before a full model?
+
+Files:
+
+- `corpus/raw/electric_vehicles/CHARGED_AMS_info.csv`
+- `corpus/raw/electric_vehicles/CHARGED_AMS_volume_first_100_rows.csv`
+
+Useful output should:
+
+- combine city metadata with a wide station-hour volume table
+- identify sparse utilization and active stations
+- avoid sizing infrastructure from a sampled time window
+
+## Case 7: Cement Decarbonization Screen
+
+Prompt:
+
+> We need a first pass on cement decarbonization opportunities. Does this emissions file tell us where to focus?
+
+Files:
+
+- `corpus/raw/cement/cement_emissions_data.csv`
+
+Useful output should:
+
+- recognize country-year process emissions despite non-UTF-8 encoding
+- exclude the `Global` aggregate from country rankings
+- ask for plant IDs, clinker ratio, kiln fuel, and retrofit costs before ranking projects
+
+## Case 8: PEM Fuel-Cell Lab Data
+
+Prompt:
+
+> A lab sent us PEM fuel cell impedance data without much context. Can we say anything useful yet?
+
+Files:
+
+- `corpus/raw/hydrogen_fuel_cells/pem_activation_constant_voltage_1.csv`
+- `corpus/raw/hydrogen_fuel_cells/pem_activation_constant_voltage_1.names`
+
+Useful output should:
+
+- identify the file as impedance data, not a stack efficiency report
+- summarize applied-voltage settings and impedance range
+- ask for operating conditions, polarization curves, and durability data before making performance claims
