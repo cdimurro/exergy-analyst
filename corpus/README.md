@@ -30,6 +30,20 @@ agent tasks each file should exercise.
 - Building energy model parsing
 - Environmental assessment review
 - Scientific/lab protocol triage
+- Aviation turbofan predictive-maintenance data
+- Natural-gas turbine emissions data
+- Solar PV module specification libraries
+- Battery aging and discharge-cycle data
+- Wind turbine SCADA diagnostics
+- PEM fuel-cell electrochemistry files
+- EV charging demand and city metadata
+- Petrochemical process fault workbooks
+- Hydrocarbon market-data spreadsheets
+- Plastics life-cycle inventory workbooks
+- Medicine product-registry archives
+- Materials-property prediction records
+- Steel plant energy-management data
+- Cement process-emissions and construction-material EPDs
 
 ## Development Rule
 

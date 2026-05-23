@@ -308,6 +308,311 @@
       ],
       "source_page": "https://netl.doe.gov/node/7503",
       "license_note": "Public DOE/NETL document."
+    },
+    {
+      "id": "aviation_cmapss_engine1_csv",
+      "filename": "aviation/NASA_turbofan_train_engine_1_FD001.csv",
+      "url": "https://huggingface.co/datasets/nominal-io/nasa-turbofan-degradation/resolve/main/NASA_turbofan_train_engine_1_FD001.csv",
+      "mode": "download",
+      "application": "aviation_predictive_maintenance",
+      "file_type": "csv",
+      "why_it_matters": "Single-engine slice of the NASA C-MAPSS turbofan degradation benchmark with operating settings and sensor channels.",
+      "expected_agent_tasks": [
+        "infer sensor meanings from messy headers",
+        "estimate degradation trend and remaining useful life signals",
+        "separate simulation benchmark confidence from real fleet confidence"
+      ],
+      "source_page": "https://huggingface.co/datasets/nominal-io/nasa-turbofan-degradation",
+      "license_note": "MIT-licensed Hugging Face dataset derived from NASA C-MAPSS; retain upstream provenance."
+    },
+    {
+      "id": "gas_turbine_uci_emissions_zip",
+      "filename": "natural_gas_turbines/uci_gas_turbine_co_nox_emissions.zip",
+      "url": "https://archive.ics.uci.edu/static/public/551/gas+turbine+co+and+nox+emission+data+set.zip",
+      "mode": "download",
+      "application": "gas_turbine_emissions",
+      "file_type": "zip_csv",
+      "why_it_matters": "Hourly sensor data from a gas turbine for CO and NOx emissions analysis.",
+      "expected_agent_tasks": [
+        "unpack and profile multi-year CSV files",
+        "model emissions against load and ambient conditions",
+        "identify variables needed for regulatory-quality emissions claims"
+      ],
+      "source_page": "https://archive.ics.uci.edu/dataset/551/gas+turbine+co+and+nox+emission+data+set",
+      "license_note": "UCI Machine Learning Repository dataset; retain citation and license metadata."
+    },
+    {
+      "id": "solar_cec_modules_csv",
+      "filename": "solar_pv/CEC_Modules.csv",
+      "url": "https://raw.githubusercontent.com/NREL/SAM/develop/deploy/libraries/CEC%20Modules.csv",
+      "mode": "download",
+      "application": "solar_panel_specs",
+      "file_type": "csv",
+      "why_it_matters": "Large PV module specification library with manufacturer, electrical, and physical fields.",
+      "expected_agent_tasks": [
+        "normalize manufacturer and model names",
+        "rank module options by power density and constraints",
+        "flag missing warranty, degradation, and bankability context"
+      ],
+      "source_page": "https://github.com/NREL/SAM",
+      "license_note": "Public NREL SAM repository; retain upstream provenance."
+    },
+    {
+      "id": "battery_nasa_discharge_csv",
+      "filename": "batteries/nasa_li_ion_discharge.csv",
+      "url": "https://raw.githubusercontent.com/fmardero/battery_aging/master/discharge.csv",
+      "mode": "download",
+      "application": "battery_aging",
+      "file_type": "csv",
+      "why_it_matters": "Converted NASA lithium-ion discharge-cycle data with voltage, current, temperature, and capacity fields.",
+      "expected_agent_tasks": [
+        "profile cycle-level degradation",
+        "estimate capacity fade from partial fields",
+        "warn when lab-cell behavior is overextended to EV packs"
+      ],
+      "source_page": "https://github.com/fmardero/battery_aging",
+      "license_note": "Public GitHub repository derived from NASA Li-ion Battery Aging Datasets; retain upstream provenance."
+    },
+    {
+      "id": "wind_turbine_scada_t1_csv",
+      "filename": "wind_turbines/wind_turbine_T1_scada.csv",
+      "url": "https://raw.githubusercontent.com/dominodatalab/reference-project-wind-turbine-scada/master/data/T1.csv",
+      "mode": "download",
+      "application": "wind_turbine_scada",
+      "file_type": "csv",
+      "why_it_matters": "Wind turbine SCADA file with generated power, wind speed, theoretical curve, and wind direction.",
+      "expected_agent_tasks": [
+        "build empirical power-curve diagnostics",
+        "detect curtailment or underperformance regions",
+        "separate turbine health signals from wind-resource effects"
+      ],
+      "source_page": "https://github.com/dominodatalab/reference-project-wind-turbine-scada",
+      "license_note": "Public GitHub repository; dataset provenance points to a public wind SCADA source."
+    },
+    {
+      "id": "pem_fuel_cell_activation_csv",
+      "filename": "hydrogen_fuel_cells/pem_activation_constant_voltage_1.csv",
+      "url": "https://raw.githubusercontent.com/ECSIM/pem-dataset1/master/Activation%20Test%20MEA%20Constant%20Voltage%200.6V/1.csv",
+      "mode": "download",
+      "application": "pem_fuel_cell_electrochemistry",
+      "file_type": "csv",
+      "why_it_matters": "PEM fuel-cell activation test data with impedance columns and applied-voltage metadata.",
+      "expected_agent_tasks": [
+        "parse electrochemical impedance data",
+        "connect curve shape to likely operating condition changes",
+        "identify missing MEA, humidity, and calibration context"
+      ],
+      "source_page": "https://github.com/ECSIM/pem-dataset1",
+      "license_note": "CC-BY-4.0 GitHub dataset; cite upstream authors."
+    },
+    {
+      "id": "pem_fuel_cell_activation_names",
+      "filename": "hydrogen_fuel_cells/pem_activation_constant_voltage_1.names",
+      "url": "https://raw.githubusercontent.com/ECSIM/pem-dataset1/master/Activation%20Test%20MEA%20Constant%20Voltage%200.6V/1.names",
+      "mode": "download",
+      "application": "pem_fuel_cell_metadata",
+      "file_type": "names",
+      "why_it_matters": "Companion metadata file for the PEM activation test CSV.",
+      "expected_agent_tasks": [
+        "join metadata to raw electrochemical data",
+        "extract test conditions and instrument context",
+        "detect mismatches between file names and tabular columns"
+      ],
+      "source_page": "https://github.com/ECSIM/pem-dataset1",
+      "license_note": "CC-BY-4.0 GitHub dataset; cite upstream authors."
+    },
+    {
+      "id": "ev_charged_ams_info_csv",
+      "filename": "electric_vehicles/CHARGED_AMS_info.csv",
+      "url": "https://raw.githubusercontent.com/IntelligentSystemsLab/CHARGED/main/data/AMS/info.csv",
+      "mode": "download",
+      "application": "ev_charging_city_metadata",
+      "file_type": "csv",
+      "why_it_matters": "City-level EV charging metadata for Amsterdam from a global charging-demand dataset.",
+      "expected_agent_tasks": [
+        "interpret charger counts and city scope",
+        "join static metadata to high-dimensional charging volume tables",
+        "surface geographic transferability limits"
+      ],
+      "source_page": "https://github.com/IntelligentSystemsLab/CHARGED",
+      "license_note": "Public GitHub repository associated with an open Scientific Data dataset; retain upstream provenance."
+    },
+    {
+      "id": "ev_charged_ams_volume_sample_csv",
+      "filename": "electric_vehicles/CHARGED_AMS_volume_first_100_rows.csv",
+      "url": "https://raw.githubusercontent.com/IntelligentSystemsLab/CHARGED/main/data/AMS/volume.csv",
+      "mode": "head_lines",
+      "line_limit": 101,
+      "application": "ev_charging_demand",
+      "file_type": "csv_sample",
+      "why_it_matters": "Wide EV charging-demand table sampled to keep the fixture lightweight while preserving messy schema shape.",
+      "expected_agent_tasks": [
+        "handle wide sparse time-series data",
+        "summarize station-level charging demand patterns",
+        "recommend aggregation before making infrastructure claims"
+      ],
+      "source_page": "https://github.com/IntelligentSystemsLab/CHARGED",
+      "license_note": "Public GitHub repository associated with an open Scientific Data dataset; sampled for development."
+    },
+    {
+      "id": "tennessee_eastman_fault10_xlsx",
+      "filename": "petrochemicals/tennessee_eastman_mode1_fault10_batch1.xlsx",
+      "url": "https://github.com/mv-per/tennessee-eastman-dataset/raw/main/simulations/mode_1/faults/mode1_10_1.xlsx",
+      "mode": "download",
+      "application": "petrochemical_process_faults",
+      "file_type": "xlsx",
+      "why_it_matters": "Faulted Tennessee Eastman chemical-process simulation workbook for process monitoring and anomaly diagnosis.",
+      "expected_agent_tasks": [
+        "parse process-control workbook data",
+        "compare normal and faulted operations",
+        "explain which sensor groups drive the anomaly"
+      ],
+      "source_page": "https://github.com/mv-per/tennessee-eastman-dataset",
+      "license_note": "MIT-licensed GitHub repository; cite original Tennessee Eastman process references."
+    },
+    {
+      "id": "tennessee_eastman_normal_xlsx",
+      "filename": "petrochemicals/tennessee_eastman_mode1_normal_50h.xlsx",
+      "url": "https://github.com/mv-per/tennessee-eastman-dataset/raw/main/simulations/mode_1/mode1_normal_50.xlsx",
+      "mode": "download",
+      "application": "petrochemical_process_baseline",
+      "file_type": "xlsx",
+      "why_it_matters": "Normal-operation companion workbook for the Tennessee Eastman chemical-process fault case.",
+      "expected_agent_tasks": [
+        "derive baseline process envelopes",
+        "compare sensor distributions against faulted operation",
+        "identify whether differences are operationally material"
+      ],
+      "source_page": "https://github.com/mv-per/tennessee-eastman-dataset",
+      "license_note": "MIT-licensed GitHub repository; cite original Tennessee Eastman process references."
+    },
+    {
+      "id": "eia_henry_hub_daily_xls",
+      "filename": "hydrocarbons/EIA_Henry_Hub_daily_spot_price.xls",
+      "url": "https://www.eia.gov/dnav/ng/hist_xls/RNGWHHDd.xls",
+      "mode": "download",
+      "application": "hydrocarbon_market_data",
+      "file_type": "xls",
+      "why_it_matters": "Daily Henry Hub natural-gas spot-price spreadsheet for project economics and fuel-price sensitivity.",
+      "expected_agent_tasks": [
+        "extract historical price series from legacy Excel",
+        "compute volatility and scenario ranges",
+        "connect fuel-price assumptions to TEA risk"
+      ],
+      "source_page": "https://www.eia.gov/dnav/ng/hist/rngwhhdd.htm",
+      "license_note": "Public U.S. Energy Information Administration data."
+    },
+    {
+      "id": "epa_plastics_lci_mechanical_recycling_xlsx",
+      "filename": "plastics/EPA_EoL_plastic_mechanical_recycling_LCI.xlsx",
+      "url": "https://raw.githubusercontent.com/USEPA/GS_End-of-Life_Plastic_Additives/main/Scenario%201%20-%20Material%20Flow%20Analysis_Mechanical%20Recycling%20with%20LCI_Final.xlsx",
+      "mode": "download",
+      "application": "plastics_life_cycle_inventory",
+      "file_type": "xlsx",
+      "why_it_matters": "EPA material-flow and life-cycle-inventory workbook for end-of-life plastic management.",
+      "expected_agent_tasks": [
+        "extract material-flow assumptions across workbook tabs",
+        "separate inventory data from scenario calculations",
+        "identify uncertain releases and missing boundary conditions"
+      ],
+      "source_page": "https://github.com/USEPA/GS_End-of-Life_Plastic_Additives",
+      "license_note": "Public U.S. EPA GitHub repository; retain upstream provenance."
+    },
+    {
+      "id": "fda_ndc_directory_zip",
+      "filename": "medicines/FDA_ndc_directory_text.zip",
+      "url": "https://www.accessdata.fda.gov/cder/ndctext.zip",
+      "mode": "download",
+      "application": "medicine_product_registry",
+      "file_type": "zip_pipe_delimited",
+      "why_it_matters": "FDA National Drug Code text files with package and product records in a compressed archive.",
+      "expected_agent_tasks": [
+        "unpack pipe-delimited regulatory product files",
+        "normalize drug names, dosage forms, and package records",
+        "flag why product registry data is not clinical-efficacy data"
+      ],
+      "source_page": "https://www.fda.gov/drugs/drug-approvals-and-databases/national-drug-code-directory",
+      "license_note": "Public U.S. FDA data; retain source and access-date context."
+    },
+    {
+      "id": "matbench_expt_gap_json",
+      "filename": "materials/matbench_expt_gap.json",
+      "url": "https://huggingface.co/datasets/smgjch/Matbench/resolve/main/matbench_expt_gap.json",
+      "mode": "download",
+      "application": "materials_property_prediction",
+      "file_type": "json",
+      "why_it_matters": "Materials-property prediction benchmark records for experimental band gap.",
+      "expected_agent_tasks": [
+        "parse JSON scientific records",
+        "connect composition strings to property targets",
+        "distinguish benchmark predictive accuracy from validated material discovery"
+      ],
+      "source_page": "https://github.com/materialsproject/matbench",
+      "license_note": "Matbench is MIT licensed; Hugging Face mirror should retain upstream citation."
+    },
+    {
+      "id": "steel_industry_energy_uci_csv",
+      "filename": "steel/steel_industry_energy_consumption.csv",
+      "url": "https://archive.ics.uci.edu/static/public/851/data.csv",
+      "mode": "download",
+      "application": "steel_plant_energy_management",
+      "file_type": "csv",
+      "why_it_matters": "Smart small-scale steel-industry electricity consumption data with active/reactive power and load categories.",
+      "expected_agent_tasks": [
+        "profile steel-site load classes",
+        "find operational drivers of energy intensity",
+        "separate electrical-load optimization from process-heat decarbonization claims"
+      ],
+      "source_page": "https://archive.ics.uci.edu/dataset/851/steel+industry+energy+consumption",
+      "license_note": "CC-BY-4.0 UCI Machine Learning Repository dataset; cite upstream authors."
+    },
+    {
+      "id": "cement_emissions_zenodo_csv",
+      "filename": "cement/cement_emissions_data.csv",
+      "url": "https://zenodo.org/api/records/3380081/files/1.%20Cement_emissions_data.csv/content",
+      "mode": "download",
+      "application": "cement_process_emissions",
+      "file_type": "csv",
+      "why_it_matters": "Country-level process CO2 emissions from cement production over long historical time horizons.",
+      "expected_agent_tasks": [
+        "parse wide country-year emissions data",
+        "separate process emissions from fuel-combustion emissions",
+        "connect cement decarbonization claims to data boundaries"
+      ],
+      "source_page": "https://zenodo.org/records/3380081",
+      "license_note": "Zenodo dataset released under CC-BY-4.0; cite Robbie Andrew and associated ESSD publication."
+    },
+    {
+      "id": "construction_pca_blended_cement_epd_pdf",
+      "filename": "construction_materials/PCA_blended_hydraulic_cement_EPD.pdf",
+      "url": "https://www.cement.org/wp-content/uploads/2024/07/pca_epd_blendedhydraulic_athena_final_revised_nov2023.pdf",
+      "mode": "download",
+      "application": "construction_materials_epd",
+      "file_type": "pdf",
+      "why_it_matters": "Industry-wide environmental product declaration for blended hydraulic cement.",
+      "expected_agent_tasks": [
+        "extract declared-unit and GWP values from PDF tables",
+        "connect EPD assumptions to construction procurement questions",
+        "flag product-specific vs industry-average limitations"
+      ],
+      "source_page": "https://www.cement.org/sustainability/cement-concrete-sustainability-pca",
+      "license_note": "Public Portland Cement Association/Athena EPD PDF; retain attribution and source URL."
+    },
+    {
+      "id": "coco2_point_sources_steel_cement_csv",
+      "filename": "steel_cement/coco2_point_sources_catalogue.csv",
+      "url": "https://zenodo.org/api/records/17206511/files/corso_ps_catalogue_v2.0.csv/content",
+      "mode": "download",
+      "application": "industrial_point_source_emissions",
+      "file_type": "csv_semicolon",
+      "why_it_matters": "Global point-source emissions catalogue including cement plants and iron/steel plants with coordinates and pollutant fields.",
+      "expected_agent_tasks": [
+        "parse semicolon-delimited industrial emissions data",
+        "filter cement and iron/steel sites",
+        "connect facility emissions to geospatial and diligence workflows"
+      ],
+      "source_page": "https://zenodo.org/records/17206511",
+      "license_note": "Zenodo open dataset; check record metadata before redistribution."
     }
   ]
 }
