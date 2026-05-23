@@ -1,0 +1,6 @@
+stream,waste_heat_mwh,exhaust_temp_c,ambient_temp_c,operating_hours
+Kiln exhaust,1200,310,25,4100
+Compressor cooling loop,2600,48,25,6200
+Dryer stack,850,180,25,3900
+Low-grade wash water,3400,38,25,5000
+

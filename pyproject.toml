@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "exergy-analyst"
+version = "0.1.0"
+description = "Exergy-aware analysis agent foundation for messy energy and engineering data."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Christopher DiMurro" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+exergy-analyst = "exergy_analyst.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+

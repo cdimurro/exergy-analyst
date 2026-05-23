@@ -1,0 +1,6 @@
+timestamp,substation,delivered_kwh,supply_temp_c,return_temp_c,ambient_temp_c
+2025-02-20T06:00:00,L4,845,92,48,-8
+2025-02-20T06:15:00,L12,620,85,42,-8
+2025-02-20T06:30:00,L17,410,98,61,-7
+2025-02-20T06:45:00,L22,950,76,40,-7
+
