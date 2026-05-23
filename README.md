@@ -1,16 +1,17 @@
 # Exergy Analyst
 
-Exergy Analyst is a practical analysis agent foundation for messy energy and
-deep-tech operating data.
+Exergy Analyst is a practical AI analyst foundation for messy energy,
+industrial, and deep-tech operating data.
 
 The product goal is simple:
 
 > Upload messy energy or engineering data. Get back the hidden operational,
 > financial, and thermodynamic insights that normal analytics miss.
 
-The first workflow targets industrial waste heat and district heating because
-those datasets often contain enough temperatures, energy quantities, and site
-labels to reveal useful-work potential without requiring new lab validation.
+The production interface is an agent built around Deep Agents and LangGraph,
+with `deepseek-v4-flash` as the target model. The deterministic CLI remains the
+test harness that proves parser coverage, calculations, claim discipline, and
+memo quality before those capabilities are exposed to the agent.
 
 ## First Use Cases
 
@@ -22,13 +23,31 @@ labels to reveal useful-work potential without requiring new lab validation.
 
 ## Current Prototype
 
-The initial CLI analyzes CSV files with messy field names. It normalizes common
-columns, computes thermal Exergy Factor values, ranks opportunity streams, and
-emits a concise decision brief.
+The CLI supports two paths:
+
+- `analyze`: deterministic exergy screening for CSVs with energy and temperature
+  fields.
+- `submit`: client-style prompt plus one or more uploaded files, returning a
+  one-page memo with evidence, limits, and next actions.
 
 ```bash
 PYTHONPATH=src python -m exergy_analyst analyze examples/district_heating_sample.csv \
   --use-case district-heating
+```
+
+```bash
+PYTHONPATH=src python -m exergy_analyst submit \
+  --prompt "This turbine looks like it is underperforming. What should we check?" \
+  corpus/raw/wind_turbines/wind_turbine_T1_scada.csv
+```
+
+The production agent factory is lazy so local development does not require an
+API key:
+
+```bash
+pip install -e ".[agent]"
+export DEEPSEEK_API_KEY=...
+export EXERGY_AGENT_MODEL=deepseek-v4-flash
 ```
 
 ## Output Philosophy
@@ -45,6 +64,12 @@ and business operators:
 
 The claim-status and observability machinery stays under the hood unless the
 user asks for the technical appendix.
+
+See:
+
+- [Product Goal](docs/PRODUCT.md)
+- [Agent Architecture](docs/AGENT_ARCHITECTURE.md)
+- [Analysis Quality Bar](docs/QUALITY_BAR.md)
 
 ## Development
 

@@ -9,6 +9,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from statistics import mean, median
 
+from .claims import ClaimSupport
+from .file_inventory import format_bytes, profile_file
+
 
 @dataclass(frozen=True)
 class SubmissionFile:
@@ -18,6 +21,7 @@ class SubmissionFile:
     file_type: str
     size_bytes: int
     readable_summary: str
+    parser_status: str
 
 
 @dataclass(frozen=True)
@@ -27,6 +31,7 @@ class ClientInsight:
     title: str
     evidence: str
     recommendation: str
+    support: ClaimSupport = ClaimSupport.COMPUTED
 
 
 @dataclass(frozen=True)
@@ -129,7 +134,8 @@ def render_submission_brief(result: SubmissionResult) -> str:
     lines.extend(["", "## Data Reviewed"])
     for file in result.files:
         lines.append(
-            f"- `{file.path.name}` ({file.file_type}, {_format_bytes(file.size_bytes)}): {file.readable_summary}"
+            f"- `{file.path.name}` ({file.file_type}, {format_bytes(file.size_bytes)}): "
+            f"{file.readable_summary} Parser status: {file.parser_status}."
         )
     lines.extend(["", "## What I Would Not Claim Yet"])
     lines.extend(f"- {item}" for item in result.limits)
@@ -144,9 +150,11 @@ def _direct_answer(result: SubmissionResult) -> str:
 
 
 def _summarize_file(path: Path) -> SubmissionFile:
+    profile = profile_file(path)
     suffix = path.suffix.lower().lstrip(".") or "unknown"
-    size = path.stat().st_size
-    if suffix == "zip":
+    if profile.file_type in {"zip", "geojson_zip", "shapefile_zip"}:
+        summary = profile.summary
+    elif suffix == "zip":
         try:
             with zipfile.ZipFile(path) as archive:
                 names = archive.namelist()
@@ -161,8 +169,14 @@ def _summarize_file(path: Path) -> SubmissionFile:
         except Exception as exc:
             summary = f"CSV-like file, but initial parsing failed: {exc}"
     else:
-        summary = "file inventoried for parser selection"
-    return SubmissionFile(path=path, file_type=suffix, size_bytes=size, readable_summary=summary)
+        summary = profile.summary
+    return SubmissionFile(
+        path=path,
+        file_type=profile.file_type,
+        size_bytes=profile.size_bytes,
+        readable_summary=summary,
+        parser_status=profile.parser_status,
+    )
 
 
 def _analyze_zip(path: Path) -> tuple[list[ClientInsight], list[str], list[str]]:
@@ -715,14 +729,6 @@ def _number(value: str | None) -> float | None:
         return float(text)
     except ValueError:
         return None
-
-
-def _format_bytes(size: int) -> str:
-    if size < 1024:
-        return f"{size} B"
-    if size < 1024 * 1024:
-        return f"{size / 1024:.1f} KB"
-    return f"{size / (1024 * 1024):.1f} MB"
 
 
 def _dedupe(items: list[str]) -> list[str]:

@@ -12,6 +12,7 @@ authors = [{ name = "Christopher DiMurro" }]
 dependencies = []
 
 [project.optional-dependencies]
+agent = ["deepagents", "langchain-openai", "langgraph"]
 dev = ["pytest>=8"]
 
 [project.scripts]
@@ -23,4 +24,3 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-

@@ -6,9 +6,12 @@ import argparse
 from pathlib import Path
 
 from .analysis import analyze_records
+from .agent import SYSTEM_PROMPT
 from .brief import render_decision_brief
+from .config import load_agent_settings
 from .ingest import load_csv_records
 from .models import UseCase
+from .quality import evaluate_memo, render_quality_result
 from .submission import analyze_submission, render_submission_brief
 
 
@@ -30,6 +33,12 @@ def main(argv: list[str] | None = None) -> int:
     submit.add_argument("files", nargs="+", type=Path, help="Uploaded file paths.")
     submit.add_argument("--output", type=Path, help="Optional Markdown output path.")
 
+    review_memo = subparsers.add_parser("review-memo", help="Evaluate a generated client memo.")
+    review_memo.add_argument("memo_path", type=Path)
+    review_memo.add_argument("--min-words", type=int, default=180)
+
+    subparsers.add_parser("agent-info", help="Print production agent configuration and tool surface.")
+
     args = parser.parse_args(argv)
     if args.command == "analyze":
         records = load_csv_records(args.csv_path)
@@ -47,6 +56,19 @@ def main(argv: list[str] | None = None) -> int:
             args.output.write_text(brief, encoding="utf-8")
         else:
             print(brief, end="")
+        return 0
+    if args.command == "review-memo":
+        result = evaluate_memo(args.memo_path.read_text(encoding="utf-8"), min_words=args.min_words)
+        print(render_quality_result(result), end="")
+        return 0 if result.passed else 2
+    if args.command == "agent-info":
+        settings = load_agent_settings()
+        print(f"model: {settings.model}")
+        print(f"base_url: {settings.base_url}")
+        print("tools: inspect_upload, analyze_uploads")
+        print(f"system_prompt_words: {len(SYSTEM_PROMPT.split())}")
+        print(f"api_key_env: {settings.api_key_env}")
+        print(f"api_key_present: {settings.api_key is not None}")
         return 0
     return 1
 
