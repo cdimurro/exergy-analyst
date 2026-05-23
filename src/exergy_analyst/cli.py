@@ -9,6 +9,7 @@ from .analysis import analyze_records
 from .brief import render_decision_brief
 from .ingest import load_csv_records
 from .models import UseCase
+from .submission import analyze_submission, render_submission_brief
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -24,6 +25,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     analyze.add_argument("--output", type=Path, help="Optional Markdown output path.")
 
+    submit = subparsers.add_parser("submit", help="Analyze a client-style prompt plus one or more uploaded files.")
+    submit.add_argument("--prompt", required=True, help="Vague client question or request.")
+    submit.add_argument("files", nargs="+", type=Path, help="Uploaded file paths.")
+    submit.add_argument("--output", type=Path, help="Optional Markdown output path.")
+
     args = parser.parse_args(argv)
     if args.command == "analyze":
         records = load_csv_records(args.csv_path)
@@ -34,9 +40,16 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(brief, end="")
         return 0
+    if args.command == "submit":
+        result = analyze_submission(args.prompt, args.files)
+        brief = render_submission_brief(result)
+        if args.output:
+            args.output.write_text(brief, encoding="utf-8")
+        else:
+            print(brief, end="")
+        return 0
     return 1
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
