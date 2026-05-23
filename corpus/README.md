@@ -45,6 +45,10 @@ agent tasks each file should exercise.
 - Materials-property prediction records
 - Steel plant energy-management data
 - Cement process-emissions and construction-material EPDs
+- BIM/CAD exchange files: IFC, gbXML, STEP, DXF, OBJ
+- Weather/modeling files: EPW
+- Geospatial files: GeoJSON ZIP, Shapefile ZIP, KML, GeoTIFF, GeoPackage
+- Scientific and data-lake containers: NetCDF, HDF5, Parquet
 
 ## Development Rule
 

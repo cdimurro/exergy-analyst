@@ -629,6 +629,230 @@
       ],
       "source_page": "https://rex.libraries.wsu.edu/esploro/outputs/model/Fischer-Tropsch-techno-economic-analysis-v-31/99900620482301842",
       "license_note": "Open-access Washington State University Research Exchange model; retain DOI and source metadata."
+    },
+    {
+      "id": "buildingsmart_hvac_ifc",
+      "filename": "bim_cad/buildingSMART_Building_Hvac.ifc",
+      "url": "https://raw.githubusercontent.com/buildingSMART/Sample-Test-Files/main/IFC%204.0.2.1%20(IFC%204)/PCERT-Sample-Scene/Building-Hvac.ifc",
+      "mode": "download",
+      "application": "bim_hvac_model",
+      "file_type": "ifc",
+      "why_it_matters": "Industry Foundation Classes BIM model containing HVAC-oriented building objects.",
+      "expected_agent_tasks": [
+        "extract spaces, equipment, and system objects from IFC",
+        "map BIM entities to energy-analysis assumptions",
+        "identify when an IFC parser such as IfcOpenShell is required"
+      ],
+      "source_page": "https://technical.buildingsmart.org/standards/ifc/ifc-examples/",
+      "license_note": "buildingSMART sample/test files; retain upstream license and provenance."
+    },
+    {
+      "id": "gbxml_urban_house_mep_xml",
+      "filename": "bim_cad/Urban_House_MEP.gbxml",
+      "url": "https://raw.githubusercontent.com/GreenBuildingXML/Sample_gbXML_Files/master/Urban_House_MEP.xml",
+      "mode": "download",
+      "application": "building_energy_exchange",
+      "file_type": "gbxml",
+      "why_it_matters": "gbXML building-energy exchange file with envelope, space, and MEP information.",
+      "expected_agent_tasks": [
+        "parse UTF-16 XML with building-energy semantics",
+        "extract surfaces, zones, and MEP loads",
+        "detect schema/version before choosing a parser"
+      ],
+      "source_page": "https://github.com/GreenBuildingXML/Sample_gbXML_Files",
+      "license_note": "Public GreenBuildingXML sample repository; retain upstream provenance."
+    },
+    {
+      "id": "formlabs_cube_hole_step",
+      "filename": "bim_cad/cube_hole.step",
+      "url": "https://raw.githubusercontent.com/Formlabs/foxtrot/master/examples/cube_hole.step",
+      "mode": "download",
+      "application": "mechanical_cad",
+      "file_type": "step",
+      "why_it_matters": "Neutral ISO 10303 STEP CAD file for mechanical geometry parsing.",
+      "expected_agent_tasks": [
+        "recognize STEP physical file structure",
+        "extract product and geometry metadata",
+        "identify when a CAD kernel or Open Cascade binding is required"
+      ],
+      "source_page": "https://github.com/Formlabs/foxtrot",
+      "license_note": "Public GitHub repository; retain upstream provenance."
+    },
+    {
+      "id": "burkardt_cube_dxf",
+      "filename": "bim_cad/cube.dxf",
+      "url": "https://people.math.sc.edu/Burkardt/data/dxf/cube.dxf",
+      "mode": "download",
+      "application": "engineering_drawing",
+      "file_type": "dxf",
+      "why_it_matters": "AutoCAD DXF drawing-interchange sample for 2D/3D CAD ingest tests.",
+      "expected_agent_tasks": [
+        "parse DXF sections and entities",
+        "extract geometry counts and units if present",
+        "identify whether ezdxf or a CAD viewer is required"
+      ],
+      "source_page": "https://people.math.sc.edu/Burkardt/data/dxf/dxf.html",
+      "license_note": "Public sample data; retain source attribution."
+    },
+    {
+      "id": "burkardt_cube_obj",
+      "filename": "bim_cad/cube.obj",
+      "url": "https://people.math.sc.edu/Burkardt/data/obj/cube.obj",
+      "mode": "download",
+      "application": "mesh_geometry",
+      "file_type": "obj",
+      "why_it_matters": "Wavefront OBJ mesh file for simple geometry and mesh ingestion tests.",
+      "expected_agent_tasks": [
+        "parse vertices, faces, and groups",
+        "summarize geometry scale and mesh topology",
+        "identify missing material or units metadata"
+      ],
+      "source_page": "https://people.math.sc.edu/Burkardt/data/obj/obj.html",
+      "license_note": "Public sample data; retain source attribution."
+    },
+    {
+      "id": "energyplus_golden_epw",
+      "filename": "weather_models/USA_CO_Golden_NREL_TMY3.epw",
+      "url": "https://raw.githubusercontent.com/NREL/EnergyPlus/develop/weather/USA_CO_Golden-NREL.724666_TMY3.epw",
+      "mode": "download",
+      "application": "building_weather_file",
+      "file_type": "epw",
+      "why_it_matters": "EnergyPlus weather file used by building-energy and PV simulation tools.",
+      "expected_agent_tasks": [
+        "parse location headers and hourly weather records",
+        "compute climate summaries for energy models",
+        "connect weather-year assumptions to simulation confidence"
+      ],
+      "source_page": "https://github.com/NREL/EnergyPlus",
+      "license_note": "Public NREL EnergyPlus repository; retain upstream provenance."
+    },
+    {
+      "id": "uswtdb_geojson_zip",
+      "filename": "geospatial/uswtdb_geojson.zip",
+      "url": "https://eerscmap.usgs.gov/uswtdb/assets/data/uswtdbGeoJSON.zip",
+      "mode": "download",
+      "application": "wind_geospatial_assets",
+      "file_type": "geojson_zip",
+      "why_it_matters": "Zipped GeoJSON release of the U.S. Wind Turbine Database.",
+      "expected_agent_tasks": [
+        "unpack and read GeoJSON features",
+        "join turbine geography to technical attributes",
+        "identify CRS and spatial-filtering assumptions"
+      ],
+      "source_page": "https://energy.usgs.gov/uswtdb/data/",
+      "license_note": "USWTDB data are public domain; include requested source acknowledgment."
+    },
+    {
+      "id": "uswtdb_shapefile_zip",
+      "filename": "geospatial/uswtdb_shapefile.zip",
+      "url": "https://eerscmap.usgs.gov/uswtdb/assets/data/uswtdbSHP.zip",
+      "mode": "download",
+      "application": "wind_geospatial_assets",
+      "file_type": "shapefile_zip",
+      "why_it_matters": "Zipped ESRI Shapefile release of the U.S. Wind Turbine Database.",
+      "expected_agent_tasks": [
+        "unpack multi-file shapefile bundles",
+        "validate presence of .shp, .dbf, .shx, and projection metadata",
+        "decide when GDAL/Fiona/pyogrio is required"
+      ],
+      "source_page": "https://energy.usgs.gov/uswtdb/data/",
+      "license_note": "USWTDB data are public domain; include requested source acknowledgment."
+    },
+    {
+      "id": "osgeo_small_world_kml",
+      "filename": "geospatial/small_world.kml",
+      "url": "https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/data/kml/small_world.kml",
+      "mode": "download",
+      "application": "geospatial_overlay",
+      "file_type": "kml",
+      "why_it_matters": "KML geospatial overlay file commonly exchanged from Google Earth workflows.",
+      "expected_agent_tasks": [
+        "parse XML placemarks and geometry",
+        "extract geographic extents",
+        "identify KML-vs-KMZ handling differences"
+      ],
+      "source_page": "https://github.com/OSGeo/gdal",
+      "license_note": "Public GDAL test data; retain upstream provenance."
+    },
+    {
+      "id": "osgeo_byte_geotiff",
+      "filename": "geospatial/byte.tif",
+      "url": "https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/data/byte.tif",
+      "mode": "download",
+      "application": "geospatial_raster",
+      "file_type": "geotiff",
+      "why_it_matters": "Small GeoTIFF raster for testing geospatial imagery and gridded data readers.",
+      "expected_agent_tasks": [
+        "read raster dimensions, bands, and georeferencing",
+        "summarize pixel statistics",
+        "identify when GDAL/rasterio is required"
+      ],
+      "source_page": "https://github.com/OSGeo/gdal",
+      "license_note": "Public GDAL test data; retain upstream provenance."
+    },
+    {
+      "id": "osgeo_byte_geopackage",
+      "filename": "geospatial/byte.gpkg",
+      "url": "https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/data/gpkg/byte.gpkg",
+      "mode": "download",
+      "application": "geospatial_database",
+      "file_type": "gpkg",
+      "why_it_matters": "GeoPackage SQLite container used for portable GIS vector/raster exchange.",
+      "expected_agent_tasks": [
+        "inspect SQLite-backed geospatial layers",
+        "extract CRS and feature/raster metadata",
+        "identify when GDAL or geopandas is required"
+      ],
+      "source_page": "https://github.com/OSGeo/gdal",
+      "license_note": "Public GDAL test data; retain upstream provenance."
+    },
+    {
+      "id": "xarray_air_temperature_netcdf",
+      "filename": "scientific_binary/air_temperature.nc",
+      "url": "https://github.com/pydata/xarray-data/raw/master/air_temperature.nc",
+      "mode": "download",
+      "application": "climate_scientific_data",
+      "file_type": "netcdf",
+      "why_it_matters": "NetCDF gridded air-temperature data for climate and weather analytics.",
+      "expected_agent_tasks": [
+        "inspect dimensions, coordinates, variables, and units",
+        "compute simple spatiotemporal summaries",
+        "identify when xarray/netCDF4 is required"
+      ],
+      "source_page": "https://github.com/pydata/xarray-data",
+      "license_note": "Public xarray sample data repository; retain upstream provenance."
+    },
+    {
+      "id": "osgeo_groups_hdf5",
+      "filename": "scientific_binary/groups.h5",
+      "url": "https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/data/hdf5/groups.h5",
+      "mode": "download",
+      "application": "scientific_hdf5_container",
+      "file_type": "hdf5",
+      "why_it_matters": "HDF5 file with groups for testing hierarchical scientific-data containers.",
+      "expected_agent_tasks": [
+        "list groups, datasets, shapes, and attributes",
+        "summarize numeric arrays where present",
+        "identify when h5py or HDF5 command-line tools are required"
+      ],
+      "source_page": "https://github.com/OSGeo/gdal",
+      "license_note": "Public GDAL test data; retain upstream provenance."
+    },
+    {
+      "id": "apache_arrow_alltypes_parquet",
+      "filename": "data_lake/alltypes-java.parquet",
+      "url": "https://raw.githubusercontent.com/apache/arrow-testing/master/data/parquet/alltypes-java.parquet",
+      "mode": "download",
+      "application": "data_lake_columnar_storage",
+      "file_type": "parquet",
+      "why_it_matters": "Apache Parquet columnar file with mixed data types for data-lake ingestion tests.",
+      "expected_agent_tasks": [
+        "inspect schema and row groups",
+        "convert columnar data to analysis tables",
+        "identify when pyarrow or duckdb is required"
+      ],
+      "source_page": "https://github.com/apache/arrow-testing",
+      "license_note": "Apache Arrow testing data; retain upstream provenance and license."
     }
   ]
 }
