@@ -93,9 +93,8 @@ export default function HomePage() {
             </span>
           </h1>
           <p className="text-[18px] sm:text-[20px] text-[#d0d8e4] mx-auto leading-relaxed text-center mb-10 max-w-4xl">
-            Exergy Lab Agent is a powerful agent with built-in tools that allow it to read messy files, run custom
-            physics simulations, extract useful insights, generate documents, and turn technical problems into clear
-            next moves.
+            The Exergy Lab Agent can read messy data, run custom physics simulations, extract useful insights,
+            generate documents, and turn technical problems into clear next steps.
           </p>
 
           <ProjectCreator variant="hero" />
