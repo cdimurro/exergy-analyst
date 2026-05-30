@@ -413,11 +413,11 @@ export default function HomePage() {
         <div className="relative max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2 className="text-[32px] sm:text-[42px] font-bold tracking-tight leading-tight mb-5">
             <span className="bg-gradient-to-r from-[#4db8a4] via-[#5ba8c8] to-[#5b8dd9] bg-clip-text text-transparent">
-              Bring a hard technical question to the agent
+              Bring us your hardest technical problems.
             </span>
           </h2>
           <p className="text-[18px] text-white mb-10">
-            Create a project and watch messy evidence become a clearer model, brief, and next step.
+            Create a project to see how we can help you solve your greatest challenges.
           </p>
           <button className="group relative px-12 py-4 rounded-xl text-[17px] font-semibold text-white overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#3a7a6a]/20"
             onClick={() => { window.scrollTo({ top: 0, behavior: "smooth" }); setTimeout(() => document.querySelector("textarea")?.focus(), 500); }}>
