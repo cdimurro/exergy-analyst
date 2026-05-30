@@ -83,7 +83,7 @@ export default function HomePage() {
 
         <div className="relative w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-20 pb-12">
           <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] xl:text-[44px] font-bold tracking-[-0.02em] leading-[1.08] text-center mb-5 mt-4">
-            <span className="text-[#e8ecf4]">A Scientifically Rigorous Agent Specifically</span>
+            <span className="text-[#e8ecf4]">A Scientifically Rigorous Agent</span>
             <br />
             <span className="text-[#e8ecf4]">
               Designed for{" "}
