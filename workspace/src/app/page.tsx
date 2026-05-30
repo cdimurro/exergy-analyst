@@ -93,7 +93,7 @@ export default function HomePage() {
             </span>
           </h1>
           <p className="text-[18px] sm:text-[20px] text-[#d0d8e4] mx-auto leading-relaxed text-center mb-10 max-w-4xl">
-            The Exergy Lab Agent can read messy data, run custom physics simulations, extract useful insights,
+            The Exergy Lab Agent can analyze messy data, run custom physics simulations, extract useful insights,
             generate documents, and turn technical problems into clear next steps.
           </p>
 
@@ -126,14 +126,12 @@ export default function HomePage() {
       <section className="relative border-y border-[#141c2c] bg-[#0a0f1a]/90">
         <div className="max-w-7xl mx-auto py-12 px-6 sm:px-10 lg:px-16">
           <p className="text-[22px] sm:text-[22px] text-[#b0bcc8] leading-relaxed text-center max-w-4xl mx-auto">
-            We built Exergy Lab because energy work is full of half-readable PDFs, incomplete spreadsheets,
-            hidden assumptions, and decisions that need more than a chatbot answer. The agent is designed to
-            move across documents, data, calculations, charts, assumptions, and reports in one thread.
+            We built Exergy Lab because traditional agents and standard LLMs are not reliable enough to trust at solving deep engineering challenges. The Exergy Lab Agent is built from the ground up to bridge this gap. Give it your hardest technical problems, and see for yourself what it can do.
           </p>
           <div className="flex flex-wrap justify-center pt-10 gap-10 sm:gap-16 mb-10">
             {[
-              { v: "Read", l: "Messy Files" }, { v: "Extract", l: "Useful Signals" },
-              { v: "Model", l: "Technical Paths" }, { v: "Generate", l: "Decision Briefs" },
+              { v: "Analyze", l: "Messy Data" }, { v: "Extract", l: "Useful Signals" },
+              { v: "Simulate", l: "Physical Systems" }, { v: "Generate", l: "Professional Documents" },
             ].map(s => (
               <div key={s.l} className="text-center px-5 py-3">
                 <div className="text-[36px] sm:text-[44px] font-bold tracking-tight bg-gradient-to-b from-[#e0e6f0] to-[#6a7a8e] bg-clip-text text-transparent leading-none">{s.v}</div>
@@ -152,8 +150,8 @@ export default function HomePage() {
           style={{ background: "radial-gradient(circle at center, #5b8dd9 0%, transparent 70%)", filter: "blur(80px)" }} />
         <div className="relative w-full px-6 sm:px-10 lg:px-16 max-w-7xl mx-auto">
           <h2 className="text-[30px] sm:text-[38px] font-bold text-[#d0d8e4] tracking-tight text-center mb-14">
-            A powerful workspace for{" "}
-            <span className="bg-gradient-to-r from-[#4db8a4] to-[#5b8dd9] bg-clip-text text-transparent">energy systems</span>
+            A powerful Agent for{" "}
+            <span className="bg-gradient-to-r from-[#4db8a4] to-[#5b8dd9] bg-clip-text text-transparent">any technology</span>
           </h2>
           <div className="flex flex-wrap gap-2 justify-center">
             {[
@@ -207,7 +205,7 @@ export default function HomePage() {
         <div className="relative w-full px-6 sm:px-10 lg:px-16">
           <div className="text-center mb-20">
             <h2 className="text-[28px] sm:text-[34px] font-bold text-[#d0d8e4] tracking-tight">
-              From scattered evidence to agent-built clarity
+              From scattered data to tailored clarity
             </h2>
           </div>
 
@@ -255,9 +253,9 @@ export default function HomePage() {
                 <div className="w-100 h-0.5 bg-gradient-to-r from-[#4db8a4] to-transparent mb-6" />
                 <h3 className="text-[24px] font-semibold text-[#d0d8e4] mb-5">A powerful decision surface</h3>
                 <p className="text-[17px] text-[#8a9aae] leading-[1.8]">
-                  Exergy Lab is built around the kind of brief people wish they had before a serious meeting:
-                  source-aware summaries, extracted signals, working assumptions, model logic, visuals, open risks,
-                  and the next measurements that would make the work stronger.
+                  Exergy Lab is built around the scientific rigor they wish all agents had:
+                  academic-aware knowledge, deep-research capabilities, advanced tool-use, complex reasoning, custom visuals, transparent limitations,
+                  and the one goal to help you with whatever you are working on.
                 </p>
               </div>
             </div>
@@ -271,11 +269,10 @@ export default function HomePage() {
               </div>
               <div className="lg:w-1/2">
                 <div className="w-100 h-0.5 bg-gradient-to-r from-[#5ba8c8] to-transparent mb-6" />
-                <h3 className="text-[24px] font-semibold text-[#d0d8e4] mb-5">Physical reasoning without false certainty</h3>
+                <h3 className="text-[24px] font-semibold text-[#d0d8e4] mb-5">Scientific reasoning without false certainty</h3>
                 <p className="text-[17px] text-[#8a9aae] leading-[1.8]">
-                  The agent brings physical context into the conversation, uses calculations when the inputs support
-                  them, and makes unsupported claims visible instead of polished. It can be ambitious without hiding
-                  the boundary of the evidence.
+                  The agent brings scientific grounding to every conversation, runs physics simulations when the inputs support
+                  it, and makes uncertaintity visible instead of hidden. 
                 </p>
               </div>
             </div>
@@ -291,9 +288,9 @@ export default function HomePage() {
                 <div className="w-100 h-0.5 bg-gradient-to-r from-[#5b8dd9] to-transparent mb-6" />
                 <h3 className="text-[24px] font-semibold text-[#d0d8e4] mb-5">A deep technical agent, not a form</h3>
                 <p className="text-[17px] text-[#8a9aae] leading-[1.8]">
-                  Energy problems rarely arrive in a clean format. Exergy Lab is meant to move across documents,
-                  data, models, notes, questions, and generated artifacts so teams can explore more of the problem
-                  space without pretending the world is neater than it is.
+                  Technical problems rarely have a simple solution. Exergy Lab help you process documents,
+                  data, models, notes, drawings, and outcomes so that your team can understand the problem
+                  better and then analyze what the solution might look like.
                 </p>
               </div>
             </div>
@@ -312,11 +309,11 @@ export default function HomePage() {
             {/* Left — bold statement */}
             <div className="lg:w-1/2 lg:sticky lg:top-32">
               <h2 className="text-[28px] sm:text-[36px] font-bold leading-[1.2] tracking-tight mb-6">
-                <span className="text-[#FFFFFF] italic">"A powerful agent should know when the evidence is not powerful enough."</span>
+                <span className="text-[#FFFFFF] italic">"A powerful agent should know when the evidence is not enough."</span>
                 <br />
               </h2>
               <p className="text-[17px] text-[#7a8a9e] leading-[1.8]">
-                Exergy Lab was built for the space between raw evidence and a real decision. It helps people
+                Exergy Lab was built for the space between raw data and real decisions. It helps people
                 read faster, model deeper, generate clearer artifacts, and keep ambition connected to physical reality.
               </p>
             </div>
@@ -341,7 +338,7 @@ export default function HomePage() {
                 <h3 className="text-[20px] font-semibold text-[#d0d8e4] mb-3">Next actions, not just answers</h3>
                 <p className="text-[16px] text-[#7a8a9e] leading-[1.75]">
                   The most useful output is often not a final verdict. It is the next measurement, missing assumption,
-                  better comparison, draft brief, or artifact that moves the work forward.
+                  better comparison, or reframing the problem in a way that moves the work forward.
                 </p>
               </div>
             </div>
@@ -358,7 +355,7 @@ export default function HomePage() {
         <div className="relative w-full px-6 sm:px-10 lg:px-16">
           <div className="text-center mb-16">
             <h2 className="text-[28px] sm:text-[34px] font-bold text-[#d0d8e4] tracking-tight">
-              Built for the people making energy decisions
+              Built for the people making technical decisions
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
