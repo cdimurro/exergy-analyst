@@ -11,7 +11,7 @@ REQUIRED_SECTIONS = (
     "## Bottom Line",
     "## Analysis",
     "## Data Reviewed",
-    "## What I Would Not Claim Yet",
+    "## Important Boundaries",
     "## Recommended Next Actions",
 )
 
@@ -53,10 +53,10 @@ def evaluate_memo(text: str, *, min_words: int = 180) -> MemoQualityResult:
     if not re.search(r"\d", text):
         issues.append(MemoQualityIssue("error", "memo contains no numeric evidence"))
 
-    if "What I Would Not Claim Yet" in text and "Recommended Next Actions" in text:
-        limits = text.split("## What I Would Not Claim Yet", 1)[1].split("## Recommended Next Actions", 1)[0]
+    if "Important Boundaries" in text and "Recommended Next Actions" in text:
+        limits = text.split("## Important Boundaries", 1)[1].split("## Recommended Next Actions", 1)[0]
         if "-" not in limits:
-            issues.append(MemoQualityIssue("error", "memo does not list limits or unsupported claims"))
+            issues.append(MemoQualityIssue("error", "memo does not list important limits"))
 
     generic_phrases = (
         "structurally readable",

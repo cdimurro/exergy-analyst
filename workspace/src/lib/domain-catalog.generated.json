@@ -1,0 +1,1637 @@
+{
+  "_generated_by": "scripts/export_domain_catalog.py",
+  "_total": 102,
+  "domains": [
+    {
+      "id": "electrochemical_storage",
+      "label": "Battery Storage",
+      "keywords": [
+        "battery",
+        "lithium ion",
+        "li ion",
+        "bess",
+        "lithium",
+        "sodium ion",
+        "lfp",
+        "nmc"
+      ],
+      "priority": 1,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "power_electronics",
+      "label": "Inverter & Power Electronics",
+      "keywords": [
+        "inverter",
+        "dc ac",
+        "dc dc",
+        "mosfet",
+        "igbt",
+        "power electronics",
+        "gate driver",
+        "power converter"
+      ],
+      "priority": 1,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "photovoltaic",
+      "label": "Solar PV",
+      "keywords": [
+        "solar cell",
+        "solar panel",
+        "solar module",
+        "silicon solar",
+        "monocrystalline",
+        "polycrystalline",
+        "thin film solar",
+        "cigs"
+      ],
+      "priority": 1,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "carbon_capture",
+      "label": "Carbon Capture",
+      "keywords": [
+        "carbon capture",
+        "direct air capture",
+        "co2 capture",
+        "ccs",
+        "ccus",
+        "sorbent",
+        "amine scrubbing",
+        "post combustion capture"
+      ],
+      "priority": 2,
+      "exergy_class": "core"
+    },
+    {
+      "id": "waste_to_fuels",
+      "label": "Waste-to-Fuels Conversion",
+      "keywords": [
+        "waste to fuels",
+        "waste to fuel",
+        "hydrothermal liquefaction",
+        "htl",
+        "thermal cracking",
+        "pyrolysis oil",
+        "biocrude",
+        "waste plastic",
+        "chemical recycling",
+        "plastic to fuel",
+        "plastic recycling",
+        "waste conversion",
+        "thermal depolymerization",
+        "waste to oil",
+        "refuse derived fuel oil",
+        "waste oil",
+        "waste plastic oil",
+        "biochar",
+        "syngas from waste"
+      ],
+      "priority": 1,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "heat_pump_hvac",
+      "label": "Heat Pump & HVAC",
+      "keywords": [
+        "heat pump",
+        "air source heat pump",
+        "ground source heat pump",
+        "geothermal heat pump",
+        "hvac",
+        "refrigerant",
+        "r744",
+        "r32"
+      ],
+      "priority": 2,
+      "exergy_class": "core"
+    },
+    {
+      "id": "electrolysis_conversion",
+      "label": "Hydrogen Electrolysis",
+      "keywords": [
+        "electrolyzer",
+        "electrolysis",
+        "green hydrogen",
+        "hydrogen production",
+        "h2 production",
+        "alkaline electroly",
+        "soec",
+        "pem electrolyzer"
+      ],
+      "priority": 2,
+      "exergy_class": "core"
+    },
+    {
+      "id": "nuclear_fission",
+      "label": "Nuclear Fission",
+      "keywords": [
+        "nuclear",
+        "fission",
+        "reactor core",
+        "nuclear reactor",
+        "smr",
+        "small modular reactor",
+        "molten salt reactor",
+        "gen iv"
+      ],
+      "priority": 2,
+      "exergy_class": "core"
+    },
+    {
+      "id": "thermochemical_reactor",
+      "label": "Thermochemical Reactor",
+      "keywords": [
+        "gasification",
+        "waste gasification",
+        "pyrolysis",
+        "reforming",
+        "steam methane reforming",
+        "ft synthesis",
+        "syngas-to-liquids",
+        "cracking"
+      ],
+      "priority": 2,
+      "exergy_class": "core"
+    },
+    {
+      "id": "rotating_electrical",
+      "label": "Wind Energy",
+      "keywords": [
+        "wind turbine",
+        "wind energy",
+        "wind power",
+        "gas turbine",
+        "steam turbine",
+        "combined cycle",
+        "ngcc",
+        "ccgt"
+      ],
+      "priority": 2,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "concentrated_solar_power",
+      "label": "Concentrated Solar Power",
+      "keywords": [
+        "concentrated solar",
+        "concentrating solar power",
+        "parabolic trough",
+        "solar tower",
+        "heliostat",
+        "fresnel reflector",
+        "dish stirling",
+        "solar thermal power"
+      ],
+      "priority": 3,
+      "exergy_class": "core"
+    },
+    {
+      "id": "data_center_energy",
+      "label": "Data Center Energy",
+      "keywords": [
+        "data center",
+        "data centre",
+        "datacenter",
+        "pue",
+        "power usage effectiveness",
+        "data center cooling",
+        "liquid cooling server",
+        "immersion cooling"
+      ],
+      "priority": 3,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "electric_vehicle",
+      "label": "Electric Vehicle",
+      "keywords": [
+        "electric vehicle",
+        "bev",
+        "phev",
+        "electric bus",
+        "electric truck",
+        "ev charging",
+        "ev battery",
+        "vehicle to grid"
+      ],
+      "priority": 3,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "flow_battery",
+      "label": "Flow Battery",
+      "keywords": [
+        "flow battery",
+        "vanadium redox",
+        "zinc bromine",
+        "iron chromium flow",
+        "redox flow battery",
+        "organic flow battery",
+        "all vanadium",
+        "flow cell"
+      ],
+      "priority": 3,
+      "exergy_class": "low"
+    },
+    {
+      "id": "fuel_cell_systems",
+      "label": "Fuel Cell",
+      "keywords": [
+        "fuel cell",
+        "pemfc",
+        "sofc",
+        "mcfc",
+        "phosphoric acid fuel cell",
+        "pafc",
+        "alkaline fuel cell",
+        "afc"
+      ],
+      "priority": 3,
+      "exergy_class": "core"
+    },
+    {
+      "id": "ammonia_systems",
+      "label": "Green Ammonia",
+      "keywords": [
+        "green ammonia",
+        "ammonia cracking",
+        "ammonia synthesis",
+        "haber bosch",
+        "ammonia as fuel",
+        "ammonia combustion",
+        "ammonia decomposition",
+        "ammonia production"
+      ],
+      "priority": 3,
+      "exergy_class": "core"
+    },
+    {
+      "id": "steel_decarbonization",
+      "label": "Green Steel",
+      "keywords": [
+        "green steel",
+        "hydrogen direct reduction",
+        "hydrogen dri",
+        "dri eaf",
+        "low carbon steel",
+        "hybrit",
+        "steel decarbonization",
+        "ironmaking"
+      ],
+      "priority": 3,
+      "exergy_class": "core"
+    },
+    {
+      "id": "nuclear_fusion",
+      "label": "Nuclear Fusion",
+      "keywords": [
+        "fusion reactor",
+        "tokamak",
+        "stellarator",
+        "inertial confinement",
+        "plasma confinement",
+        "magnetic confinement",
+        "fusion energy",
+        "iter"
+      ],
+      "priority": 3,
+      "exergy_class": "high"
+    },
+    {
+      "id": "solid_state_battery",
+      "label": "Solid State Battery",
+      "keywords": [
+        "solid state battery",
+        "solid electrolyte",
+        "ceramic electrolyte",
+        "sulfide electrolyte",
+        "polymer electrolyte battery",
+        "garnet electrolyte",
+        "lisicon",
+        "nasicon battery"
+      ],
+      "priority": 3,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "absorption_chiller",
+      "label": "Absorption Cooling",
+      "keywords": [
+        "absorption chiller",
+        "absorption cooling",
+        "adsorption chiller",
+        "desiccant cooling",
+        "solar cooling",
+        "waste heat cooling",
+        "lithium bromide chiller",
+        "ammonia absorption"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "advanced_conductors",
+      "label": "Advanced Conductors",
+      "keywords": [
+        "advanced conductor",
+        "high temperature low sag",
+        "htls conductor",
+        "accc conductor",
+        "carbon core conductor",
+        "reconductoring",
+        "composite conductor",
+        "aluminum conductor"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "advanced_membrane",
+      "label": "Advanced Membrane Technologies",
+      "keywords": [
+        "ion exchange membrane",
+        "gas separation membrane",
+        "pervaporation",
+        "membrane reactor",
+        "hollow fiber membrane",
+        "ceramic membrane",
+        "membrane electrode",
+        "polymer membrane"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "advanced_nuclear_fuel",
+      "label": "Advanced Nuclear Fuel",
+      "keywords": [
+        "haleu",
+        "triso fuel",
+        "triso particle",
+        "accident tolerant fuel",
+        "metallic fuel",
+        "cermet fuel",
+        "high assay low enriched",
+        "coated particle fuel"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "agrivoltaics",
+      "label": "Agrivoltaics",
+      "keywords": [
+        "agrivoltaic",
+        "agri pv",
+        "solar farming dual use",
+        "solar grazing",
+        "solar agriculture",
+        "greenhouse solar",
+        "crop solar",
+        "land equivalent ratio solar"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "aluminum_smelting",
+      "label": "Aluminum Smelting & Decarbonization",
+      "keywords": [
+        "aluminum smelting",
+        "aluminium smelting",
+        "inert anode aluminum",
+        "hall heroult",
+        "aluminum electrolysis",
+        "green aluminum",
+        "bauxite refining",
+        "bayer process"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "aviation_propulsion",
+      "label": "Aviation Propulsion",
+      "keywords": [
+        "electric aircraft",
+        "electric aviation",
+        "hydrogen aviation",
+        "sustainable aviation fuel",
+        "evtol",
+        "electric vtol",
+        "urban air mobility",
+        "hybrid electric aircraft"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "battery_recycling",
+      "label": "Battery Recycling",
+      "keywords": [
+        "battery recycling",
+        "lithium recycling",
+        "hydrometallurgical recycling",
+        "pyrometallurgical",
+        "direct recycling battery",
+        "black mass",
+        "cathode recovery",
+        "li ion recycling"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "biofuel_production",
+      "label": "Biofuels",
+      "keywords": [
+        "biofuel",
+        "cellulosic ethanol",
+        "biodiesel",
+        "hydrotreated vegetable oil",
+        "hvo",
+        "algae fuel",
+        "algae biofuel",
+        "corn ethanol"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "biogas_anaerobic",
+      "label": "Biogas & Anaerobic Digestion",
+      "keywords": [
+        "biogas",
+        "anaerobic digestion",
+        "biomethane",
+        "biogas upgrading",
+        "digestate",
+        "anaerobic digester",
+        "food waste digestion",
+        "manure digestion"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "biomass_combustion",
+      "label": "Biomass Energy",
+      "keywords": [
+        "biomass combustion",
+        "biomass boiler",
+        "biomass chp",
+        "wood pellet",
+        "cofiring",
+        "torrefaction",
+        "biomass gasification combined cycle",
+        "biomass power plant"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "building_envelope",
+      "label": "Building Envelope",
+      "keywords": [
+        "building envelope",
+        "insulation",
+        "thermal insulation",
+        "air barrier",
+        "building shell",
+        "passive house",
+        "passivhaus",
+        "r value"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "carbon_fiber_composites",
+      "label": "Carbon Fiber Composites",
+      "keywords": [
+        "carbon fiber",
+        "carbon fibre",
+        "composite material",
+        "cfrp",
+        "glass fiber composite",
+        "gfrp",
+        "wind blade material",
+        "pressure vessel composite"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "carbon_negative",
+      "label": "Carbon Removal",
+      "keywords": [
+        "carbon negative",
+        "negative emissions",
+        "beccs",
+        "biochar",
+        "enhanced weathering",
+        "ocean alkalinity enhancement",
+        "dac with storage",
+        "pyrogenic carbon capture"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "carbon_utilization",
+      "label": "Carbon Utilization",
+      "keywords": [
+        "carbon utilization",
+        "co2 utilization",
+        "co2 to concrete",
+        "co2 to chemicals",
+        "co2 mineralization",
+        "carboncure",
+        "carbon to value",
+        "co2 conversion"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "catalyst_materials",
+      "label": "Catalyst Materials",
+      "keywords": [
+        "catalyst material",
+        "platinum group metal",
+        "non pgm catalyst",
+        "single atom catalyst",
+        "nanoparticle catalyst",
+        "zeolite catalyst",
+        "metal organic framework",
+        "mof catalyst"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "chemical_process",
+      "label": "Chemical Process Decarbonization",
+      "keywords": [
+        "chemical process",
+        "electrochemical synthesis",
+        "green chemistry",
+        "process intensification",
+        "catalytic reactor",
+        "continuous flow chemistry",
+        "polymer production",
+        "specialty chemical"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "circuit_breaker_switchgear",
+      "label": "Circuit Breaker & Switchgear",
+      "keywords": [
+        "circuit breaker",
+        "switchgear",
+        "sf6 free",
+        "vacuum breaker",
+        "solid state breaker",
+        "gas insulated switchgear",
+        "ring main unit",
+        "arc flash"
+      ],
+      "priority": 4,
+      "exergy_class": "not_recommended"
+    },
+    {
+      "id": "cogeneration_chp",
+      "label": "Cogeneration CHP",
+      "keywords": [
+        "cogeneration",
+        "combined heat and power",
+        "chp plant",
+        "trigeneration",
+        "chp",
+        "topping cycle",
+        "bottoming cycle",
+        "industrial chp"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "compressed_air_storage",
+      "label": "Compressed Air Storage",
+      "keywords": [
+        "compressed air energy storage",
+        "caes",
+        "adiabatic caes",
+        "isothermal caes",
+        "diabatic caes",
+        "huntorf",
+        "mcintosh",
+        "compressed air storage"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "critical_mineral_processing",
+      "label": "Critical Mineral Processing",
+      "keywords": [
+        "critical mineral",
+        "lithium extraction",
+        "cobalt processing",
+        "nickel processing",
+        "graphite processing",
+        "manganese processing",
+        "mineral processing",
+        "ore beneficiation"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "desalination",
+      "label": "Desalination",
+      "keywords": [
+        "reverse osmosis",
+        "multi effect distillation",
+        "multi stage flash",
+        "electrodialysis",
+        "forward osmosis",
+        "brackish water",
+        "seawater desalination",
+        "brine management"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "district_energy",
+      "label": "District Energy",
+      "keywords": [
+        "district heating",
+        "district cooling",
+        "district energy",
+        "fourth generation district",
+        "4gdh",
+        "heat network",
+        "chilled water network",
+        "thermal network"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "electric_arc_furnace",
+      "label": "Electric Arc Furnace",
+      "keywords": [
+        "electric arc furnace",
+        "eaf steelmaking",
+        "scrap steel recycling",
+        "eaf",
+        "arc furnace",
+        "secondary steelmaking",
+        "ladle furnace",
+        "electric steelmaking"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "electric_motor",
+      "label": "Electric Motors",
+      "keywords": [
+        "electric motor",
+        "induction motor",
+        "permanent magnet motor",
+        "reluctance motor",
+        "traction motor",
+        "industrial motor",
+        "motor efficiency",
+        "ie4"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "electrochemical_sensors",
+      "label": "Electrochemical Sensors",
+      "keywords": [
+        "electrochemical sensor",
+        "gas sensor",
+        "emissions monitoring sensor",
+        "water quality sensor",
+        "continuous emissions",
+        "potentiometric sensor",
+        "amperometric sensor"
+      ],
+      "priority": 4,
+      "exergy_class": "not_recommended"
+    },
+    {
+      "id": "energy_management_system",
+      "label": "Energy Management Systems",
+      "keywords": [
+        "energy management system",
+        "ems",
+        "scada",
+        "virtual power plant",
+        "vpp",
+        "der aggregation",
+        "demand response",
+        "load management"
+      ],
+      "priority": 4,
+      "exergy_class": "not_recommended"
+    },
+    {
+      "id": "advanced_geothermal_egs",
+      "label": "Enhanced Geothermal",
+      "keywords": [
+        "enhanced geothermal",
+        "egs",
+        "closed loop geothermal",
+        "superhot rock",
+        "deep geothermal",
+        "eavor loop",
+        "advanced geothermal",
+        "millimeter wave drilling"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "enzyme_biocatalysis",
+      "label": "Enzyme Biocatalysis",
+      "keywords": [
+        "enzyme",
+        "biocatalysis",
+        "biocatalyst",
+        "industrial enzyme",
+        "enzyme engineering",
+        "protein engineering",
+        "directed evolution",
+        "enzymatic process"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "offshore_wind_floating",
+      "label": "Floating Offshore Wind",
+      "keywords": [
+        "floating wind",
+        "floating offshore",
+        "spar buoy wind",
+        "semi submersible wind",
+        "tension leg platform wind",
+        "floating foundation",
+        "hywind",
+        "windfloat"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "flywheel_storage",
+      "label": "Flywheel Energy Storage",
+      "keywords": [
+        "flywheel energy storage",
+        "flywheel storage",
+        "kinetic energy storage",
+        "beacon power",
+        "composite flywheel",
+        "steel flywheel",
+        "mechanical battery"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "food_processing_energy",
+      "label": "Food Processing Energy",
+      "keywords": [
+        "food processing energy",
+        "food drying",
+        "cold chain",
+        "food refrigeration",
+        "freeze drying",
+        "pasteurization energy",
+        "food waste energy",
+        "industrial baking"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "fusion_materials",
+      "label": "Fusion Reactor Materials",
+      "keywords": [
+        "plasma facing material",
+        "first wall material",
+        "tritium breeding blanket",
+        "fusion blanket",
+        "divertor material",
+        "tungsten plasma facing",
+        "lithium lead blanket",
+        "beryllium multiplier"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "geothermal",
+      "label": "Geothermal",
+      "keywords": [
+        "geothermal power",
+        "binary cycle geothermal",
+        "flash steam geothermal",
+        "hot dry rock",
+        "geothermal well",
+        "geothermal reservoir",
+        "geothermal heating",
+        "ground heat exchange"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "cement_decarbonization",
+      "label": "Green Cement",
+      "keywords": [
+        "green cement",
+        "low carbon cement",
+        "clinker substitution",
+        "supplementary cementitious",
+        "lc3 cement",
+        "calcined clay cement",
+        "cement decarbonization",
+        "cement kiln"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "grid_enhancing_tech",
+      "label": "Grid Enhancing Tech",
+      "keywords": [
+        "grid enhancing",
+        "dynamic line rating",
+        "power flow control",
+        "topology optimization",
+        "advanced power flow",
+        "flexible ac transmission",
+        "facts device",
+        "gets"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "grid_transmission",
+      "label": "Grid Transmission",
+      "keywords": [
+        "hvdc",
+        "high voltage direct current",
+        "hvac transmission",
+        "transmission line",
+        "power transmission",
+        "overhead line",
+        "submarine cable",
+        "interconnector"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "grid_scale_inverter",
+      "label": "Grid-Scale Inverter",
+      "keywords": [
+        "grid scale inverter",
+        "utility inverter",
+        "grid forming inverter",
+        "bess inverter",
+        "central inverter",
+        "string inverter farm",
+        "grid following",
+        "grid forming"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "hydrogen_fueling",
+      "label": "Hydrogen Fueling",
+      "keywords": [
+        "hydrogen fueling",
+        "hydrogen refueling",
+        "hydrogen station",
+        "hydrogen dispenser",
+        "700 bar hydrogen",
+        "350 bar hydrogen",
+        "h2 station",
+        "hydrogen filling"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "hydrogen_storage",
+      "label": "Hydrogen Storage",
+      "keywords": [
+        "hydrogen storage",
+        "hydrogen tank",
+        "compressed hydrogen",
+        "liquid hydrogen storage",
+        "metal hydride storage",
+        "underground hydrogen",
+        "salt cavern hydrogen",
+        "hydrogen vessel"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "hydrogen_transport",
+      "label": "Hydrogen Transport",
+      "keywords": [
+        "hydrogen pipeline",
+        "hydrogen transport",
+        "tube trailer hydrogen",
+        "liquid hydrogen tanker",
+        "hydrogen shipping",
+        "ammonia carrier",
+        "hydrogen blending",
+        "hydrogen compression"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "industrial_heat",
+      "label": "Industrial Heat",
+      "keywords": [
+        "industrial heat",
+        "process heat",
+        "waste heat recovery",
+        "thermal integration",
+        "industrial boiler",
+        "steam generation",
+        "high temperature heat",
+        "industrial furnace"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "led_lighting",
+      "label": "LED Lighting",
+      "keywords": [
+        "led lighting",
+        "led luminaire",
+        "oled lighting",
+        "smart lighting",
+        "horticultural lighting",
+        "grow light",
+        "luminous efficacy",
+        "solid state lighting"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "liquid_air_storage",
+      "label": "Liquid Air Energy Storage",
+      "keywords": [
+        "liquid air energy storage",
+        "laes",
+        "cryogenic energy storage",
+        "cryobattery",
+        "highview power",
+        "liquid nitrogen storage"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "direct_lithium_extraction",
+      "label": "Lithium Extraction",
+      "keywords": [
+        "direct lithium extraction",
+        "dle",
+        "lithium from brine",
+        "geothermal lithium",
+        "lithium sorbent",
+        "lithium ion sieve",
+        "evaporation pond alternative",
+        "lithium extraction"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "long_duration_storage",
+      "label": "Long Duration Storage",
+      "keywords": [
+        "long duration storage",
+        "long duration energy storage",
+        "multi day storage",
+        "seasonal storage",
+        "iron air battery",
+        "zinc air battery",
+        "form energy",
+        "100 hour storage"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "maritime_propulsion",
+      "label": "Maritime Propulsion",
+      "keywords": [
+        "electric ferry",
+        "electric ship",
+        "ammonia ship",
+        "hydrogen ship",
+        "maritime propulsion",
+        "marine electrification",
+        "shore power",
+        "wind assist shipping"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "methane_abatement",
+      "label": "Methane Abatement",
+      "keywords": [
+        "methane abatement",
+        "methane capture",
+        "methane leak detection",
+        "ldar",
+        "flaring reduction",
+        "methane oxidation",
+        "coal mine methane",
+        "landfill methane"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "microgrid_systems",
+      "label": "Microgrids",
+      "keywords": [
+        "microgrid",
+        "island microgrid",
+        "campus microgrid",
+        "military microgrid",
+        "islanded operation",
+        "nanogrid",
+        "community microgrid",
+        "microgrid controller"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "mining_electrification",
+      "label": "Mining Electrification",
+      "keywords": [
+        "mining electrification",
+        "electric haul truck",
+        "electric drilling",
+        "mine ventilation",
+        "autonomous mining",
+        "electric excavator",
+        "trolley assist mining",
+        "battery mining vehicle"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "nuclear_waste_management",
+      "label": "Nuclear Waste Management",
+      "keywords": [
+        "spent fuel",
+        "nuclear waste",
+        "radioactive waste",
+        "deep geological repository",
+        "dry cask storage",
+        "fuel reprocessing",
+        "vitrification",
+        "transmutation"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "ocean_energy",
+      "label": "Ocean Energy",
+      "keywords": [
+        "tidal",
+        "wave energy",
+        "tidal energy",
+        "ocean thermal",
+        "otec",
+        "tidal stream",
+        "tidal barrage",
+        "oscillating water column"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "perovskite_solar",
+      "label": "Perovskite Solar",
+      "keywords": [
+        "perovskite solar",
+        "perovskite cell",
+        "perovskite pv",
+        "perovskite tandem",
+        "halide perovskite",
+        "perovskite stability",
+        "perovskite efficiency",
+        "organic inorganic perovskite"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "piezoelectric_harvesting",
+      "label": "Piezoelectric Energy Harvesting",
+      "keywords": [
+        "piezoelectric",
+        "piezo harvesting",
+        "vibration energy harvesting",
+        "piezo floor",
+        "piezoelectric generator",
+        "energy harvester"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "plastic_recycling",
+      "label": "Plastic Recycling",
+      "keywords": [
+        "plastic recycling",
+        "chemical recycling plastic",
+        "pyrolysis plastic",
+        "depolymerization",
+        "enzymatic recycling plastic",
+        "pet recycling",
+        "mechanical recycling plastic",
+        "plastic waste"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "power_quality",
+      "label": "Power Quality",
+      "keywords": [
+        "power quality",
+        "statcom",
+        "harmonic filter",
+        "voltage regulation",
+        "power factor correction",
+        "uninterruptible power",
+        "ups system",
+        "svc"
+      ],
+      "priority": 4,
+      "exergy_class": "not_recommended"
+    },
+    {
+      "id": "power_transformer",
+      "label": "Power Transformer",
+      "keywords": [
+        "power transformer",
+        "distribution transformer",
+        "solid state transformer",
+        "autotransformer",
+        "phase shifting transformer",
+        "tap changer",
+        "transformer oil",
+        "transformer cooling"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "gravity_storage",
+      "label": "Pumped Hydro & Gravity",
+      "keywords": [
+        "pumped hydro",
+        "pumped storage",
+        "gravity storage",
+        "gravity energy",
+        "gravitricity",
+        "energy vault",
+        "rail gravity",
+        "gravity tower"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "quantum_computing_energy",
+      "label": "Quantum Computing Energy Systems",
+      "keywords": [
+        "quantum computing energy",
+        "quantum processor",
+        "dilution refrigerator",
+        "qubit cooling",
+        "cryogenic computing",
+        "quantum advantage energy"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "radioisotope_power",
+      "label": "Radioisotope Power Systems",
+      "keywords": [
+        "radioisotope",
+        "rtg",
+        "radioisotope thermoelectric generator",
+        "betavoltaic",
+        "nuclear battery",
+        "stirling radioisotope"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "rail_electrification",
+      "label": "Rail Electrification",
+      "keywords": [
+        "rail electrification",
+        "electric train",
+        "battery electric train",
+        "hydrogen train",
+        "overhead catenary",
+        "third rail",
+        "railway electrification",
+        "electric locomotive"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "rare_earth_processing",
+      "label": "Rare Earth Processing",
+      "keywords": [
+        "rare earth",
+        "rare earth element",
+        "neodymium",
+        "dysprosium",
+        "permanent magnet",
+        "magnet recycling",
+        "ree extraction",
+        "rare earth separation"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "refrigeration_cooling",
+      "label": "Refrigeration & Cooling",
+      "keywords": [
+        "refrigeration",
+        "cold storage",
+        "industrial refrigeration",
+        "cold chain",
+        "natural refrigerant cooling",
+        "co2 refrigeration",
+        "ammonia refrigeration",
+        "transcritical co2"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "semiconductor_manufacturing",
+      "label": "Semiconductor Fab",
+      "keywords": [
+        "semiconductor",
+        "semiconductor fab",
+        "wafer fabrication",
+        "cleanroom",
+        "lithography",
+        "euv",
+        "chip manufacturing",
+        "silicon wafer"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "small_wind",
+      "label": "Small Wind",
+      "keywords": [
+        "small wind turbine",
+        "distributed wind",
+        "vertical axis wind",
+        "vawt",
+        "building integrated wind",
+        "micro wind",
+        "rooftop wind",
+        "small wind energy"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "smart_glass_electrochromic",
+      "label": "Smart Glass & Electrochromic Systems",
+      "keywords": [
+        "smart glass",
+        "electrochromic",
+        "thermochromic",
+        "smart window",
+        "dynamic glazing",
+        "switchable glass",
+        "spd glass",
+        "pdlc"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "grid_distribution",
+      "label": "Smart Grid",
+      "keywords": [
+        "distribution grid",
+        "distribution network",
+        "smart grid",
+        "distribution transformer",
+        "derms",
+        "distribution automation",
+        "advanced metering",
+        "ami"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "space_based_solar",
+      "label": "Space-Based Solar Power",
+      "keywords": [
+        "space based solar",
+        "sbsp",
+        "space solar power",
+        "microwave power transmission",
+        "orbital solar",
+        "rectenna"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "supercapacitor",
+      "label": "Supercapacitor",
+      "keywords": [
+        "ultracapacitor",
+        "edlc",
+        "electric double layer",
+        "pseudocapacitor",
+        "hybrid capacitor",
+        "maxwell bcap",
+        "graphene capacitor",
+        "electrochemical capacitor"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "superconductor_power",
+      "label": "Superconductors",
+      "keywords": [
+        "superconductor",
+        "high temperature superconductor",
+        "hts cable",
+        "superconducting magnetic",
+        "smes",
+        "fault current limiter",
+        "ybco",
+        "rebco"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "sustainable_agriculture",
+      "label": "Sustainable Agriculture",
+      "keywords": [
+        "precision agriculture",
+        "soil carbon",
+        "regenerative agriculture",
+        "carbon farming",
+        "agricultural drone",
+        "variable rate application",
+        "cover crop",
+        "no till"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "sustainable_materials",
+      "label": "Sustainable Materials",
+      "keywords": [
+        "sustainable material",
+        "bio based polymer",
+        "green concrete",
+        "mass timber",
+        "cross laminated timber",
+        "clt",
+        "bamboo composite",
+        "mycelium material"
+      ],
+      "priority": 4,
+      "exergy_class": "low"
+    },
+    {
+      "id": "syngas_production",
+      "label": "Syngas Production",
+      "keywords": [
+        "syngas production",
+        "synthesis gas",
+        "syngas cleanup",
+        "water gas shift",
+        "plasma gasification",
+        "syngas conditioning",
+        "partial oxidation",
+        "autothermal reforming"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "fuels_chemical",
+      "label": "Synthetic Fuels",
+      "keywords": [
+        "ammonia",
+        "ammonia synthesis",
+        "haber bosch",
+        "e fuel",
+        "synthetic fuel",
+        "power to liquid",
+        "methanol",
+        "synfuel"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "textile_recycling",
+      "label": "Textile Recycling",
+      "keywords": [
+        "textile recycling",
+        "fiber recycling",
+        "chemical recycling textile",
+        "fabric recycling",
+        "polyester recycling",
+        "cotton recycling",
+        "garment recycling",
+        "circular fashion"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "thermal_storage",
+      "label": "Thermal Energy Storage",
+      "keywords": [
+        "thermal storage",
+        "thermal energy storage",
+        "molten salt storage",
+        "pcm",
+        "phase change material",
+        "carnot battery",
+        "etes",
+        "heat storage"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "thermoelectric",
+      "label": "Thermoelectric",
+      "keywords": [
+        "thermoelectric generator",
+        "teg",
+        "peltier cooler",
+        "seebeck effect",
+        "thermoelectric module",
+        "radioisotope thermoelectric",
+        "bismuth telluride",
+        "skutterudite"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "thorium_cycle",
+      "label": "Thorium Fuel Cycle",
+      "keywords": [
+        "thorium reactor",
+        "thorium fuel",
+        "thorium cycle",
+        "liquid fluoride thorium",
+        "lftr",
+        "molten salt breeder",
+        "thorium molten salt",
+        "th232"
+      ],
+      "priority": 4,
+      "exergy_class": "high"
+    },
+    {
+      "id": "variable_frequency_drive",
+      "label": "Variable Frequency Drive",
+      "keywords": [
+        "variable frequency drive",
+        "vfd",
+        "variable speed drive",
+        "motor drive",
+        "frequency converter",
+        "motor control",
+        "soft starter",
+        "pwm drive"
+      ],
+      "priority": 4,
+      "exergy_class": "identity"
+    },
+    {
+      "id": "vertical_farming",
+      "label": "Vertical Farming",
+      "keywords": [
+        "vertical farm",
+        "indoor farming",
+        "controlled environment agriculture",
+        "hydroponic",
+        "aeroponic",
+        "aquaponic",
+        "plant factory",
+        "led grow light farm"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    },
+    {
+      "id": "heat_recovery_orc",
+      "label": "Waste Heat Recovery",
+      "keywords": [
+        "organic rankine cycle",
+        "orc",
+        "waste heat to power",
+        "kalina cycle",
+        "waste heat boiler",
+        "heat recovery steam generator",
+        "hrsg",
+        "bottoming cycle orc"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "waste_to_energy",
+      "label": "Waste to Energy",
+      "keywords": [
+        "waste to energy",
+        "waste incineration",
+        "municipal solid waste",
+        "msw gasification",
+        "refuse derived fuel",
+        "rdf",
+        "mass burn",
+        "waste combustion"
+      ],
+      "priority": 4,
+      "exergy_class": "core"
+    },
+    {
+      "id": "water_treatment",
+      "label": "Water Treatment",
+      "keywords": [
+        "water treatment",
+        "wastewater treatment",
+        "membrane bioreactor",
+        "mbr",
+        "advanced oxidation",
+        "uv disinfection",
+        "water recycling",
+        "water reuse"
+      ],
+      "priority": 4,
+      "exergy_class": "medium"
+    }
+  ]
+}

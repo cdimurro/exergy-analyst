@@ -1,0 +1,607 @@
+{
+  "_generated_by": "scripts/export_domain_physics.py",
+  "_note": "Do not edit manually. Regenerate with: python scripts/export_domain_physics.py",
+  "pv": {
+    "shockley_queisser_limit_pct": 33.7,
+    "technology_bounds": {
+      "mono_perc": {
+        "technology": "Mono-PERC",
+        "efficiency": {
+          "impossible": 23.0,
+          "extraordinary": [
+            21.5,
+            22.0
+          ],
+          "typical": [
+            20.5,
+            21.7
+          ],
+          "conservative": 19.5
+        },
+        "temp_coeff_pmax": {
+          "impossible": -0.2,
+          "typical": [
+            -0.32,
+            -0.38
+          ]
+        },
+        "fill_factor": {
+          "impossible": 0.87,
+          "typical": [
+            0.79,
+            0.82
+          ]
+        },
+        "degradation_per_year": {
+          "impossible": 0.2,
+          "typical": [
+            0.45,
+            0.65
+          ],
+          "conservative": 0.9
+        },
+        "first_year_degradation": [
+          1.0,
+          2.0
+        ],
+        "warranty_25yr_retention": [
+          84.0,
+          87.0
+        ]
+      },
+      "topcon": {
+        "technology": "TOPCon",
+        "efficiency": {
+          "impossible": 25.0,
+          "extraordinary": [
+            23.5,
+            24.0
+          ],
+          "typical": [
+            22.0,
+            23.7
+          ],
+          "conservative": 21.0
+        },
+        "temp_coeff_pmax": {
+          "impossible": -0.2,
+          "typical": [
+            -0.28,
+            -0.33
+          ]
+        },
+        "fill_factor": {
+          "impossible": 0.88,
+          "typical": [
+            0.81,
+            0.84
+          ]
+        },
+        "degradation_per_year": {
+          "impossible": 0.15,
+          "typical": [
+            0.35,
+            0.55
+          ],
+          "conservative": 0.75
+        },
+        "first_year_degradation": [
+          0.3,
+          0.6
+        ],
+        "warranty_25yr_retention": [
+          87.0,
+          90.0
+        ]
+      },
+      "hjt": {
+        "technology": "HJT/SHJ",
+        "efficiency": {
+          "impossible": 25.0,
+          "extraordinary": [
+            23.5,
+            24.0
+          ],
+          "typical": [
+            22.5,
+            23.5
+          ],
+          "conservative": 21.5
+        },
+        "temp_coeff_pmax": {
+          "impossible": -0.18,
+          "typical": [
+            -0.24,
+            -0.27
+          ]
+        },
+        "fill_factor": {
+          "impossible": 0.88,
+          "typical": [
+            0.8,
+            0.84
+          ]
+        },
+        "degradation_per_year": {
+          "impossible": 0.15,
+          "typical": [
+            0.3,
+            0.5
+          ],
+          "conservative": 0.7
+        },
+        "first_year_degradation": [
+          0.2,
+          0.4
+        ],
+        "warranty_25yr_retention": [
+          88.0,
+          92.0
+        ]
+      },
+      "ibc": {
+        "technology": "IBC/Back-Contact",
+        "efficiency": {
+          "impossible": 26.0,
+          "extraordinary": [
+            24.5,
+            25.0
+          ],
+          "typical": [
+            23.5,
+            24.8
+          ],
+          "conservative": 22.0
+        },
+        "temp_coeff_pmax": {
+          "impossible": -0.18,
+          "typical": [
+            -0.25,
+            -0.3
+          ]
+        },
+        "fill_factor": {
+          "impossible": 0.9,
+          "typical": [
+            0.82,
+            0.86
+          ]
+        },
+        "degradation_per_year": {
+          "impossible": 0.15,
+          "typical": [
+            0.3,
+            0.5
+          ],
+          "conservative": 0.7
+        },
+        "first_year_degradation": [
+          0.2,
+          0.4
+        ],
+        "warranty_25yr_retention": [
+          90.0,
+          92.0
+        ]
+      },
+      "cdte": {
+        "technology": "CdTe",
+        "efficiency": {
+          "impossible": 22.0,
+          "extraordinary": [
+            20.0,
+            21.0
+          ],
+          "typical": [
+            18.5,
+            20.0
+          ],
+          "conservative": 17.0
+        },
+        "temp_coeff_pmax": {
+          "impossible": -0.22,
+          "typical": [
+            -0.32,
+            -0.35
+          ]
+        },
+        "fill_factor": {
+          "impossible": 0.84,
+          "typical": [
+            0.76,
+            0.8
+          ]
+        },
+        "degradation_per_year": {
+          "impossible": 0.2,
+          "typical": [
+            0.4,
+            0.65
+          ],
+          "conservative": 0.85
+        },
+        "first_year_degradation": [
+          1.0,
+          2.0
+        ],
+        "warranty_25yr_retention": [
+          88.0,
+          92.5
+        ]
+      },
+      "cigs": {
+        "technology": "CIGS",
+        "efficiency": {
+          "impossible": 22.0,
+          "extraordinary": [
+            19.0,
+            20.0
+          ],
+          "typical": [
+            15.0,
+            18.0
+          ],
+          "conservative": 14.0
+        },
+        "temp_coeff_pmax": {
+          "impossible": -0.2,
+          "typical": [
+            -0.36,
+            -0.45
+          ]
+        },
+        "fill_factor": {
+          "impossible": 0.83,
+          "typical": [
+            0.73,
+            0.79
+          ]
+        },
+        "degradation_per_year": {
+          "impossible": 0.2,
+          "typical": [
+            0.5,
+            0.8
+          ],
+          "conservative": 1.0
+        },
+        "first_year_degradation": [
+          0.0,
+          1.0
+        ],
+        "warranty_25yr_retention": [
+          80.0,
+          84.0
+        ]
+      },
+      "perovskite_si_tandem": {
+        "technology": "Perovskite-Silicon Tandem",
+        "efficiency": {
+          "impossible": 36.0,
+          "extraordinary": [
+            28.0,
+            32.0
+          ],
+          "typical": [
+            24.5,
+            28.0
+          ],
+          "conservative": 22.0
+        },
+        "temp_coeff_pmax": {
+          "impossible": -0.18,
+          "typical": [
+            -0.25,
+            -0.3
+          ]
+        },
+        "fill_factor": {
+          "impossible": 0.88,
+          "typical": [
+            0.78,
+            0.84
+          ]
+        },
+        "degradation_per_year": {
+          "impossible": 0.3,
+          "typical": [
+            1.0,
+            3.0
+          ],
+          "conservative": 5.0
+        },
+        "first_year_degradation": [
+          2.0,
+          5.0
+        ],
+        "warranty_25yr_retention": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "param_ranges": {
+      "I_L_ref": [
+        7.0,
+        13.0
+      ],
+      "I_o_ref": [
+        1e-12,
+        1e-09
+      ],
+      "R_s": [
+        0.1,
+        1.5
+      ],
+      "R_sh_ref": [
+        100.0,
+        1500.0
+      ],
+      "a_ref": [
+        1.0,
+        2.2
+      ],
+      "alpha_sc": [
+        0.001,
+        0.006
+      ]
+    }
+  },
+  "battery": {
+    "chemistry_bounds": {
+      "aliases": {},
+      "chemistries": {
+        "LFP": {
+          "trl": 9,
+          "voltage_max_v": 3.65,
+          "voltage_min_v": 2.0
+        },
+        "NMC_111": {
+          "trl": 9,
+          "voltage_max_v": 4.2,
+          "voltage_min_v": 2.7
+        },
+        "NMC_532": {
+          "trl": 9,
+          "voltage_max_v": 4.2,
+          "voltage_min_v": 2.7
+        },
+        "NMC_622": {
+          "trl": 9,
+          "voltage_max_v": 4.2,
+          "voltage_min_v": 2.8
+        },
+        "NMC_811": {
+          "trl": 9,
+          "voltage_max_v": 4.2,
+          "voltage_min_v": 2.8
+        },
+        "NCA": {
+          "trl": 9,
+          "voltage_max_v": 4.2,
+          "voltage_min_v": 2.7
+        },
+        "LMO": {
+          "trl": 9,
+          "voltage_max_v": 4.3,
+          "voltage_min_v": 3.0
+        },
+        "LTO": {
+          "trl": 9,
+          "voltage_max_v": 2.8,
+          "voltage_min_v": 1.5
+        },
+        "LCO": {
+          "trl": 9,
+          "voltage_max_v": 4.2,
+          "voltage_min_v": 3.0
+        },
+        "LMFP": {
+          "trl": 8,
+          "voltage_max_v": 4.1,
+          "voltage_min_v": 2.0
+        },
+        "Na_ion": {
+          "trl": 7,
+          "voltage_max_v": 4.1,
+          "voltage_min_v": 1.5
+        }
+      },
+      "global_fallback": {
+        "specific_energy_wh_per_kg": {
+          "impossible": 500,
+          "implausible": 400,
+          "typical_low": 100,
+          "typical_high": 300,
+          "conservative": 50
+        },
+        "cycle_life_80pct": {
+          "impossible": 50000,
+          "implausible": 30000,
+          "typical_low": 300,
+          "typical_high": 10000,
+          "conservative": 200
+        },
+        "coulombic_efficiency_pct": {
+          "impossible": 100.0,
+          "implausible": 99.99,
+          "typical_low": 98.5,
+          "typical_high": 99.9,
+          "conservative": 97.0
+        },
+        "round_trip_efficiency_pct": {
+          "impossible": 100.0,
+          "implausible": 99.0,
+          "typical_low": 85.0,
+          "typical_high": 98.0,
+          "conservative": 80.0
+        },
+        "calendar_aging_pct_per_year": {
+          "impossible": 0.05,
+          "implausible": 0.3,
+          "typical_low": 1.0,
+          "typical_high": 8.0,
+          "conservative": 10.0
+        },
+        "max_c_rate": {
+          "impossible": 60,
+          "implausible": 40,
+          "typical_low": 1,
+          "typical_high": 25,
+          "conservative": 0.5
+        },
+        "voltage_max_v": 5.0,
+        "voltage_min_v": 1.0
+      }
+    },
+    "param_ranges": {
+      "capacity_ah": [
+        2.0,
+        5.5
+      ],
+      "R0_mohm": [
+        14.0,
+        70.0
+      ],
+      "R1_mohm": [
+        6.0,
+        45.0
+      ],
+      "C1_F": [
+        250.0,
+        1200.0
+      ],
+      "coulombic_eff": [
+        0.975,
+        0.9995
+      ],
+      "fade_rate_per_cycle": [
+        0.0001,
+        0.0025
+      ]
+    },
+    "plausibility": {
+      "capacity_ah_max": 100.0,
+      "R0_mohm_max": 500.0,
+      "coulombic_eff_range": [
+        0.5,
+        1.0
+      ],
+      "fade_rate_max": 0.05,
+      "voltage_range": [
+        1.0,
+        5.0
+      ]
+    }
+  },
+  "inverter": {
+    "hard_fail": {
+      "peak_efficiency_min_pct": 85.0,
+      "peak_efficiency_max_pct": 99.5,
+      "weighted_efficiency_min_pct": 90.0
+    },
+    "param_ranges": {
+      "rated_power_w": [
+        1000,
+        100000
+      ],
+      "r_on_mohm": [
+        50,
+        600
+      ],
+      "f_sw_khz": [
+        8,
+        100
+      ],
+      "e_sw_uj": [
+        50,
+        1500
+      ],
+      "p_aux_w": [
+        3,
+        50
+      ],
+      "thermal_resistance_cw": [
+        0.02,
+        0.25
+      ],
+      "t_derate_start": [
+        40,
+        70
+      ],
+      "t_derate_full": [
+        60,
+        90
+      ],
+      "thd_base_pct": [
+        0.5,
+        5.0
+      ]
+    },
+    "topology_benchmarks": {
+      "string_1ph": {
+        "peak_efficiency_typical": [
+          96.0,
+          98.0
+        ],
+        "cec_efficiency_typical": [
+          95.5,
+          97.5
+        ]
+      },
+      "string_3ph": {
+        "peak_efficiency_typical": [
+          97.0,
+          98.5
+        ],
+        "cec_efficiency_typical": [
+          96.5,
+          98.0
+        ]
+      },
+      "central": {
+        "peak_efficiency_typical": [
+          97.5,
+          98.8
+        ],
+        "cec_efficiency_typical": [
+          97.0,
+          98.3
+        ]
+      },
+      "microinverter": {
+        "peak_efficiency_typical": [
+          95.0,
+          97.0
+        ],
+        "cec_efficiency_typical": [
+          94.0,
+          96.0
+        ]
+      },
+      "sic_optimized": {
+        "peak_efficiency_typical": [
+          98.0,
+          99.3
+        ],
+        "cec_efficiency_typical": [
+          97.5,
+          99.0
+        ]
+      }
+    }
+  },
+  "cross_domain": {
+    "system_efficiency_rule": "Product of component efficiencies",
+    "energy_storage_round_trip_pct": [
+      85,
+      95
+    ],
+    "epistemics": [
+      "Always cite simulation data when available",
+      "If no simulation exists for a claim, propose one",
+      "Distinguish Tier 0 preview (directional) from Tier 1 engine (authoritative)",
+      "Never make quantitative claims contradicting established physics limits"
+    ]
+  }
+}

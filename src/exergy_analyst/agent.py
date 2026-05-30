@@ -11,6 +11,7 @@ from typing import Any
 
 from .config import AgentSettings, load_agent_settings
 from .file_inventory import profile_file
+from .agent_run import run_workspace_agent
 from .submission import analyze_submission, render_submission_brief
 
 
@@ -22,6 +23,7 @@ inspect files, run deterministic analyzers, and preserve claim discipline.
 Rules:
 - Answer the client question directly.
 - Use computed values from uploaded files whenever possible.
+- Run structured physics/data screens when an uploaded file matches a supported domain.
 - State what the data cannot prove.
 - Never make procurement, warranty, compliance, medical, or investment claims
   without the required supporting context.
@@ -47,6 +49,13 @@ def analyze_uploads(prompt: str, files: list[str]) -> str:
 
     result = analyze_submission(prompt, [Path(file) for file in files])
     return render_submission_brief(result)
+
+
+def run_workspace_analysis(prompt: str, files: list[str]) -> dict[str, Any]:
+    """Tool: run the full structured workspace-agent pipeline."""
+
+    result = run_workspace_agent(prompt, [Path(file) for file in files])
+    return result.to_dict()
 
 
 def create_exergy_agent(settings: AgentSettings | None = None) -> Any:
@@ -76,6 +85,6 @@ def create_exergy_agent(settings: AgentSettings | None = None) -> Any:
     )
     return create_deep_agent(
         model=model,
-        tools=[inspect_upload, analyze_uploads],
+        tools=[inspect_upload, analyze_uploads, run_workspace_analysis],
         system_prompt=SYSTEM_PROMPT,
     )

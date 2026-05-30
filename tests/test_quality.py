@@ -9,7 +9,7 @@ GOOD_MEMO = """# Client Analysis Memo
 Can this file support a useful decision?
 
 ## Bottom Line
-Yes. The upload contains a signal worth acting on, but only as a screening result.
+Yes. The upload contains a signal worth acting on, but only as an initial result.
 
 ## Analysis
 1. **Useful signal**
@@ -18,7 +18,7 @@ Yes. The upload contains a signal worth acting on, but only as a screening resul
 ## Data Reviewed
 - `upload.csv` (csv, 12 KB): CSV with useful operating fields.
 
-## What I Would Not Claim Yet
+## Important Boundaries
 - This does not prove ROI, compliance, warranty status, or equipment failure.
 
 ## Recommended Next Actions

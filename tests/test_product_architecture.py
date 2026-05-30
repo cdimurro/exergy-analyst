@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 
-from exergy_analyst.agent import create_exergy_agent, inspect_upload
+from exergy_analyst.agent import create_exergy_agent, inspect_upload, run_workspace_analysis
 from exergy_analyst.cli import main
 from exergy_analyst.config import load_agent_settings
 from exergy_analyst.file_inventory import profile_file
@@ -52,4 +53,49 @@ def test_agent_info_cli_describes_product_surface(capsys: pytest.CaptureFixture[
     output = capsys.readouterr().out
 
     assert "model: deepseek-v4-flash" in output
-    assert "tools: inspect_upload, analyze_uploads" in output
+    assert "tools: inspect_upload, analyze_uploads, run_workspace_analysis" in output
+
+
+def test_structured_workspace_analysis_tool_returns_agent_run(tmp_path: Path) -> None:
+    upload = tmp_path / "sample.csv"
+    upload.write_text(
+        "stream,waste_heat_mwh,exhaust_temp_c,ambient_temp_c\nKiln,10,300,25\n",
+        encoding="utf-8",
+    )
+
+    result = run_workspace_analysis("Find the first useful insight.", [str(upload)])
+
+    assert result["physics_screens"][0]["family"] == "thermal_exergy"
+    assert result["memo_markdown"].startswith("# Client Analysis Memo")
+
+
+def test_structured_workspace_analysis_screens_power_plant_pdf(tmp_path: Path) -> None:
+    upload = tmp_path / "ccgt_deck.pdf"
+    upload.write_bytes(b"%PDF-1.7 placeholder")
+    upload.with_suffix(upload.suffix + ".mineru.json").write_text(
+        json.dumps(
+            {
+                "parser": "MinerU2.5 Pro",
+                "status": "cached",
+                "markdown": "\n".join(
+                    [
+                        "Natural gas combined cycle power plant",
+                        "Net plant output 620 MW",
+                        "Net heat rate 6,600 Btu/kWh",
+                        "Capacity factor 65%",
+                        "Gas price $4.25/MMBtu",
+                        "Power price $62/MWh",
+                    ]
+                ),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_workspace_analysis("Analyze economics and emissions.", [str(upload)])
+    screen = result["physics_screens"][0]
+
+    assert screen["family"] == "power_plant_performance"
+    assert screen["key_metrics"]["net_capacity_mw"] == 620
+    assert screen["key_metrics"]["fuel_cost_per_mwh"] == 28.05
+    assert screen["key_metrics"]["annual_generation_gwh"] == 3530.28

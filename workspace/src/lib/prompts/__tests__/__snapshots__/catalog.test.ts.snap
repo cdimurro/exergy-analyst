@@ -1,0 +1,251 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`prompt formatting snapshots formatRationalizationsForPrompt — PtL diligence deployment 1`] = `
+"- **Validation in an adjacent configuration proves this configuration.** (key: \`adjacent_validation_transfers\`, module: physics, priority: critical)
+  - Why tempting: Adjacent evidence feels close enough to count and bridges gaps in the primary dataset. It is easy for reviewers to accept by analogy.
+  - What to check: Whether the validated configuration differs from the commercial configuration in any of: feedstock composition, operating mode (e.g., H2 vs co-electrolysis), catalyst formulation, steady-state vs load-following duty, integrated vs standalone operation, or scale regime. Any material difference invalidates direct transfer.
+  - Typical gap: Pilot tested one feedstock; commercial assumes another. Lab catalyst performance cited; integrated plant catalyst not tested. Steady-state test data cited for a load-following commercial duty. Single-mode electrolyzer data cited for co-electrolysis commercial mode.
+  - Disconfirming checks required:
+    - List every dimension where test article and commercial article differ (feedstock, mode, duty, integration, scale).
+    - For each dimension, quantify the expected performance delta with a citation.
+    - Confirm the validated configuration is not a cherry-picked best-case representative.
+  - False-positive pattern: Small-scale validation of a truly equivalent configuration (same chemistry, same duty, same catalyst) where only throughput differs.
+- **The pilot demonstrated commercial viability.** (key: \`pilot_equals_commercial\`, module: scalability, priority: critical)
+  - Why tempting: A working pilot feels like de-risked proof. Founders and press releases both reinforce this framing.
+  - What to check: Scale ratio between pilot and target plant, duration of continuous operation, feedstock/site variability exposure, and whether third-party operators have run the asset.
+  - Typical gap: Pilot was short-duration, single-feedstock, single-site, operated by the R&D team under ideal conditions. Commercial scale is 10-100x larger with different heat/mass transfer regimes.
+  - Disconfirming checks required:
+    - Compare pilot throughput to target commercial throughput (report the multiplier).
+    - Confirm pilot ran at least one year with representative seasonal/feedstock variability.
+    - Check that a non-R&D operator has run the plant at nameplate for at least one shift cycle.
+  - False-positive pattern: Technologies where scale-up is genuinely modular (e.g., PV modules, Li-ion cells) where parallel replication is the deployment model. In those cases pilot is more representative.
+- **Policy (IRA 45V/Q/Z, ITC, CBAM, ReFuelEU) makes the economics work.** (key: \`policy_tailwinds_make_it_work\`, module: economics, priority: critical)
+  - Why tempting: Headline credit values are large and current; models pencil out easily with them included.
+  - What to check: Credit eligibility timeline, monetization path, safe-harbor rules, creditworthy offtaker needed to realize the credit, and economics if credits sunset or are revoked. Bankability often requires the base case to work without the credit.
+  - Typical gap: Unmonetized credits, single-jurisdiction dependency, project timeline longer than credit horizon, IRR sensitivity to policy exceeds 30%.
+  - Disconfirming checks required:
+    - Report IRR with and without each headline credit, and name the delta.
+    - Confirm credit eligibility for the specific pathway (feedstock, carbon intensity, domestic content).
+    - Identify the monetization mechanism and any creditworthy counterparty required.
+  - False-positive pattern: Mature technologies where policy is a tiebreaker against incumbents (not the sole driver). Example: wind/solar with ITC.
+- **Balance of plant is standard, off-the-shelf equipment.** (key: \`bop_is_standard_equipment\`, module: system_integration, priority: high)
+  - Why tempting: It shifts perceived technical risk to a commoditized category the reviewer discounts.
+  - What to check: What specifically is in the BoP scope (gas cleanup, heat integration, water treatment, compression), whether vendor quotes are binding, and whether the reactor's operating envelope imposes non-standard requirements on the BoP.
+  - Typical gap: Novel reactor chemistries often produce non-standard syngas/product streams that push BoP into custom territory where cost, schedule, and reliability risk actually lives.
+  - Disconfirming checks required:
+    - Itemize BoP scope and identify any custom equipment (material, size, duty).
+    - Confirm vendor quotes are binding and include integration scope.
+    - Check reactor effluent composition against standard BoP design envelopes.
+  - False-positive pattern: Genuinely modular tech where BoP (inverters, transformers, switchgear) is a mature commodity category with strong reference plants.
+- **LCOE assumes a high capacity factor consistent with resource/feedstock.** (key: \`capacity_factor_assumption\`, module: performance, priority: high)
+  - Why tempting: Resource/feedstock data often supports a high theoretical maximum.
+  - What to check: Historical capacity factors for comparable operating assets, planned maintenance downtime, forced outage rate from incumbent operators, and whether grid curtailment or feedstock interruption is modeled.
+  - Typical gap: Nameplate capacity factor assumed above 90% when real operating assets average 70-85% after accounting for maintenance, curtailment, and feedstock variability.
+  - Disconfirming checks required:
+    - Report assumed capacity factor and benchmark against comparable operating assets.
+    - Confirm planned and forced outage rates are modeled.
+    - Check whether feedstock interruption or grid curtailment is reflected in the base case.
+  - False-positive pattern: Baseload technologies (geothermal, dispatchable hydro) with robust historical operating data.
+- **20-year service life from accelerated durability testing.** (key: \`durability_from_accelerated_test\`, module: performance, priority: high)
+  - Why tempting: Accelerated testing is industry-standard and the extrapolation math looks rigorous.
+  - What to check: Acceleration factor basis, whether degradation mechanism is the same at accelerated and real conditions, test duration, and whether multiple samples show consistent behavior. For batteries: cycle count, depth-of-discharge, and calendar aging separately.
+  - Typical gap: Acceleration factors assume a single Arrhenius-like mechanism, but fouling, catalyst sintering, mechanical fatigue, and secondary degradation rarely scale linearly. Tests under 3000 hours extrapolated to 20 years are structurally unreliable.
+  - Disconfirming checks required:
+    - Name the dominant degradation mechanism and confirm it is the same under accelerated and real conditions.
+    - Report test duration and translate to equivalent service hours; flag extrapolations over 10x.
+    - Check for multi-sample consistency (n >= 3) in degradation trajectory.
+  - False-positive pattern: Well-understood technologies (crystalline silicon PV) where accelerated protocols have decades of field validation.
+- **Costs will come down the learning curve as volumes scale.** (key: \`learning_curve_cost_down\`, module: economics, priority: high)
+  - Why tempting: Historical precedents (PV modules, Li-ion cells) make it feel like a law rather than a conditional outcome.
+  - What to check: What specific cost driver is expected to decline, what volume unlocks it, and whether the learning rate is comparable to technologies that actually followed the curve. Distinguish BoM cost from installed cost from LCOE.
+  - Typical gap: Cost reduction depends on sustained volume that requires the technology to already be cheap. Learning rates for process-plant tech (gasification, electrolysis stacks) are far lower than cell-manufacturing tech.
+  - Disconfirming checks required:
+    - Name the specific cost driver expected to decline and the volume threshold.
+    - Cite a learning rate with its source, and compare it to a reference tech of similar architecture (not PV or Li-ion for process plants).
+    - Confirm whether installed cost (not just BoM/equipment) follows the same curve.
+  - False-positive pattern: Mass-manufactured modular hardware (cells, modules, inverters) where learning rates are genuinely empirical and robust across chemistries.
+- **We have offtake agreements covering multi-year demand.** (key: \`offtake_is_secured\`, module: economics, priority: high)
+  - Why tempting: Named counterparties in a deck feel like demand validation.
+  - What to check: Whether the agreement is binding (take-or-pay vs LOI vs MoU), counterparty creditworthiness, pricing mechanism (fixed, indexed, contingent), volume commitments, and termination clauses.
+  - Typical gap: 'Offtake' is frequently a non-binding LOI at a price that assumes the producer hits optimistic cost targets. Binding take-or-pay with investment-grade counterparties is rare at pre-FID stage.
+  - Disconfirming checks required:
+    - Classify each offtake as LOI / MoU / binding contract / take-or-pay.
+    - Identify counterparty credit rating and whether it is investment-grade.
+    - Check the pricing mechanism and any conditions precedent.
+  - False-positive pattern: Regulated markets with compliance obligations (RFS, LCFS, CBAM) where the buyer universe is effectively committed by law.
+- **Our model is physics-based, so projections are reliable.** (key: \`physics_based_model_is_accurate\`, module: physics, priority: high)
+  - Why tempting: 'Physics-based' connotes first-principles rigor and reviewer deference.
+  - What to check: What calibration data was used, what phenomena are not modeled (fouling, corrosion, catalyst sintering, side reactions, contamination), validation against independent datasets, and quantified residuals.
+  - Typical gap: Physics models still require empirical closure terms. Unmodeled phenomena often dominate long-term performance but are hidden by short-duration calibration datasets.
+  - Disconfirming checks required:
+    - List unmodeled phenomena and their expected impact.
+    - Compare model predictions to an independent holdout dataset and report residuals.
+    - Confirm closure/empirical terms are cited and grounded.
+  - False-positive pattern: Well-established engineering models (Aspen/HYSYS for chemical processes, pvlib for PV) in regimes where empirical closure is well-characterized.
+- **Our supply chain is domestic and diversified.** (key: \`supply_chain_is_diversified\`, module: manufacturing, priority: high)
+  - Why tempting: Current geopolitical framing makes this answer socially expected.
+  - What to check: Specific named suppliers and their share for each critical material (iridium, platinum, nickel, rare earths, specific membranes/catalysts), geographic concentration at the refining step (not just mining), and qualified second-source status.
+  - Typical gap: Mining origin may be diversified but refining is concentrated (typically in one geography for most critical minerals). Qualified second-source often means 'identified' not 'tested and approved.'
+  - Disconfirming checks required:
+    - For each critical material, identify mining and refining shares by country.
+    - Confirm whether second sources are qualified (tested and approved) vs merely identified.
+    - Report single-source critical components explicitly.
+  - False-positive pattern: Commodity inputs (steel, concrete, common metals) where diversification is a true property of the market.
+- **Third-party validation has been completed.** (key: \`third_party_validation_completed\`, module: regulatory, priority: high)
+  - Why tempting: 'Third-party' sounds independent and rigorous.
+  - What to check: Who the validator is (engineering firm vs notified body vs academic), exactly what was validated (performance vs safety vs LCA vs manufacturability), test scope and duration, and whether the report is public or available under NDA.
+  - Typical gap: DNV/TUV/UL performance verification is often confused with certification, LCA, or bankability review. Scope is frequently narrow and the reviewer relies on company-supplied data.
+  - Disconfirming checks required:
+    - Name the validator and their role (engineering firm, notified body, academic lab).
+    - Describe exactly what was validated and bound the scope.
+    - Confirm the report is available for review under NDA.
+  - False-positive pattern: Products with mandatory certification (inverters, cells for aviation/automotive) where the validation is legally required and narrowly scoped.
+- **Competitors are 5+ years behind our technology.** (key: \`competitors_are_behind\`, module: novelty, priority: medium)
+  - Why tempting: Provides urgency, scarcity, and a moat narrative.
+  - What to check: Named competitors including quiet incumbents (oil majors, utilities, chemical companies have large unpublished R&D). Patent landscape, published pilot announcements, funded competing programs in DOE/ARPA-E/EU portfolios.
+  - Typical gap: Public-company deprioritization is often mistaken for absence. Hyperscalers, incumbents, and state-backed programs are underrepresented in Western competitive mapping.
+  - Disconfirming checks required:
+    - Map named competitors including incumbents and state-backed programs.
+    - Search patent filings in the core claim areas from the last 5 years.
+    - Check DOE/ARPA-E/EU funded program lists for adjacent work.
+  - False-positive pattern: Genuinely novel chemistry/architecture where an exhaustive patent/program search confirms the claim.
+- **We are at TRL 7/8, so deployment risk is low.** (key: \`trl_implies_readiness\`, module: scalability, priority: medium)
+  - Why tempting: TRL is a widely recognized framework and high numbers imply maturity.
+  - What to check: TRL is self-reported and covers technology only. Independently assess MRL (manufacturing readiness), CRL (commercial readiness), and IRL (integration readiness). Check for third-party TRL assessment (e.g., DOE, NASA, EC methodology).
+  - Typical gap: High TRL claims often rely on a single successful prototype, not repeated operation. MRL/CRL typically lag TRL by 2-3 levels.
+  - Disconfirming checks required:
+    - Ask for MRL and CRL ratings separately from TRL.
+    - Confirm TRL was assessed by an independent body, not self-declared.
+    - Check whether 'TRL 8' rests on one prototype or repeated operation.
+  - False-positive pattern: Technologies with formal, audited readiness assessments (defense, space) where TRL ratings are externally verified."
+`;
+
+exports[`prompt formatting snapshots formatRedFlagsForPrompt — PtL diligence deployment 1`] = `
+"**EVIDENCE**
+  - [blocker] Performance or durability data cited to support the commercial design was generated on a different generation of hardware (e.g., Gen 1 pilot used to support Gen 2 commercial claims). (key: \`commercial_design_not_same_as_test_article\`, module: physics, priority: critical)
+    - Why: Performance and durability do not transfer across hardware generations when materials, geometry, or control systems change. Gen-1 data used to support Gen-2 claims is a common failure pattern.
+    - Clearing evidence: Validation data from the commercial-design hardware, even at reduced scale, covering the claimed performance envelope.
+    - Follow-up: List every material, geometric, or control difference between the test article and commercial article. Quantify expected performance delta.
+  - [caution] All peer-reviewed performance data has the founder, company, or funded collaborators as authors. (key: \`evidence_only_from_affiliates\`, module: physics, priority: high)
+    - Why: Absence of truly independent replication is the single strongest predictor of overstated performance in emerging energy tech.
+    - Clearing evidence: At least one peer-reviewed replication by an unaffiliated group with consistent results.
+    - Follow-up: Search for independent replications and note whether any unaffiliated group has published on the same system.
+  - [caution] Key performance or cost claims are explicitly marked proprietary and not independently verifiable. (key: \`proprietary_blocks_verification\`, module: physics, priority: high)
+    - Why: Bankability and diligence require independently reviewable evidence. Proprietary gating shifts risk entirely to the investor.
+    - Clearing evidence: Independent engineer's report under NDA confirms proprietary claims, with scope documented.
+    - Follow-up: Request NDA-gated review by an independent engineer or trusted third party. Note the scope of proprietary blocks explicitly.
+  - [caution] All operational evidence comes from one site, one operator, and one feedstock/input profile. (key: \`single_site_single_operator\`, module: scalability, priority: high)
+    - Why: Site-specific, operator-specific, and feedstock-specific performance does not generalize. Commercial deployments expose variability that single-site data cannot predict.
+    - Clearing evidence: Operational data from two or more sites, operators, or feedstock profiles showing consistent performance.
+    - Follow-up: Note the single-site scope in caveats. If deployment diligence, require evidence from a second site or operator before clearing.
+
+**ECONOMICS**
+  - [blocker] Base-case IRR or NPV swings by more than 30% when a single policy credit is removed. (key: \`irr_policy_sensitivity_high\`, module: economics, priority: critical)
+    - Why: Policy-gated bankability creates binary outcomes on regulatory or administrative events. Most tier-1 lenders require a viable base case without credits.
+    - Clearing evidence: Base-case IRR meets lender hurdle (typically 10-12%) without policy credits, OR a binding credit transfer with an investment-grade counterparty.
+    - Follow-up: Recompute IRR without each headline credit. If the unsupported base case is below lender hurdle, flag as veto concern at deployment stage.
+  - [caution] CAPEX is from vendor quotes or internal estimates with no EPC contractor bid or independent engineer review. (key: \`capex_vendor_quote_only\`, module: economics, priority: high)
+    - Why: Vendor-quoted CAPEX typically excludes integration, site work, contingency, and commissioning — commonly 30-100% underrepresentation of installed cost.
+    - Clearing evidence: EPC lump-sum bid or independent engineer's cost validation within 15% of the company estimate.
+    - Follow-up: Request EPC-level cost estimate with contingency and commissioning broken out. Apply an installed-cost multiplier in the caveat.
+  - [caution] Feedstock or electricity cost is locked at current or favorable prices with no volatility analysis. (key: \`feedstock_price_static\`, module: economics, priority: high)
+    - Why: Feedstock cost is typically the dominant operating expense and its volatility drives real bankability risk. Static assumptions hide this.
+    - Clearing evidence: Hedging/PPA structure or a long-term fixed-price feedstock contract covering the investment horizon.
+    - Follow-up: Run a Monte Carlo or scenario sensitivity on feedstock/electricity price using historical volatility.
+  - [blocker] Replacement or major maintenance cadence (stack, catalyst, membrane, sorbent, filter, inverter block) is omitted from OPEX or lifecycle cost. (key: \`replacement_cadence_omitted\`, module: economics, priority: high)
+    - Why: Stack/catalyst/membrane replacement is often the dominant recurring cost and drives real LCOE/LCOS. Omitting it underrepresents OPEX by 20-50%.
+    - Clearing evidence: OPEX model includes replacement schedule for every consumable with durability data supporting the interval.
+    - Follow-up: List every consumable or major-maintenance item, its expected replacement interval, and its unit cost. Recompute OPEX and LCOE.
+  - [caution] No WACC disclosed, or WACC below 8% for an unproven technology. (key: \`wacc_missing_or_unrealistic\`, module: economics, priority: medium)
+    - Why: WACC for first-of-a-kind energy tech is typically 10-15%; using utility-equivalent WACC (6-8%) flatters LCOE and is not lendable.
+    - Clearing evidence: Disclosed WACC in the 10-15% range with debt/equity split reflecting first-of-a-kind risk, OR credit-enhanced structure justifying a lower WACC.
+    - Follow-up: Ask for the assumed WACC and benchmark against first-of-a-kind comparables.
+
+**SCALE**
+  - [blocker] Scaling plan requires a material, component, or manufacturing capacity that does not yet exist at the needed volume (e.g., iridium demand exceeds global annual supply). (key: \`scale_depends_on_nonexistent_capacity\`, module: manufacturing, priority: critical)
+    - Why: Commercial deployment timelines are constrained by the slowest upstream bottleneck, which is often invisible in the company's own roadmap.
+    - Clearing evidence: Upstream capacity plan with named suppliers and committed capacity, OR a qualified alternate chemistry with no capacity constraint.
+    - Follow-up: Quantify the upstream capacity gap and timeline to close it. Identify alternate materials/processes that relax the constraint.
+  - [blocker] Gap of 10x or more between the largest operated unit and the next planned scale. (key: \`scale_jump_too_large\`, module: scalability, priority: critical)
+    - Why: Process-industry heuristics recommend at most 3-10x per scale-up step. Jumps beyond that routinely fail on heat/mass transfer, mechanical, or control issues.
+    - Clearing evidence: Intermediate-scale demonstration operating within the 3-10x envelope for at least 6 months.
+    - Follow-up: Require an intermediate demonstration at the 3-10x step before deployment-stage promotion.
+
+**MANUFACTURING**
+  - [caution] Manufacturing yield is assumed above 95% in cost models without pilot-line evidence. (key: \`manufacturing_yield_assumed_high\`, module: manufacturing, priority: high)
+    - Why: First-generation yields are commonly 60-85%. Yield assumptions flow directly into unit cost and are frequently the largest single source of cost overrun.
+    - Clearing evidence: Pilot-line data across multiple production runs supporting the assumed yield, or a yield-ramp curve with documented basis.
+    - Follow-up: Request pilot-line yield data by stage. Rebuild unit-cost model with realistic ramp-curve yield.
+
+**DURABILITY**
+  - [caution] Lifetime or degradation claim extrapolated from under 1000 hours of operation, or under 500 cycles for batteries. (key: \`degradation_from_short_test\`, module: performance, priority: high)
+    - Why: Short-duration tests miss slow degradation modes (fouling, sintering, SEI evolution, UV-driven polymer aging) that dominate years 5-20 of service life.
+    - Clearing evidence: Continuous operation data covering at least 10% of claimed service life, OR peer-reviewed mechanism-based extrapolation with uncertainty bounds.
+    - Follow-up: Identify the dominant degradation mechanism and confirm it is captured at the tested duration. Discount lifetime claims pending longer-duration data.
+  - [caution] Tested operating envelope (temperature, pressure, load, cycling profile) is narrower than the service conditions claimed for commercial deployment. (key: \`operating_envelope_narrower_than_service\`, module: performance, priority: high)
+    - Why: Untested corners of the operating envelope are where safety, durability, and performance surprises cluster.
+    - Clearing evidence: Test data covering the full service envelope, including worst-case corners.
+    - Follow-up: Overlay the test envelope and the service envelope. Require testing in each untested corner.
+
+**REGULATORY**
+  - [blocker] Permitting plan assumes a novel pathway (new category, waiver, fast-track) with no documented pre-application engagement with the permitting authority. (key: \`novel_permit_path_no_engagement\`, module: regulatory, priority: critical)
+    - Why: Regulatory timelines for novel categories commonly exceed 3-5 years and can introduce fatal-flaw requirements discovered late.
+    - Clearing evidence: Pre-application meeting records or issued determination letter from the permitting authority covering the novel pathway.
+    - Follow-up: Require documented pre-application engagement with the permitting authority. Map the complete permit list and agency touchpoints.
+  - [caution] No documented FMEA, HAZOP, or equivalent structured safety analysis for the commercial-scale design. (key: \`no_fmea_or_hazop\`, module: safety, priority: high)
+    - Why: Absence of structured safety analysis is a standard lender and insurance disqualifier, and typically surfaces design-level issues late.
+    - Clearing evidence: Completed HAZOP/FMEA with closed action items and sign-off by an independent safety authority.
+    - Follow-up: Require a HAZOP or FMEA covering the commercial-scale design, led by a qualified independent facilitator.
+  - [blocker] Product meets the claimed market spec only conditionally (e.g., blend wall limits, ASTM/IEC test coverage incomplete), or the certification path is not yet complete. (key: \`product_spec_or_certification_gap\`, module: regulatory, priority: high)
+    - Why: A fuel that only meets spec as a blend component, or hardware that lacks full IEC/UL/ASTM certification, cannot access the full claimed market. This constrains TAM and offtake pricing.
+    - Clearing evidence: Completed certification (ASTM D7566, IEC 62109, UL 1741, etc.) covering the commercial product as-sold, or a signed regulatory determination authorizing the use case.
+    - Follow-up: Enumerate every spec and certification required for the claimed market. Identify the specific gaps and cost/timeline to close them.
+
+**ENVIRONMENTAL**
+  - [blocker] Environmental permitting load (water withdrawal, wastewater discharge, criteria pollutants, hazardous air pollutants, stormwater, noise) is not modeled or is only partially addressed. (key: \`environmental_permit_load_unmodeled\`, module: environmental, priority: critical)
+    - Why: Environmental permits are typically the long-pole item in project timelines and can be a fatal flaw. Missing air, water, and waste permits surface late and at high cost.
+    - Clearing evidence: Complete environmental permit matrix with agency touchpoints, jurisdictional requirements, and a credible schedule.
+    - Follow-up: Compile the full environmental permit matrix (air, water, waste, noise) for the deployment jurisdiction. Estimate permitting timeline and agency interactions.
+  - [caution] Decommissioning, disposal, recycling, or end-of-life cost is missing from the lifecycle model (electrolysis stacks, catalysts, membranes, specialty materials, asset retirement). (key: \`decommissioning_or_end_of_life_cost_missing\`, module: environmental, priority: high)
+    - Why: End-of-life cost is a material LCOE/LCOS input for hardware with high-value or hazardous components. Its absence understates true cost and is a common insurance/regulator blocker.
+    - Clearing evidence: Lifecycle model including ARO, decommissioning, and recycling/disposal cost for each specialty material with jurisdictional basis.
+    - Follow-up: Add asset retirement obligation (ARO) and end-of-life cost to the lifecycle model. Identify recycling or disposal pathway for each specialty material.
+
+**SUPPLY CHAIN**
+  - [caution] A critical component (membrane, catalyst, custom cell format, specialty alloy) has only one qualified supplier. (key: \`single_source_critical_component\`, module: manufacturing, priority: high)
+    - Why: Single-source critical components create schedule, price, and continuity risk that is very difficult to resolve post-FID.
+    - Clearing evidence: Qualified second supplier with parts tested and approved in production, OR a substitution pathway demonstrated at scale.
+    - Follow-up: Identify a qualified second source or a substitution pathway. Require a 180-day inventory buffer until second source is qualified.
+  - [caution] Raw-material sourcing map shows diversification at the mine but not at the refining/processing step. (key: \`refining_concentration_hidden\`, module: manufacturing, priority: medium)
+    - Why: For most critical minerals (Li, Ni, Co, REE, Ir), processing is geographically concentrated and is the true supply-chain bottleneck.
+    - Clearing evidence: Refining supply map with two or more geographies covering each critical material.
+    - Follow-up: Map refining concentration by geography for each critical material. Note the exposure explicitly in caveats.
+
+**BANKABILITY**
+  - [blocker] No independent engineer's report (IER) or equivalent third-party technical review has been commissioned. (key: \`no_independent_engineer_report\`, module: economics, priority: critical)
+    - Why: Project finance lenders require an IER before financial close. Absence at late development stages indicates either early stage or reluctance to surface findings.
+    - Clearing evidence: Completed IER with no unresolved blockers, issued by a tier-1 firm.
+    - Follow-up: Commission an IER from a tier-1 engineering firm. Scope must cover performance, constructability, safety, and OPEX.
+  - [caution] No insurance product, OEM performance warranty of sufficient term, or equivalent wrap covers the technology's performance risk. (key: \`no_insurance_or_warranty_wrap\`, module: economics, priority: high)
+    - Why: Without a performance wrap, technology risk sits with the lender and project sponsor. Most tier-1 capital will not proceed without it for first-of-a-kind assets.
+    - Clearing evidence: Bound insurance policy or OEM warranty of at least 10 years covering the performance envelope.
+    - Follow-up: Engage a technology risk insurer or negotiate an extended OEM warranty covering the bankability tenor.
+  - [caution] Offtake is LOI or MoU only, with no binding take-or-pay from a creditworthy counterparty. (key: \`offtake_is_loi_only\`, module: economics, priority: high)
+    - Why: Non-binding offtake is not a revenue contract and does not support project finance. LOIs routinely do not convert at the prices assumed in the financial model.
+    - Clearing evidence: Binding take-or-pay with an investment-grade counterparty covering greater than 50% of nameplate, OR regulated buyer with compliance obligation.
+    - Follow-up: Convert LOI to binding take-or-pay with a creditworthy counterparty, OR demonstrate a regulated offtake obligation."
+`;
+
+exports[`prompt formatting snapshots formatRedFlagsForPrompt — battery research discovery 1`] = `
+"**EVIDENCE**
+  - [caution] All peer-reviewed performance data has the founder, company, or funded collaborators as authors. (key: \`evidence_only_from_affiliates\`, module: physics, priority: high)
+    - Why: Absence of truly independent replication is the single strongest predictor of overstated performance in emerging energy tech.
+    - Clearing evidence: At least one peer-reviewed replication by an unaffiliated group with consistent results.
+    - Follow-up: Search for independent replications and note whether any unaffiliated group has published on the same system.
+
+**ECONOMICS**
+  - [caution] No WACC disclosed, or WACC below 8% for an unproven technology. (key: \`wacc_missing_or_unrealistic\`, module: economics, priority: medium)
+    - Why: WACC for first-of-a-kind energy tech is typically 10-15%; using utility-equivalent WACC (6-8%) flatters LCOE and is not lendable.
+    - Clearing evidence: Disclosed WACC in the 10-15% range with debt/equity split reflecting first-of-a-kind risk, OR credit-enhanced structure justifying a lower WACC.
+    - Follow-up: Ask for the assumed WACC and benchmark against first-of-a-kind comparables."
+`;
