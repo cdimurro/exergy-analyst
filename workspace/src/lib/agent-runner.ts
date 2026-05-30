@@ -1464,12 +1464,15 @@ async function synthesizePlanFinal(args: {
     "Choose the answer format dynamically from the user request and tool results. Use a brief answer, narrative, bullets, headings, tables, or a full technical breakdown only when that format genuinely improves the response.",
     "Do not reuse a fixed heading template. Do not add boilerplate sections just because this is an agent run.",
     "Be explicit about what the data supports and what it cannot prove when the answer is high stakes.",
+    args.run.parent_run_id
+      ? "This is a follow-up turn. Answer the specific follow-up directly and conversationally. Do not restate the structure, tables, or support-and-limits sections from earlier answers unless the user is asking for a new calculation, model, or analysis. If they only want a file, produce it and share the link with a one-line summary."
+      : "",
     ...ANALYSIS_DISCIPLINE_RULES,
     `Project: ${args.project.name}`,
     `User request: ${args.run.user_message}`,
     `Approved plan:\n${planText}`,
     `Tool results:\n${base}`,
-  ].join("\n\n");
+  ].filter(Boolean).join("\n\n");
   const text = await callDeepSeekV3([{ role: "user", content: prompt }], {
     temperature: 0.2,
     maxTokens: 2200,

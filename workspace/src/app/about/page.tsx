@@ -17,8 +17,7 @@ export default function AboutPage() {
             <span className="bg-gradient-to-r from-[#4db8a4] to-[#5b8dd9] bg-clip-text text-transparent">Exergy Lab</span>
           </h1>
           <p className="text-[18px] sm:text-[20px] text-[#8a9aae] leading-[1.8] max-w-3xl mx-auto">
-            Energy work is becoming too complex for clean slides and isolated spreadsheets. We built Exergy Lab
-            as a powerful agentic workspace for making messy evidence legible, useful, and alive.
+            Deep technical work is becoming more and more complex, and current AI tools lack the scientific rigor needed to deliver real world results. We designed Exergy Lab as a powerful agentic workspace in order to .
           </p>
         </div>
       </section>
@@ -33,21 +32,20 @@ export default function AboutPage() {
                 The problem we're solving
               </h2>
               <p className="text-[17px] text-[#8a9aae] leading-[1.8] mb-6">
-                The most important energy questions rarely arrive as complete datasets. They arrive as a mix of
+                The most important technical questions rarely arrive as complete datasets. They arrive as a mix of
                 PDFs, vendor claims, sensor exports, rough assumptions, lab notes, and half-formed models. The work
                 is not just analysis. It is translation.
               </p>
               <p className="text-[17px] text-[#8a9aae] leading-[1.8]">
-                We wanted a place where people could bring that mess and begin moving toward clarity. A powerful
-                technical agent that can read, extract, organize, model, explain, and generate useful artifacts while
-                still showing what the evidence can and cannot support.
+                We wanted a place where people could bring messy data and complex problems and begin moving toward clarity. A powerful
+                agent that can read, extract, organize, model, explain, and generate useful artifacts while scientifically grounded throughout ever step and being transparent about what the evidence cannot or does not support.
               </p>
             </div>
             <div className="lg:w-1/2 space-y-6">
               {[
-                { stat: "Files", label: "read for signals, claims, assumptions, and gaps" },
-                { stat: "Models", label: "built around visible assumptions and useful boundaries" },
-                { stat: "Briefs", label: "generated to help teams understand what to do next" },
+                { stat: "Files", label: "extract claims, understand assumptions, and identify gaps" },
+                { stat: "Analyze", label: "calculated around visible assumptions and useful boundaries" },
+                { stat: "Outputs", label: "organized data to help you understand what to do next" },
               ].map(item => (
                 <div key={item.stat} className="border-l-2 border-[#4db8a4]/40 pl-8 py-2">
                   <div className="text-[28px] font-bold bg-gradient-to-r from-[#4db8a4] to-[#5b8dd9] bg-clip-text text-transparent mb-1">
@@ -75,7 +73,7 @@ export default function AboutPage() {
               },
               {
                 title: "Physical context matters",
-                body: "Energy is not just a market category. It is heat, work, mass, pressure, time, place, degradation, uncertainty, and constraint. Exergy Lab was built to keep that physical reality close to the agent's reasoning.",
+                body: "Real engineering is not just a market category. It is physics, materials, heat, work, mass, signals, time, degradation, uncertainty, and constraint. Exergy Lab was built to keep that physical reality close to the agent's reasoning.",
               },
               {
                 title: "Uncertainty should be visible",
@@ -83,7 +81,7 @@ export default function AboutPage() {
               },
               {
                 title: "Built for serious curiosity",
-                body: "The people working on energy systems need better ways to explore, question, compare, model, brief, and explain. Exergy Lab is for founders, engineers, researchers, investors, operators, and project teams who want the next conversation to be sharper than the last one.",
+                body: "The people working on hard technical problems need better ways to explore, question, compare, model, brief, and explain. Exergy Lab is for founders, engineers, researchers, investors, operators, and teams who want the next conversation to be sharper than the last one.",
               },
             ].map((item, i) => (
               <div key={item.title} className="flex gap-8 items-start">
@@ -135,9 +133,9 @@ export default function AboutPage() {
             How Exergy Lab is different
           </h2>
           <p className="text-[17px] text-[#7a8a9e] text-center max-w-3xl mx-auto mb-16">
-            We did not build another generic chat window and give it an energy logo. We built a workspace around
-            a powerful technical agent for energy evidence, uncertainty, models, generated artifacts, and the
-            questions that move projects forward.
+            We did not build another generic chatbot. We designed an intuitive workspace around
+            an extremely powerful agent that comes equipped with the tools needed to handle complex engineering challenges and research problems in order to provide the
+            clarity needed to move projects forward.
           </p>
 
           <div className="overflow-x-auto">
@@ -153,7 +151,7 @@ export default function AboutPage() {
               <tbody className="text-[15px]">
                 {[
                   { row: "Starting point", us: "Messy evidence plus agentic workflow", them1: "Prompt text", them2: "Scoped engagement" },
-                  { row: "Energy context", us: "Built in", them1: "General", them2: "Expert-dependent" },
+                  { row: "Technical context", us: "Built in", them1: "General", them2: "Expert-dependent" },
                   { row: "Model boundary", us: "Visible", them1: "Often implicit", them2: "Documented later" },
                   { row: "Output shape", us: "Briefs, charts, models, and artifacts", them1: "Conversation", them2: "Report" },
                   { row: "Best use", us: "Deep technical exploration", them1: "General reasoning", them2: "Formal diligence" },
@@ -177,12 +175,11 @@ export default function AboutPage() {
       <section className="py-24 border-t border-[#141c2c]">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2 className="text-[28px] sm:text-[34px] font-bold text-[#ffffff] tracking-tight mb-6">
-            Beyond energy —{" "}
+            Beyond the lab —{" "}
             <span className="text-[#00bf63]">restoring nature</span>
           </h2>
           <p className="text-[17px] text-[#8a9aae] leading-[1.8] mb-8 max-w-2xl mx-auto">
-            Exergy Lab Nature explores the same idea in living systems: bringing fragmented evidence,
-            place-based context, generated briefs, and clearer questions into restoration work.
+            Exergy Lab Nature goes beyond physical engineering. It's a tool designed to help restore and protect natural ecosystems.
           </p>
           <a href={natureExploreUrl} className="inline-flex items-center gap-2 text-[16px] font-medium text-[#00bf63] hover:text-[#6ad0bc] transition-colors">
             Explore Exergy Lab Nature
@@ -200,7 +197,7 @@ export default function AboutPage() {
         <div className="relative max-w-3xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2 className="text-[28px] sm:text-[36px] font-bold tracking-tight leading-tight mb-5">
             <span className="bg-gradient-to-r from-[#4db8a4] via-[#5ba8c8] to-[#5b8dd9] bg-clip-text text-transparent">
-              Helping energy ideas become easier to understand
+              Making technical challenges easier to understand
             </span>
           </h2>
           <p className="text-[17px] text-[#7a8a9e] mb-10 leading-relaxed">

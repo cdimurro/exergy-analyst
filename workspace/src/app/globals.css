@@ -112,6 +112,21 @@ button:disabled { cursor: not-allowed; }
 .user-message li { color: #e0e8f4 !important; }
 .user-message strong { color: #ffffff !important; }
 
+/* Keep long words, URLs, and code from extending past the message bubble */
+.user-message {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.user-message pre,
+.user-message code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.user-message pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 /* ── Exergy Lab brand atmosphere for workspace ────── */
 .workspace-atmosphere {
   position: relative;

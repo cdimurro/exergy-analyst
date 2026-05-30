@@ -268,6 +268,65 @@ function resizeChatInput(textarea: HTMLTextAreaElement | null, value: string) {
 
 const LOW_INFORMATION_STATUS = /^(?:run started|run created|starting run|working on your request|working through the request)\.?$/i;
 
+// Infrastructure noise that should never be shown as "what the agent is doing".
+const INFRA_NOISE_RE = /\b(auth|secret|token|api[ _-]?key|credential|sandbox|env(?:ironment)?\s*var|stderr|stdout|exit code|traceback|venv|python path|pythonpath|node_modules)\b/i;
+// Generic planning filler that tends to get stuck on screen.
+const FILLER_PROGRESS_RE = /(selected agent workspace|runtime is ready|selecting the analysis path|saved project context|using (?:the )?prompt and|mapping the .* from the prompt|combining uploaded evidence)/i;
+// Honest, rotating fallbacks shown when no specific activity is available yet.
+const PROGRESS_FALLBACKS = [
+  "Reading the request and project context",
+  "Reasoning about the problem",
+  "Analyzing the available evidence",
+  "Working through the analysis",
+  "Assembling the response",
+];
+
+// Build follow-up suggestions tailored to the actual answer rather than a fixed
+// generic set. Prefers backend-provided suggestions, then derives from signals
+// in the response, then fills with broadly useful prompts.
+function deriveFollowups(content: string, provided?: unknown): string[] {
+  const out: string[] = [];
+  const add = (s: string) => { if (out.length < 3 && s && !out.includes(s)) out.push(s); };
+  if (Array.isArray(provided)) {
+    for (const item of provided) if (typeof item === "string" && item.trim()) add(item.trim());
+  }
+  const text = (content || "").toLowerCase();
+  if (/\b(assum|estimat|approximat|nominal)\b/.test(text)) add("Which assumptions most affect this result?");
+  if (/\b(risk|fail|degrad|uncertain|limitation|unresolved)\b/.test(text)) add("What are the biggest risks or failure modes here?");
+  if (/\b(cost|price|capex|opex|payback|lcoe|economic|\$|margin)\b/.test(text)) add("How do the economics shift under worse-case inputs?");
+  if (/\b(compare|versus|\bvs\b|alternative|benchmark|competing)\b/.test(text)) add("How does this compare to the leading alternatives?");
+  if (/\b(efficiency|power|capacity|performance|yield|temperature|throughput)\b/.test(text)) add("Run a sensitivity on the key performance drivers.");
+  if (/\b(table|dataset|measured values|raw data)\b/.test(text)) add("Export these results as a file.");
+  add("What data would most improve confidence in this?");
+  add("Summarize the most important takeaway in one line.");
+  add("Turn this into a short brief I can share.");
+  return out.slice(0, 3);
+}
+
+function isLowSignalProgress(text: string): boolean {
+  const t = (text || "").trim();
+  if (!t) return true;
+  return LOW_INFORMATION_STATUS.test(t) || INFRA_NOISE_RE.test(t) || FILLER_PROGRESS_RE.test(t);
+}
+
+// Distinct, meaningful in-progress sentences (newest last), used to rotate the
+// thinking line so it reflects real activity instead of stalling on one phrase.
+function progressCandidates(message: Pick<Msg, "agentActivity" | "loadingText">): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (raw?: string) => {
+    const text = (raw || "").trim();
+    if (!text || isLowSignalProgress(text)) return;
+    const clean = formatLoadingText(text).replace(/[.。]+$/g, "");
+    if (clean && !seen.has(clean)) { seen.add(clean); out.push(clean); }
+  };
+  for (const event of message.agentActivity || []) {
+    if (event.status === "running" || event.status === "info") push(event.detail || event.title);
+  }
+  push(message.loadingText);
+  return out;
+}
+
 const THINKING_MODE_STORAGE_KEY = "exergy_lab_thinking_mode";
 
 function cleanThinkingMode(value: string | null): "instant" | "expert" {
@@ -354,10 +413,16 @@ function stripLatex(text: string): string {
 }
 
 function LoadingIndicator({ message }: { message: Pick<Msg, "agentActivity" | "loadingText" | "loading"> }) {
-  const progressSentence = useAgentProgressSentence(message, true);
   const dots = useAnimatedDots(true);
   const elapsed = useElapsedTime(true);
-  const displayText = formatLoadingText(progressSentence).replace(/[.。]+$/g, "");
+  // Show the most recent real activity; if it stalls, advance roughly every 5s
+  // through the meaningful activity history (and honest fallbacks) so the user
+  // always sees movement and never a stuck planning sentence or infra noise.
+  const candidates = progressCandidates(message);
+  const tick = Math.floor(elapsed / 5);
+  const displayText = candidates.length > 0
+    ? candidates[Math.min(tick, candidates.length - 1)]
+    : PROGRESS_FALLBACKS[tick % PROGRESS_FALLBACKS.length];
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
   const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
@@ -375,7 +440,7 @@ function LoadingIndicator({ message }: { message: Pick<Msg, "agentActivity" | "l
       <div className="flex items-center gap-3">
         <div className="h-1 flex-1 max-w-[160px] rounded-full bg-[var(--bg-elevated)] overflow-hidden">
           <div className="h-full w-[38%] rounded-full bg-gradient-to-r from-[var(--accent-blue)] to-[var(--accent-cyan)]"
-            style={{ animation: "loading-bar 1.35s linear infinite", willChange: "transform" }} />
+            style={{ animation: "loading-bar 2s linear infinite", willChange: "transform" }} />
         </div>
       </div>
     </div>
@@ -964,7 +1029,7 @@ export default function WorkspacePage() {
         loading: false,
         loadingText: undefined,
         plan: run.plan,
-        followups: ["What data would improve confidence?", "Turn this into a client-ready memo", "Export this result"],
+        followups: deriveFollowups(finalAnswer, run.suggested_followups),
       });
       if (finalAnswer && finalAnswer !== "Run complete.") {
         setHist(prev => [...prev, { role: "assistant", content: finalAnswer }].slice(-50));
@@ -1014,7 +1079,7 @@ export default function WorkspacePage() {
         loading: false,
         loadingText: undefined,
         plan: steps || undefined,
-        followups: ["What data would improve confidence?", "Turn this into a client-ready memo", "Export this result"],
+        followups: deriveFollowups(finalAnswer || message, (data as Record<string, unknown>).suggested_followups),
       });
       if (finalAnswer) {
         setHist(prev => [...prev, { role: "assistant", content: finalAnswer }].slice(-50));
@@ -1672,7 +1737,7 @@ RULES:
           bestArtifact,
         });
         const synthContent = sr.content || fallbackContent;
-        const rawFollowups = [...gapFollowups, ...(sr.suggested_followups || []), ...defaultFollowups];
+        const rawFollowups = [...(sr.suggested_followups || []), ...gapFollowups, ...defaultFollowups];
         const finalFollowups = rawFollowups.filter((v, i, a) => a.indexOf(v) === i).slice(0, 3);
         while (finalFollowups.length < 3) finalFollowups.push("Tell me more");
         // Prefer evaluation artifact for primary card; include ALL artifacts for multi-artifact display
@@ -2156,8 +2221,8 @@ RULES:
                 return visibleMsgs.map((m, _mi) => (
                 <div key={m.id} ref={_mi === visibleMsgs.length - 1 ? lastMsgRef : undefined} className={`group ${m.role === "user" ? "flex justify-end" : ""}`}>
                   <div className={`relative ${m.role === "user"
-                    ? "max-w-[80%] bg-[#151d35] border border-[#2a3358] rounded-2xl rounded-br-md px-5 py-4"
-                    : `w-full border border-[var(--border)] rounded-2xl rounded-bl-md px-5 py-4`}`}>
+                    ? "max-w-[80%] bg-[#151d35] border border-[#2a3358] rounded-2xl rounded-br-[2px] px-5 py-4"
+                    : `w-full border border-[var(--border)] rounded-2xl rounded-bl-[2px] px-5 py-4`}`}>
                     {/* Copy button — appears on hover */}
                     {m.content && !m.loading && (
                       <div className="absolute top-2 right-2">
@@ -2409,7 +2474,7 @@ RULES:
                 </div>
               )}
               <input ref={fileRef} type="file" multiple accept=".pdf,.csv,.xlsx,.xls,.docx,.doc,.txt,.json,.png,.jpg,.jpeg,.gif,.webp,.svg,.xml,.yaml,.yml,.md,.pptx,.rtf,.tsv,.parquet" style={{ display: "none" }} onChange={e => { addPendingFiles(e.target.files); e.target.value = ""; }} />
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-[0_14px_40px_rgba(0,0,0,0.24)] focus-within:border-[var(--accent-blue)] transition-colors">
+              <div className="rounded-2xl border border-[#2a3358] bg-[#151d35] shadow-[0_14px_40px_rgba(0,0,0,0.24)] focus-within:border-[var(--accent-blue)] transition-colors">
                 <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
                   placeholder="Message Exergy Lab..."
                   rows={1}

@@ -36,6 +36,13 @@ const HIGH_STAKES_RE =
 const LOW_STAKES_RE =
   /\b(define|what is|one sentence|briefly explain|conceptual only|no calculation|no files?|no analysis)\b/i;
 
+// A follow-up re-triggers the full analytical contract only when it is itself a
+// new modeling/calculation/analysis request. A simple question or a request to
+// just produce a file should be answered directly, without repeating the
+// structured format from earlier turns.
+const FOLLOWUP_HEAVY_RE =
+  /\b(model|simulate|simulation|calculate|recalculate|recompute|compute|scenario|sensitivity|optimi[sz]e|techno-?economic|feasibility|payback|lcoe|lcoh|lcos|npv|irr|sizing|re-?run|full (?:analysis|assessment))\b/i;
+
 const NUMERIC_MODEL_RE =
   /\b(model|simulate|simulation|calculate|calculation|scenario|sensitivity|compare|economic|finance|capex|opex|npv|irr|payback|lcoe|lcoh|lcos|emissions?|co2|performance|efficiency|capacity|throughput|energy|heat|mass|flow|pressure|temperature|cost|price|roi|table)\b/i;
 
@@ -49,7 +56,10 @@ function clean(value: string): string {
 }
 
 export function isHighStakesPrompt(prompt: string, opts: { hasDocuments?: boolean; hasFiles?: boolean; followup?: boolean } = {}): boolean {
-  if (opts.hasDocuments || opts.hasFiles || opts.followup) return true;
+  // Judge a follow-up on its own request so the heavy format is not repeated for
+  // a simple question or a plain file-generation ask.
+  if (opts.followup) return FOLLOWUP_HEAVY_RE.test(prompt);
+  if (opts.hasDocuments || opts.hasFiles) return true;
   if (LOW_STAKES_RE.test(prompt) && !NUMERIC_MODEL_RE.test(prompt)) return false;
   return HIGH_STAKES_RE.test(prompt);
 }

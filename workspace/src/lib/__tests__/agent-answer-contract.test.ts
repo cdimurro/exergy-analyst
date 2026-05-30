@@ -159,6 +159,38 @@ describe("agent answer contract", () => {
     expect(result.answer).toContain("Assumption drift");
   });
 
+  it("keeps simple follow-ups light instead of repeating the full format", () => {
+    const question = enforceAnswerContract({
+      prompt: "Thanks — why is the kiln the best stream to start with?",
+      answer: "Because it has the highest recoverable useful work for its temperature.",
+      documents: [docWithEvidence()],
+      followup: true,
+    });
+    expect(question.highStakes).toBe(false);
+    expect(question.answer).not.toContain("## Support and Limits");
+    expect(question.answer).not.toContain("## Calculation Basis");
+
+    const fileRequest = enforceAnswerContract({
+      prompt: "Can you export that ranking as a CSV file and give me the link?",
+      answer: "Here is the CSV export of the ranking.",
+      documents: [docWithEvidence()],
+      followup: true,
+    });
+    expect(fileRequest.highStakes).toBe(false);
+    expect(fileRequest.answer).not.toContain("## Support and Limits");
+  });
+
+  it("still applies the full contract when a follow-up is a new modeling request", () => {
+    const result = enforceAnswerContract({
+      prompt: "Now run a sensitivity model on the kiln recovery at three different ambient temperatures.",
+      answer: "I modeled the kiln recovery at 5, 15, and 25 C ambient.",
+      documents: [docWithEvidence()],
+      followup: true,
+    });
+    expect(result.highStakes).toBe(true);
+    expect(result.answer).toContain("## Support and Limits");
+  });
+
   it("does not add scenario reproducibility for ordinary change metrics", () => {
     const result = enforceAnswerContract({
       prompt: "Extract the key values and calculate annual electricity use, emissions change, operating-cost change, payback, and exergy limitations.",

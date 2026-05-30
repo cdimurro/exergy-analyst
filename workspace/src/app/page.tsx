@@ -93,7 +93,7 @@ export default function HomePage() {
             </span>
           </h1>
           <p className="text-[18px] sm:text-[20px] text-[#d0d8e4] mx-auto leading-relaxed text-center mb-10 max-w-4xl">
-            The Exergy Lab Agent can analyze messy data, run custom physics simulations, extract useful insights,
+            The Exergy Lab Agent can analyze data, run custom physics simulations, extract useful insights,
             generate documents, and turn technical problems into clear next steps.
           </p>
 
@@ -126,7 +126,7 @@ export default function HomePage() {
       <section className="relative border-y border-[#141c2c] bg-[#0a0f1a]/90">
         <div className="max-w-7xl mx-auto py-12 px-6 sm:px-10 lg:px-16">
           <p className="text-[22px] sm:text-[22px] text-[#b0bcc8] leading-relaxed text-center max-w-4xl mx-auto">
-            We built Exergy Lab because traditional agents and standard LLMs are not reliable enough to trust at solving deep engineering challenges. The Exergy Lab Agent is built from the ground up to bridge this gap. Give it your hardest technical problems, and see for yourself what it can do.
+            We built Exergy Lab because traditional agents and standard LLMs are not reliable enough at solving deep engineering challenges. The Exergy Lab Agent is built from the ground up to bridge this gap. Give it your hardest technical problems, and see for yourself what it can do.
           </p>
           <div className="flex flex-wrap justify-center pt-10 gap-10 sm:gap-16 mb-10">
             {[
@@ -155,33 +155,29 @@ export default function HomePage() {
           </h2>
           <div className="flex flex-wrap gap-2 justify-center">
             {[
-              "Lithium-Ion Batteries", "Solar PV", "Nuclear Fission", "Wind Turbines", "Fuel Cells",
-              "Heat Pumps", "Electrolyzers", "Carbon Capture", "Geothermal", "Hydrogen Storage",
-              "Grid-Scale Storage", "Inverters", "Supercapacitors", "Thermoelectrics", "Biofuels",
-              "Concentrated Solar", "Ocean Energy", "Fusion", "Solid-State Batteries", "Redox Flow Batteries",
-              "Perovskite PV", "Wave Energy", "Biomass", "Thermal Storage", "Absorption Chillers",
-              "Advanced Conductors", "Enhanced Geothermal", "Advanced Membranes", "Advanced Nuclear Fuel",
-              "Agrivoltaics", "Aluminum Smelting", "Ammonia Systems", "Aviation Propulsion", "Battery Recycling",
-              "Biogas", "Building Envelope", "Carbon Utilization", "Catalyst Materials", "Cement Decarbonization",
-              "Chemical Process", "Circuit Breakers", "Cogeneration CHP", "Compressed Air Storage",
-              "Critical Minerals", "Data Center Energy", "Desalination", "Direct Lithium Extraction",
-              "District Energy", "Electric Arc Furnace", "Electric Motors", "Electric Vehicles",
-              "Electrochemical Sensors", "Energy Management", "Enzyme Biocatalysis", "FT Synthesis",
-              "Flywheel Storage", "Food Processing Energy", "Fusion Materials", "Gravity Storage",
-              "Grid Distribution", "Grid-Enhancing Tech", "Grid-Scale Inverters", "Grid Transmission",
-              "PEM Electrolysis", "Heat Recovery ORC", "Hydrogen Fueling", "Hydrogen Transport",
-              "Industrial Heat", "LED Lighting", "Liquid Air Storage", "Long Duration Storage",
-              "Maritime Propulsion", "Methane Abatement", "Microgrids", "Mining Electrification",
-              "Nuclear Waste Management", "Offshore Wind", "Piezoelectric Harvesting", "Plastic Recycling",
-              "Power Quality", "Power Transformers", "Quantum Computing Energy", "Radioisotope Power",
-              "Rail Electrification", "Rare Earth Processing", "Refrigeration", "Semiconductor Manufacturing",
-              "Small Wind", "Smart Glass", "Small Modular Reactors", "Space-Based Solar",
-              "Steel Decarbonization", "Superconductors", "Sustainable Agriculture", "Sustainable Materials",
-              "Syngas Production", "Textile Recycling", "Thermoelectric Generators", "Thorium Cycle",
-              "Variable Frequency Drives", "Vertical Farming", "Waste-to-Energy", "Water Treatment",
-              "Carbon Negative", "Carbon Fiber Composites",
+              "Lithium-Ion Batteries", "Semiconductors", "Aerospace Propulsion", "Surgical Robotics", "Solar PV",
+              "Quantum Computing", "Autonomous Vehicles", "Gene Therapy", "Industrial Automation", "Carbon Capture",
+              "Photonic Integrated Circuits", "Wind Turbines", "Medical Imaging", "Advanced Composites", "5G / 6G Networks",
+              "Hydrogen Storage", "Additive Manufacturing", "Neuromorphic Chips", "Electric Vehicles", "Satellite Systems",
+              "Biomanufacturing", "Heat Pumps", "Power Electronics", "CRISPR Platforms", "Drones & UAVs",
+              "Solid-State Batteries", "RF & Microwave", "Desalination", "Hypersonics", "Wearable Sensors",
+              "Nuclear Fission", "Robotic Manipulation", "mRNA Therapeutics", "MEMS Devices", "Fusion",
+              "Data Center Cooling", "Precision Agriculture", "Lidar Systems", "Flow Chemistry", "Grid-Scale Storage",
+              "Edge AI Accelerators", "Prosthetics", "Maritime Propulsion", "Catalysis", "AR/VR Optics",
+              "Geothermal", "Structural Engineering", "Diagnostic Devices", "Electrolyzers", "Spacecraft Thermal",
+              "Industrial IoT", "Polymer Materials", "Brain-Computer Interfaces", "Fuel Cells", "Cryogenics",
+              "Water Treatment", "Semiconductor Lithography", "Soft Robotics", "Carbon Fiber Composites", "Superconductors",
+              "Battery Recycling", "Optical Networking", "Tissue Engineering", "Turbomachinery", "Finite Element Analysis",
+              "Microfluidics", "Thermoelectrics", "Antenna Design", "Vaccine Platforms", "Heat Exchangers",
+              "Computer Vision Hardware", "Rare Earth Processing", "Ultrasound Systems", "Direct Air Capture", "PCB Design",
+              "Bioreactors", "Aircraft Structures", "Energy Storage Systems", "Quantum Sensing", "Process Control",
+              "Nanomaterials", "Electric Motors", "Combustion Systems", "Memory Devices", "Pharmaceutical Process",
+              "Radar Systems", "Hydrogen Fueling", "Refrigeration", "Display Technology", "Aerodynamics",
+              "Implantable Devices", "Power Transformers", "Signal Processing", "Advanced Membranes", "Rocket Engines",
+              "Industrial Heat", "Chip Packaging", "Genomics Platforms", "Smart Materials", "Grid Interconnection",
+              "Telecom Infrastructure", "Carbon-Negative Materials",
             ].map((t, i) => {
-              const highlighted = [0, 2, 7, 11, 18, 26, 38, 50, 63, 74, 91, 101].includes(i);
+              const highlighted = [0, 5, 17, 23, 32, 40, 49, 52, 62, 76, 90, 94].includes(i);
               return (
                 <span key={t} className={`px-3 py-1.5 rounded-lg text-[13px] font-medium border transition-colors ${
                   highlighted
@@ -204,8 +200,8 @@ export default function HomePage() {
           style={{ background: "radial-gradient(circle at center, #4db8a4 0%, transparent 70%)", filter: "blur(80px)" }} />
         <div className="relative w-full px-6 sm:px-10 lg:px-16">
           <div className="text-center mb-20">
-            <h2 className="text-[28px] sm:text-[34px] font-bold text-[#d0d8e4] tracking-tight">
-              From scattered data to tailored clarity
+            <h2 className="text-[36px] sm:text-[44px] font-bold tracking-tight bg-gradient-to-b from-[#e0e6f0] to-[#6a7a8e] bg-clip-text text-transparent leading-none">
+              Turn complex challenges into precise solutions
             </h2>
           </div>
 
@@ -215,9 +211,9 @@ export default function HomePage() {
 
             <div className="space-y-16">
               {[
-                { n: "1", title: "Bring the messy material", body: "Upload a PDF, paste a question, describe a site, or drop in the spreadsheet nobody has cleaned yet. The agent starts by reading the evidence, finding structure, and pulling the important signals forward." },
-                { n: "2", title: "Build a working view", body: "The workspace can extract tables, organize assumptions, sketch calculations, generate charts, and keep track of what is measured, inferred, missing, or still speculative." },
-                { n: "3", title: "Generate the brief", body: "Instead of disconnected notes, you get a clearer technical brief: what the evidence suggests, what it cannot prove, and what would make the next conversation sharper." },
+                { n: "1", title: "Upload any file type", body: "Upload a PDF, paste a question, describe a problem, or ask the agent to perform a task. The agent starts by analyzing the provided data, formulates a plan, and the systematically works through the problem." },
+                { n: "2", title: "Collaborate intuitively", body: "The more context you provide, the better the agent will perform. The workspace will automatically generate tables and charts, run simulations, perform calculations, build models, state assumptions, generate documents, and organize any information for you." },
+                { n: "3", title: "Generate the outcomes", body: "Instead of scattered ideas, you will get a clearer technical briefs: what the evidence suggests, what it cannot prove, and what would make the results even sharper." },
               ].map(step => (
                 <div key={step.n} className="flex gap-8 md:gap-12 items-start">
                   <div className="relative shrink-0">
@@ -253,9 +249,9 @@ export default function HomePage() {
                 <div className="w-100 h-0.5 bg-gradient-to-r from-[#4db8a4] to-transparent mb-6" />
                 <h3 className="text-[24px] font-semibold text-[#d0d8e4] mb-5">A powerful decision surface</h3>
                 <p className="text-[17px] text-[#8a9aae] leading-[1.8]">
-                  Exergy Lab is built around the scientific rigor they wish all agents had:
+                  Exergy Lab is built around the scientific rigor that all agents should have:
                   academic-aware knowledge, deep-research capabilities, advanced tool-use, complex reasoning, custom visuals, transparent limitations,
-                  and the one goal to help you with whatever you are working on.
+                  and one goal of helping you with whatever you are working on.
                 </p>
               </div>
             </div>
@@ -361,7 +357,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {[
               { role: "Founders", desc: "Turn a technical story into a stronger evidence package. Use the agent to read files, sharpen claims, create briefs, and identify what would make the next conversation more credible.", icon: "M13 10V3L4 14h7v7l9-11h-7z", color: "#4db8a4" },
-              { role: "Investors", desc: "Move faster through unfamiliar energy evidence. Ask the agent to surface assumptions, missing data, physical questions, and the claims that deserve a harder look before the next call.", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z", color: "#5ba8c8" },
+              { role: "Investors", desc: "Move faster through unfamiliar technical evidence. Ask the agent to surface assumptions, missing data, physical questions, and the claims that deserve a harder look before the next call.", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z", color: "#5ba8c8" },
               { role: "Engineers", desc: "Use the agent as a technical thinking surface for messy systems work: extract data, compare assumptions, sketch models, generate visuals, and turn scattered evidence into something testable.", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z", color: "#5b8dd9" },
             ].map(item => (
               <div key={item.role} className="group relative rounded-2xl border border-[#1a2a3e] bg-gradient-to-b from-[#0d1424] to-[#080c16] p-8 text-center transition-all hover:border-[#2a4a6a] hover:shadow-lg hover:shadow-[#5b8dd9]/5">
@@ -387,13 +383,13 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <PriceCard title="Free" price="$0" period=""
             features={["3 projects", "5 messages / day", "Basic extraction", "Community support"]}
-            cta="Get Started" href="/signup" />
+            cta="Start Free" href="/signup" />
           <PriceCard title="Plus" price="$19" period="/mo"
             features={["50 projects", "Unlimited messages", "Full extraction + simulation", "Decision briefs + PDF export", "Priority processing"]}
-            cta="Get Started" href="/signup" />
+            cta="Start Plus" href="/signup" />
           <PriceCard title="Pro" price="$99" period="/mo"
             features={["Unlimited projects", "Memory vault", "API access", "Advanced reasoning", "Priority support", "Custom domains"]}
-            cta="Get Started" href="/signup" />
+            cta="Start Pro" href="/signup" />
         </div>
       </section>
 
@@ -410,7 +406,7 @@ export default function HomePage() {
         <div className="relative max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h2 className="text-[32px] sm:text-[42px] font-bold tracking-tight leading-tight mb-5">
             <span className="bg-gradient-to-r from-[#4db8a4] via-[#5ba8c8] to-[#5b8dd9] bg-clip-text text-transparent">
-              Bring us your hardest technical problems.
+              Bring us your hardest technical problems
             </span>
           </h2>
           <p className="text-[18px] text-white mb-10">

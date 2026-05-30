@@ -14,8 +14,8 @@ export default function FeaturesPage() {
             <span className="bg-gradient-to-r from-[#4db8a4] to-[#5b8dd9] bg-clip-text text-transparent">capabilities</span>
           </h1>
           <p className="text-[18px] sm:text-[20px] text-[#8a9aae] leading-[1.8] max-w-3xl mx-auto">
-            Exergy Lab can read, extract, reason, model, chart, brief, and iterate across technical evidence in
-            one workspace for energy work that does not fit a template.
+            Exergy Lab can read, extract, analyze, plan, reason, build, and iterate across technical any form of technical information in
+            one workspace enabling real-world results to be achieved sooner.
           </p>
         </div>
       </section>
@@ -31,26 +31,26 @@ export default function FeaturesPage() {
             {[
               {
                 title: "Powerful evidence intake",
-                desc: "Upload messy technical material and ask the agent to find the useful structure inside it. Datasheets, PDFs, CSVs, notes, and project context can all become part of the same working brief.",
-                example: "Example: Bring a spec sheet and a rough site description, then ask the agent to extract the signals, claims, gaps, and next questions.",
+                desc: "Upload complex technical material and ask the agent to find the useful structure inside it. Datasheets, PDFs, CSVs, notes, and project context can all become part of the same working brief.",
+                example: "Example: Upload a spec sheet and a provide basic context. Ask the agent to extract the signals, claims, gaps, and recommend next steps.",
                 color: "#4db8a4",
               },
               {
                 title: "Model-aware execution",
-                desc: "When the inputs support it, Exergy Lab can help structure calculations, compare assumptions, sketch model logic, and turn raw parameters into a clearer analytical surface.",
-                example: "Example: Ask which operating assumptions matter most before building a financial, performance, or risk model.",
+                desc: "When the inputs support it, Exergy Lab can help perform calculations, state assumptions, build entire models, and turn raw parameters into a clearer analytical results.",
+                example: "Example: Ask which operating assumptions matter most before building a financial, performance, or risk model. The agent will perform a sensitivity analysis and provide the answers.",
                 color: "#5ba8c8",
               },
               {
                 title: "Broad deep tech reach",
-                desc: "The workspace is designed to move across energy systems of many kinds: heat, power, storage, fuels, industrial processes, buildings, infrastructure, and emerging technologies.",
-                example: "Example: Use the same agent to reason about waste heat, district energy, solar performance, or a new technical concept.",
+                desc: "The workspace is designed to provide value across technical domains of any kind: hardware, materials, processes, electronics, energy systems, infrastructure, software-defined systems, and emerging technologies.",
+                example: "Example: Use the same agent to reason about a battery cell material, a semiconductor process, an aerospace structure, or a brand-new technical concept.",
                 color: "#5b8dd9",
               },
               {
                 title: "Agentic output generation",
                 desc: "The agent is the interface for collecting context, asking follow-up questions, shaping analysis, and turning the work into artifacts a team can read, challenge, and improve.",
-                example: "Example: Ask for a technical brief, a next-measurement plan, a model outline, charts, or a clearer explanation of the assumptions.",
+                example: "Example: Ask for a technical brief, a measurement plan, a model conversion, edit existing charts, or a provide comprehensive comparison to the current state-of-the-art.",
                 color: "#4db8a4",
               },
             ].map(item => (
@@ -122,7 +122,7 @@ export default function FeaturesPage() {
       <section className="relative border-y border-[#141c2c] bg-[#0a0e18] py-24">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <h2 className="text-[28px] sm:text-[34px] font-bold text-[#d0d8e4] tracking-tight text-center mb-16">
-            More capabilities inside the agent
+            Advanced tools and capabilities are built-in
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
@@ -132,7 +132,7 @@ export default function FeaturesPage() {
               { title: "PDF extraction", desc: "Upload papers, decks, reports, and spec sheets so the first pass starts from the material you already have." },
               { title: "Project workspace", desc: "Keep files, runs, notes, artifacts, generated outputs, and follow-up questions connected to the same project." },
               { title: "Exports", desc: "Create briefs, reports, and supporting artifacts that can travel outside the workspace." },
-              { title: "Exergy-aware lens", desc: "Bring thermodynamic quality into conversations where raw energy totals can be misleading." },
+              { title: "First-principles lens", desc: "Bring physical and thermodynamic rigor into conversations where headline numbers or raw totals can be misleading." },
               { title: "Risk language", desc: "Surface uncertainty, missing inputs, unsupported claims, and weak assumptions in plain language." },
               { title: "Next-measurement plans", desc: "Turn uncertainty into a practical list of data, tests, or context that would make the work stronger." },
             ].map(item => (
@@ -156,7 +156,7 @@ export default function FeaturesPage() {
             </span>
           </h2>
           <p className="text-[17px] text-[#7a8a9e] mb-10 leading-relaxed">
-            Create a project and let the agent start turning messy technical evidence into a useful brief.
+            Create a project and let the agent start turning complex technical evidence into a useful brief.
           </p>
           <a href="/">
             <button className="group relative px-12 py-4 rounded-xl text-[17px] font-semibold text-white overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#3a7a6a]/20">
