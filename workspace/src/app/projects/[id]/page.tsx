@@ -269,12 +269,11 @@ function resizeChatInput(textarea: HTMLTextAreaElement | null, value: string) {
 const LOW_INFORMATION_STATUS = /^(?:run started|run created|starting run|working on your request|working through the request)\.?$/i;
 
 const LOADING_MESSAGES = [
-  "Reading the request and workspace context",
-  "Checking attached files and prior results",
-  "Choosing whether to answer directly or use a tool",
-  "Running the selected analysis path",
-  "Checking intermediate outputs for consistency",
-  "Writing the final answer and download links",
+  "Mapping the request to the right analysis path",
+  "Extracting the concrete claims, variables, and constraints",
+  "Running the selected analysis workflow",
+  "Checking outputs for unsupported claims and missing inputs",
+  "Turning the results into clear next steps",
 ];
 const progressMessages = LOADING_MESSAGES;
 const THINKING_MODE_STORAGE_KEY = "exergy_lab_thinking_mode";
@@ -2406,7 +2405,7 @@ RULES:
                 <div className={`${canvasOpen ? "max-w-full" : "max-w-[960px]"} mx-auto flex gap-2 items-stretch`}>
                   {lastFollowups.slice(0, 3).map((f, i) => (
                     <button key={i} onClick={() => { setBusy(true); sendMessage(f); }} title={f} disabled={busy}
-                      className="flex-1 min-w-0 px-4 py-2.5 rounded-2xl text-[14px] leading-snug text-white/90 bg-[#151d35] border border-[#2a3358] hover:text-white hover:bg-[#263163] hover:border-[#6077b8] hover:shadow-[0_0_0_1px_rgba(96,119,184,0.35)] transition-colors duration-150 text-left disabled:opacity-40 disabled:pointer-events-none line-clamp-2 whitespace-normal break-words cursor-pointer">
+                      className="flex-1 min-w-0 px-4 py-2.5 rounded-2xl text-[14px] leading-snug text-[var(--text-secondary)] bg-[var(--bg-card)] border border-[var(--border)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-light)] transition-colors duration-150 text-left disabled:opacity-40 disabled:pointer-events-none line-clamp-2 whitespace-normal break-words cursor-pointer">
                       {f}
                     </button>
                   ))}
@@ -2426,26 +2425,26 @@ RULES:
               {pendingFiles.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {pendingFiles.map((f, i) => (
-                    <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#151d35] border border-[#2a3358] text-[15px] text-white">
+                    <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border)] text-[15px] text-[var(--text-primary)]">
                       <IconPaperclip />
                       <span className="truncate max-w-[160px] font-medium">{f.name}</span>
-                      <button onClick={() => removePendingFile(i)} className="text-white/60 hover:text-white ml-0.5 text-sm leading-none">&times;</button>
+                      <button onClick={() => removePendingFile(i)} className="text-[var(--text-dim)] hover:text-[var(--text-primary)] ml-0.5 text-sm leading-none">&times;</button>
                     </div>
                   ))}
                 </div>
               )}
               <input ref={fileRef} type="file" multiple accept=".pdf,.csv,.xlsx,.xls,.docx,.doc,.txt,.json,.png,.jpg,.jpeg,.gif,.webp,.svg,.xml,.yaml,.yml,.md,.pptx,.rtf,.tsv,.parquet" style={{ display: "none" }} onChange={e => { addPendingFiles(e.target.files); e.target.value = ""; }} />
-              <div className="rounded-2xl border border-[#2a3358] bg-[#151d35] shadow-[0_14px_40px_rgba(0,0,0,0.24)] focus-within:border-[#6077b8] transition-colors">
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-[0_14px_40px_rgba(0,0,0,0.24)] focus-within:border-[var(--accent-blue)] transition-colors">
                 <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
-                  placeholder={busy ? "Keep typing while I work..." : "Message Exergy Lab..."}
+                  placeholder="Message Exergy Lab..."
                   rows={1}
-                  className="w-full bg-transparent px-4 pt-3.5 pb-1.5 text-[17px] leading-relaxed text-white placeholder:text-white/55 resize-none overflow-hidden focus:outline-none"
+                  className="w-full bg-transparent px-4 pt-3.5 pb-1.5 text-[17px] leading-relaxed text-[var(--text-primary)] placeholder:text-[var(--text-dim)] resize-none overflow-hidden focus:outline-none"
                   style={{ height: `${CHAT_INPUT_MIN_HEIGHT}px`, minHeight: `${CHAT_INPUT_MIN_HEIGHT}px`, maxHeight: `${CHAT_INPUT_MAX_HEIGHT}px` }}
                   onInput={e => resizeChatInput(e.target as HTMLTextAreaElement, (e.target as HTMLTextAreaElement).value)} />
                 <div className="flex items-center justify-between gap-2 px-3 pb-2.5">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <button onClick={() => fileRef.current?.click()}
-                      className="h-10 w-10 rounded-xl flex items-center justify-center text-white/72 hover:text-white hover:bg-white/10 disabled:opacity-30 transition-colors"
+                      className="h-10 w-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] disabled:opacity-30 transition-colors"
                       title="Attach files">
                       <IconPaperclip size={24} />
                     </button>

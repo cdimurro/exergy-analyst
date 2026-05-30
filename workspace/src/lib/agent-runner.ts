@@ -536,23 +536,23 @@ function actionAttemptTimeoutMs(actionType: ActionType): number {
 
 function heartbeatMessagesForAction(actionType: ActionType): string[] {
   const fallback = [
-    "Reviewing the request and current workspace context.",
-    "Running the selected workspace tools and calculations.",
-    "Checking intermediate results before writing the answer.",
-    "Preparing the final response from the completed work.",
+    "Extracting the concrete variables, claims, and constraints from the request.",
+    "Running the selected analysis path and collecting outputs.",
+    "Reviewing intermediate outputs for unsupported claims or missing inputs.",
+    "Converting the finished work into a concise answer.",
   ];
   const byAction: Partial<Record<ActionType, string[]>> = {
     agent_workspace: [
-      "Preparing the isolated workspace and readable input files.",
-      "Generating and running project-specific analysis code.",
-      "Checking calculated tables, files, and report outputs.",
-      "Converting the workspace results into a client-ready answer.",
+      "Preparing a project workspace for this request.",
+      "Generating analysis code tailored to the current problem.",
+      "Executing the analysis and collecting generated tables, figures, and reports.",
+      "Reviewing outputs for missing values, unsupported claims, or runtime errors.",
     ],
     deep_agent: [
-      "Planning the multi-tool work and checking current context.",
-      "Running the most relevant research, modelling, and data tools.",
-      "Building an evidence ledger from completed tool results.",
-      "Verifying calculations, source support, and remaining gaps.",
+      "Breaking the request into evidence, calculations, risks, and output needs.",
+      "Running the relevant research, modelling, and data steps.",
+      "Consolidating completed tool results into an evidence ledger.",
+      "Checking calculations, source support, and unresolved gaps.",
       "Writing the final answer from the verified evidence ledger.",
     ],
     physics_simulation: [
@@ -599,6 +599,36 @@ function heartbeatMessagesForAction(actionType: ActionType): string[] {
     ],
   };
   return byAction[actionType] || fallback;
+}
+
+function visibleRequestSubject(message: string): string {
+  const text = stripAttachmentChrome(message).toLowerCase();
+  if (/\b(nmc|lithium|battery|cathode|anode|electrolyte|cycle life)\b/.test(text)) return "battery material readiness";
+  if (/\b(waste heat|heat recovery|district heating|thermal|exergy)\b/.test(text)) return "thermal and exergy opportunity";
+  if (/\b(capex|opex|npv|irr|lcoe|payback|financial model|economics)\b/.test(text)) return "techno-economic model";
+  if (/\b(report|brief|memo|deck|pitch|presentation|spec sheet|schematic)\b/.test(text)) return "deliverable request";
+  if (/\b(simulation|physics|solver|model|calculation)\b/.test(text)) return "physics and calculation request";
+  if (/\b(research|benchmark|literature|market|competitor)\b/.test(text)) return "research and benchmark request";
+  return "technical request";
+}
+
+function intakeProgressMessage(message: string, documentCount: number): string {
+  const subject = visibleRequestSubject(message);
+  if (documentCount > 0) {
+    return `Reading ${documentCount} uploaded file${documentCount === 1 ? "" : "s"} and mapping the ${subject} to the right workflow.`;
+  }
+  return `No uploaded files detected; mapping the ${subject} from the prompt and project history.`;
+}
+
+function readinessProgressMessage(readiness: ReturnType<typeof buildEnvironmentReadiness>, documentCount: number): string {
+  const missingRequired = readiness.checks.filter((check) => check.required && check.status === "missing");
+  if (missingRequired.length > 0) {
+    return `Runtime setup is missing ${missingRequired.map((check) => check.label).join(", ")} before full tool execution.`;
+  }
+  if (documentCount > 0) {
+    return "Runtime is ready; combining uploaded evidence with the project history.";
+  }
+  return "Runtime is ready; selecting the analysis path from the prompt and project history.";
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
@@ -1481,14 +1511,14 @@ export async function startAgentRun(projectId: string, runId: string): Promise<v
   if (!project) throw new Error("Project not found");
 
   await storage.updateAgentRun(projectId, runId, { status: "running" });
-  await emit(projectId, runId, "progress", "Reviewing the request and project context.");
-  const readiness = buildEnvironmentReadiness();
-  await emit(projectId, runId, "progress", "Checking available tools and data sources.", {
-    tool_readiness: readiness,
-  });
 
   try {
     const docs = await resolveRunDocuments(projectId, run);
+    await emit(projectId, runId, "progress", intakeProgressMessage(run.user_message, docs.length));
+    const readiness = buildEnvironmentReadiness();
+    await emit(projectId, runId, "progress", readinessProgressMessage(readiness, docs.length), {
+      tool_readiness: readiness,
+    });
     const decision = run.plan && run.plan.some((step) => step.action_type !== "synthesis" && !step.display_only)
       ? null
       : await routeRun(projectId, run, project, docs);

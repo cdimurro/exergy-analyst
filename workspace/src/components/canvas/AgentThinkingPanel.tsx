@@ -49,6 +49,24 @@ function statusLabel(status?: string): string {
   return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function dedupeAdjacentEvents(events: AgentActivityEntry[]): AgentActivityEntry[] {
+  const deduped: AgentActivityEntry[] = [];
+  for (const event of events) {
+    const previous = deduped[deduped.length - 1];
+    if (
+      previous &&
+      previous.title === event.title &&
+      previous.detail === event.detail &&
+      previous.status === event.status &&
+      previous.actionType === event.actionType
+    ) {
+      continue;
+    }
+    deduped.push(event);
+  }
+  return deduped;
+}
+
 function ActivityRow({ event }: { event: AgentActivityEntry }) {
   const duration = durationLabel(event.durationMs);
   return (
@@ -119,10 +137,12 @@ export function AgentThinkingPanel({
   plan?: PlanStepLike[];
   title?: string;
 }) {
-  const completed = events.filter((event) => event.status === "done").length;
-  const failed = events.filter((event) => event.status === "failed").length;
-  const running = events.find((event) => event.status === "running");
-  const sortedEvents = [...events].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  const sortedEvents = dedupeAdjacentEvents(
+    [...events].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+  );
+  const completed = sortedEvents.filter((event) => event.status === "done").length;
+  const failed = sortedEvents.filter((event) => event.status === "failed").length;
+  const running = sortedEvents.find((event) => event.status === "running");
 
   return (
     <div className="space-y-6">
@@ -134,7 +154,7 @@ export function AgentThinkingPanel({
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <span className="rounded-md border border-[var(--border)] px-2.5 py-1 text-[12px] text-[var(--text-muted)]">
-            {events.length} events
+            {sortedEvents.length} events
           </span>
           <span className="rounded-md border border-[var(--border)] px-2.5 py-1 text-[12px] text-[var(--text-muted)]">
             {completed} completed

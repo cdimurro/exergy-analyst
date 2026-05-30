@@ -143,7 +143,7 @@ export function ProjectCreator({ initialDescription = "", variant = "hero" }: Pr
         className={`relative rounded-2xl border overflow-hidden transition-all ${
           dragOver
             ? "border-[var(--accent-blue)] bg-[var(--accent-blue)]/5 shadow-[0_0_30px_rgba(91,141,217,0.15)]"
-            : "border-[#2a3358] bg-[#151d35] shadow-xl shadow-black/20"
+            : "border-[var(--border)] bg-[var(--bg-card)] shadow-xl shadow-black/20"
         }`}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
@@ -155,10 +155,10 @@ export function ProjectCreator({ initialDescription = "", variant = "hero" }: Pr
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Describe the challenge you are trying to solve, or ask the agent to conduct research on any topic..."
+          placeholder="Message Exergy Lab..."
           rows={4}
           disabled={creating}
-          className="w-full bg-transparent px-5 pt-5 pb-2 text-[15px] text-white placeholder:text-white/55 resize-none focus:outline-none focus:ring-0 disabled:opacity-50 leading-relaxed"
+          className="w-full bg-transparent px-5 pt-5 pb-2 text-[15px] text-[var(--text-primary)] placeholder:text-[var(--text-dim)] resize-none focus:outline-none focus:ring-0 disabled:opacity-50 leading-relaxed"
           style={{ minHeight: "120px", maxHeight: "300px" }}
           onInput={(e) => {
             const t = e.target as HTMLTextAreaElement;
@@ -173,16 +173,16 @@ export function ProjectCreator({ initialDescription = "", variant = "hero" }: Pr
             {files.map((f, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#202940] border border-[#2a3358] text-[12px] text-white"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[12px] text-[var(--text-primary)]"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M7 1H3.5A1.5 1.5 0 002 2.5v7A1.5 1.5 0 003.5 11h5A1.5 1.5 0 0010 9.5V4L7 1z" stroke="currentColor" strokeWidth="1" />
                 </svg>
                 <span className="truncate max-w-[180px]">{f.name}</span>
-                <span className="text-[10px] text-white/55">{(f.size / 1024).toFixed(0)} KB</span>
+                <span className="text-[10px] text-[var(--text-dim)]">{(f.size / 1024).toFixed(0)} KB</span>
                 <button
                   onClick={() => removeFile(i)}
-                  className="text-white/60 hover:text-white ml-0.5 text-sm leading-none"
+                  className="text-[var(--text-dim)] hover:text-[var(--text-primary)] ml-0.5 text-sm leading-none"
                 >
                   &times;
                 </button>
@@ -195,7 +195,7 @@ export function ProjectCreator({ initialDescription = "", variant = "hero" }: Pr
         <div className="flex items-center justify-between px-4 pb-3 pt-1">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <div
-              className="relative flex h-10 items-center gap-2 px-3 rounded-xl text-[13px] font-medium text-white/72 hover:text-white hover:bg-white/10 transition-all cursor-pointer select-none overflow-hidden"
+              className="relative flex h-10 items-center gap-2 px-3 rounded-xl text-[13px] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all cursor-pointer select-none overflow-hidden"
             >
               <IconPaperclip />
               <input

@@ -13,13 +13,36 @@ import { NextRequest, NextResponse } from "next/server";
 import { callGemma4 } from "@/lib/backend";
 
 const FALLBACK_DOCUMENT_ACK =
-  "Analyzing the attached evidence now. I am checking what can be computed, what remains uncertain, and which data would improve confidence.";
+  "Reading the uploaded evidence now, separating source-backed claims from gaps, and identifying what can be computed from the files.";
+
+function requestSubject(message: string): string {
+  const text = message.toLowerCase();
+  if (/\b(nmc|lithium|battery|cathode|anode|electrolyte|cycle life)\b/.test(text)) return "battery material readiness";
+  if (/\b(waste heat|heat recovery|district heating|thermal|exergy)\b/.test(text)) return "thermal and exergy opportunity";
+  if (/\b(capex|opex|npv|irr|lcoe|payback|financial model|economics)\b/.test(text)) return "techno-economic model";
+  if (/\b(report|brief|memo|deck|pitch|presentation|spec sheet|schematic)\b/.test(text)) return "deliverable";
+  if (/\b(simulation|physics|solver|model|calculation)\b/.test(text)) return "physics calculation";
+  if (/\b(research|benchmark|literature|market|competitor)\b/.test(text)) return "research benchmark";
+  return "technical request";
+}
+
+function fallbackAck(message: string, hasDocuments?: boolean, agentMode?: "plan" | "implement"): string {
+  const subject = requestSubject(message);
+  if (hasDocuments) {
+    return agentMode === "plan"
+      ? `Drafting a grounded plan for the uploaded ${subject} evidence and holding execution for approval.`
+      : FALLBACK_DOCUMENT_ACK;
+  }
+  return agentMode === "plan"
+    ? `Drafting a plan for the ${subject} and holding execution for approval.`
+    : `Starting the ${subject} from the prompt and project history.`;
+}
 
 function cleanAck(value: string): string {
   const cleaned = value.replace(/^["']|["']$/g, "").replace(/\s+/g, " ").trim();
-  if (!cleaned) return "Reading the request and workspace context.";
-  if (!/[.!?]$/.test(cleaned)) return "Reading the request and workspace context.";
-  if (/\b(to|and|or|with|for|the|a|an)$/i.test(cleaned)) return "Reading the request and workspace context.";
+  if (!cleaned) return "";
+  if (!/[.!?]$/.test(cleaned)) return "";
+  if (/\b(to|and|or|with|for|the|a|an)$/i.test(cleaned)) return "";
   return cleaned;
 }
 
@@ -37,7 +60,7 @@ export async function POST(
     };
 
     if (!message) {
-      return NextResponse.json({ ack: "Reading the request and workspace context." });
+      return NextResponse.json({ ack: "Starting from the current project context." });
     }
 
     if (hasDocuments) {
@@ -70,9 +93,9 @@ Your 1-2 sentence acknowledgment:`;
       },
     );
 
-    return NextResponse.json({ ack: cleanAck(ack) });
+    return NextResponse.json({ ack: cleanAck(ack) || fallbackAck(message, hasDocuments, agentMode) });
   } catch {
     // Non-fatal — frontend falls back to hardcoded ack
-    return NextResponse.json({ ack: "Reading the request and workspace context." });
+    return NextResponse.json({ ack: "Starting from the prompt and project history." });
   }
 }
