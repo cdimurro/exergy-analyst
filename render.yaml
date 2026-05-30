@@ -27,6 +27,8 @@ services:
         sync: false
       - key: CONTACT_EMAIL
         value: support@exergylab.com
+      - key: NEXT_PUBLIC_NATURE_ENGINE_EXPLORE_URL
+        value: /nature/explorer
       - key: EXERGY_AGENT_SANDBOX_MODE
         value: local
       - key: EXERGY_AGENT_ALLOW_DEPENDENCY_INSTALL

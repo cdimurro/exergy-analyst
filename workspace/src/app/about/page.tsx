@@ -1,5 +1,8 @@
 "use client";
 
+const natureExploreUrl =
+  process.env.NEXT_PUBLIC_NATURE_ENGINE_EXPLORE_URL || "/nature/explorer";
+
 export default function AboutPage() {
   return (
     <div className="bg-[#080c16]">
@@ -181,7 +184,7 @@ export default function AboutPage() {
             Exergy Lab Nature explores the same idea in living systems: bringing fragmented evidence,
             place-based context, generated briefs, and clearer questions into restoration work.
           </p>
-          <a href="/nature" className="inline-flex items-center gap-2 text-[16px] font-medium text-[#00bf63] hover:text-[#6ad0bc] transition-colors">
+          <a href={natureExploreUrl} className="inline-flex items-center gap-2 text-[16px] font-medium text-[#00bf63] hover:text-[#6ad0bc] transition-colors">
             Explore Exergy Lab Nature
             <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 3l4 4-4 4" />
