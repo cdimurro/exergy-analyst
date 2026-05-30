@@ -7,6 +7,7 @@ from statistics import mean
 
 from .exergy import accessible_exergy_mwh, thermal_exergy_factor
 from .models import AnalysisResult, CleanRecord, Confidence, EnrichedRecord, Insight, UseCase
+from .physical_reasoning import is_physical, robust_weighted_mean
 
 
 def analyze_records(records: list[CleanRecord], use_case: UseCase) -> AnalysisResult:
@@ -14,9 +15,17 @@ def analyze_records(records: list[CleanRecord], use_case: UseCase) -> AnalysisRe
 
     enriched = tuple(_enrich_record(record) for record in records)
     usable = [record for record in enriched if record.exergy_mwh is not None]
-    total_energy = sum(record.clean.energy_mwh or 0.0 for record in enriched)
-    total_exergy = sum(record.exergy_mwh or 0.0 for record in usable)
-    weighted_fx = total_exergy / total_energy if total_energy > 0.0 else None
+    # Only physically valid energy contributes to totals and to the
+    # delivery-weighted quality factor, so one negative or garbage row cannot
+    # corrupt the aggregate.
+    contributing = [
+        record for record in usable if is_physical("magnitude", record.clean.energy_mwh)
+    ]
+    total_energy = sum(record.clean.energy_mwh or 0.0 for record in contributing)
+    total_exergy = sum(record.exergy_mwh or 0.0 for record in contributing)
+    weighted_fx = robust_weighted_mean(
+        (record.clean.energy_mwh, record.exergy_factor) for record in contributing
+    )
     confidence = _overall_confidence(enriched)
     insights = tuple(_build_insights(usable, use_case, weighted_fx, confidence))
     return AnalysisResult(
@@ -43,11 +52,19 @@ def _enrich_record(record: CleanRecord) -> EnrichedRecord:
     exergy_mwh = None
     fidelity = "F0"
     if record.energy_mwh is not None and record.source_temp_c is not None and record.sink_temp_c is not None:
-        fx = thermal_exergy_factor(record.source_temp_c, record.sink_temp_c)
-        exergy_mwh = accessible_exergy_mwh(max(0.0, record.energy_mwh), fx)
-        fidelity = "F3" if record.timestamp else "F2"
-        if fx == 0.0:
-            notes.append("source_temperature_not_above_sink")
+        try:
+            fx = thermal_exergy_factor(record.source_temp_c, record.sink_temp_c)
+        except ValueError:
+            # Non-physical temperature (at or below absolute zero). Do not crash
+            # the whole run; flag the row and leave its exergy uncomputed.
+            fx = None
+            notes.append("non_physical_temperature")
+            fidelity = "F1"
+        else:
+            exergy_mwh = accessible_exergy_mwh(max(0.0, record.energy_mwh), fx)
+            fidelity = "F3" if record.timestamp else "F2"
+            if fx == 0.0:
+                notes.append("source_temperature_not_above_sink")
     elif record.energy_mwh is not None:
         fidelity = "F1"
     score = exergy_mwh or 0.0
@@ -161,6 +178,13 @@ def _cannot_prove(records: tuple[EnrichedRecord, ...], use_case: UseCase) -> lis
     ]
     if any(record.clean.issues for record in records):
         limits.append("Rows with missing energy or temperature fields cannot support stream-specific claims.")
+    notes = {note for record in records for note in record.notes}
+    if "non_physical_temperature" in notes:
+        limits.append("One or more streams have a temperature at or below absolute zero and were left out of the useful-work estimate; correct the data before relying on the ranking.")
+    if "source_temperature_not_above_sink" in notes:
+        limits.append("One or more streams are at or below the reference temperature, so they carry no directly recoverable useful work without a heat pump.")
+    if any(not is_physical("magnitude", record.clean.energy_mwh) for record in records):
+        limits.append("One or more streams report a negative or non-physical energy quantity and were excluded from the totals; confirm the metering before use.")
     if use_case == UseCase.DISTRICT_HEATING:
         limits.append("The current pass does not prove customer comfort or hydraulic feasibility.")
     if use_case == UseCase.INDUSTRIAL_WASTE_HEAT:

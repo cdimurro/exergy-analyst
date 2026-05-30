@@ -1,3 +1,12 @@
+import {
+  ABSOLUTE_ZERO_C,
+  checkQuantity,
+  clamp,
+  outsideTypicalBand,
+  reconcile,
+  type QuantityKind,
+} from "@/lib/physical-reasoning";
+
 type Metric = {
   label: string;
   value: string;
@@ -19,6 +28,55 @@ export interface EngineeringSolverResult {
   missing_inputs: string[];
   sensitivity?: Array<{ case: string; metric: string; value: string; note?: string }>;
   normalized_params: Record<string, number>;
+  ranking?: HeatRecoveryRanking;
+}
+
+export interface WasteHeatStream {
+  label: string;
+  energy_mwh: number;
+  source_temp_c: number;
+  ambient_temp_c?: number;
+  mass_flow_kg_s?: number;
+  cp_kj_kg_k?: number;
+}
+
+export interface RankedStream {
+  rank: number;
+  label: string;
+  energy_mwh: number;
+  energy_rank: number;
+  source_temp_c: number;
+  carnot_factor: number;
+  exergy_mwh: number;
+  grade: "high" | "medium" | "low";
+  flags: string[];
+}
+
+export interface ReferenceStateSensitivity {
+  label: string;
+  exergy_mwh_base: number;
+  exergy_mwh_warm: number;
+  pct_change: number;
+  rank_changed: boolean;
+  fragile: boolean;
+}
+
+export interface StreamConsistencyCheck {
+  label: string;
+  delta_t_c: number;
+  implied_hours_min: number | null;
+  implied_hours_max: number | null;
+  status: "ok" | "unresolved" | "low_duty" | "impossible" | "not_checked";
+  note: string;
+}
+
+export interface HeatRecoveryRanking {
+  reference_temp_c: number;
+  warm_reference_temp_c: number;
+  ranked_streams: RankedStream[];
+  fund_first: string | null;
+  reference_state_sensitivity: ReferenceStateSensitivity[];
+  consistency_checks: StreamConsistencyCheck[];
 }
 
 export const FIRST_PRINCIPLES_SOLVER_FAMILIES = [
@@ -391,6 +449,12 @@ export function runEconomicsSolver(input: Record<string, unknown>): EngineeringS
   }
   if (capacityMw !== undefined) metrics.push(metric("Capacity", capacityMw, "MW", 3));
   if (cf !== undefined) metrics.push(metric("Capacity factor", cf * 100, "%", 2));
+  if (cf !== undefined && !checkQuantity("fraction", cf).physical) {
+    limitations.push("The supplied capacity factor exceeds 100%, which is not physical; annual generation and every figure derived from it are unreliable until the input is corrected.");
+  }
+  if (p.efficiency_pct !== undefined && !checkQuantity("percent", p.efficiency_pct).physical) {
+    limitations.push("The supplied efficiency is outside the 0 to 100% range, which is not physical for a first-law efficiency; check the input before using the result.");
+  }
 
   const heatRate = p.heat_rate_btu_per_kwh;
   const fuelPrice = p.fuel_price_per_mmbtu;
@@ -512,11 +576,52 @@ function tempKFromC(value: number): number {
   return value + KELVIN_OFFSET;
 }
 
+// Known physical quantities and the domain each must satisfy. Curated (not a
+// blanket suffix rule) so signed coefficients and temperature differences are
+// not misjudged. Absolute temperatures must exceed absolute zero, amounts must
+// be non-negative, and efficiencies must lie in 0 to 100%.
+const PHYSICAL_PARAM_KINDS: Array<[string, QuantityKind]> = [
+  ["hot_temp_c", "absolute_temperature_c"], ["cold_temp_c", "absolute_temperature_c"],
+  ["reference_temp_c", "absolute_temperature_c"], ["temperature_c", "absolute_temperature_c"],
+  ["inlet_temp_c", "absolute_temperature_c"], ["outlet_temp_c", "absolute_temperature_c"],
+  ["hot_in_temp_c", "absolute_temperature_c"], ["hot_out_temp_c", "absolute_temperature_c"],
+  ["cold_in_temp_c", "absolute_temperature_c"], ["cold_out_temp_c", "absolute_temperature_c"],
+  ["cell_temp_c", "absolute_temperature_c"],
+  ["heat_kw", "magnitude"], ["mass_flow_kg_s", "magnitude"], ["mass_kg", "magnitude"],
+  ["flow_m3_s", "magnitude"], ["area_m2", "magnitude"], ["swept_area_m2", "magnitude"],
+  ["electric_power_kw", "magnitude"], ["capacity_kw", "magnitude"], ["current_a", "magnitude"],
+  ["head_m", "magnitude"], ["irradiance_w_m2", "magnitude"], ["storage_capacity_mwh", "magnitude"],
+  ["cop", "magnitude"],
+  ["efficiency_pct", "percent"], ["pump_efficiency_pct", "percent"], ["fan_efficiency_pct", "percent"],
+  ["compressor_efficiency_pct", "percent"], ["turbine_efficiency_pct", "percent"],
+  ["module_efficiency_pct", "percent"], ["round_trip_efficiency_pct", "percent"],
+  ["faradaic_efficiency_pct", "percent"], ["recovery_pct", "percent"], ["salt_rejection_pct", "percent"],
+  ["capture_rate_pct", "percent"], ["conversion_pct", "percent"], ["selectivity_pct", "percent"],
+  ["yield_pct", "percent"],
+];
+
+function humanizeParam(key: string): string {
+  return key.replace(/_(c|kw|mw|kwh|mwh|gwh|kg_s|kg_h|kg|m3_s|m3_h|m2|m|a|v|pa|bar|pct|w_m2)$/g, "").replace(/_/g, " ").trim() || key;
+}
+
+function validatePhysicalParams(p: Record<string, number>): string[] {
+  const issues: string[] = [];
+  for (const [key, kind] of PHYSICAL_PARAM_KINDS) {
+    const value = p[key];
+    if (value === undefined) continue;
+    const verdict = checkQuantity(kind, value);
+    if (!verdict.physical) {
+      issues.push(`The supplied ${humanizeParam(key)} (${formatNumber(value, 2)}) ${verdict.reason}; check the input before using the result.`);
+    }
+  }
+  return issues;
+}
+
 export function runPhysicsSolver(input: Record<string, unknown>): EngineeringSolverResult {
   const p = collectSolverParams(input);
   const metrics: Metric[] = [];
   const assumptions: string[] = [];
-  const limitations: string[] = [];
+  const limitations: string[] = [...validatePhysicalParams(p)];
   const missing = new Set<string>();
 
   const t0C = p.reference_temp_c ?? p.cold_temp_c ?? 25;
@@ -772,5 +877,352 @@ export function runPhysicsSolver(input: Record<string, unknown>): EngineeringSol
     limitations,
     missing_inputs: Array.from(missing),
     normalized_params: p,
+  };
+}
+
+// --- Multi-stream waste-heat recovery ranking -----------------------------
+//
+// A waste-heat program with several candidate streams is the canonical case
+// where ranking by energy quantity (MWh) instead of useful-work potential
+// (exergy) produces the wrong investment order: a large low-temperature
+// stream can carry far more heat than a small high-temperature one while
+// being thermodynamically almost useless. This solver enforces the second-law
+// ranking, classifies each stream's grade, tests how fragile the ranking is to
+// the reference-state (dead-state) temperature, and runs a mass-flow vs.
+// reported-energy consistency check. When that check cannot be reconciled it
+// is surfaced as an unresolved limitation rather than explained away with an
+// assumed specific heat.
+
+const STREAM_GRADE_HIGH_CARNOT = 0.4;
+const STREAM_GRADE_LOW_CARNOT = 0.15;
+const REFERENCE_STATE_WARM_DELTA_C = 15;
+const REFERENCE_STATE_FRAGILE_PCT = 30;
+const GAS_CP_KJ_KG_K = 1.0;
+const PLAUSIBLE_MIN_FULL_LOAD_HOURS = 876; // 10% utilization
+// Above this, an industrial heat stream is beyond adiabatic flame temperatures,
+// so the value is almost always a unit error rather than a real source.
+const TYPICAL_MAX_SOURCE_C = 3000;
+
+// Carnot factor of a hot source against a dead state, clamped to [0, 1] and
+// guarded against non-physical temperatures (at/below absolute zero, or a
+// source not hotter than the dead state -> no recoverable useful work).
+const CARNOT_AT = (sourceC: number, t0C: number): number => {
+  const hotK = tempKFromC(sourceC);
+  const t0K = tempKFromC(t0C);
+  if (hotK <= 0 || t0K <= 0 || hotK <= t0K) return 0;
+  return clamp(1 - t0K / hotK, 0, 1);
+};
+
+function gradeFromCarnot(carnot: number): RankedStream["grade"] {
+  if (carnot >= STREAM_GRADE_HIGH_CARNOT) return "high";
+  if (carnot >= STREAM_GRADE_LOW_CARNOT) return "medium";
+  return "low";
+}
+
+function roundHours(value: number): number {
+  return Math.round(value / 10) * 10;
+}
+
+interface StreamSelection {
+  streams: WasteHeatStream[];
+  /** Object rows in the chosen array that lacked a usable energy + temperature pair. */
+  droppedRows: number;
+}
+
+/**
+ * Pull waste-heat streams out of a loosely-typed action input, and report how
+ * many candidate rows were dropped for lacking a usable energy + source
+ * temperature, so a silently unparseable row can still be surfaced.
+ */
+function selectStreamRows(input: Record<string, unknown>): StreamSelection {
+  const candidateArrays: unknown[] = [];
+  for (const key of ["streams", "rows", "data", "table", "records"]) {
+    if (Array.isArray(input[key])) candidateArrays.push(input[key]);
+  }
+  for (const value of Object.values(input)) {
+    if (Array.isArray(value) && value.some((item) => item && typeof item === "object")) {
+      candidateArrays.push(value);
+    }
+  }
+
+  // Match an alias only on whole `_`-delimited token boundaries, so a source
+  // alias never swallows a different column that merely ends with the same
+  // suffix (e.g. `ambient_temp_c` must not be read as a source temperature).
+  const keyMatches = (norm: string, k: string): boolean =>
+    norm === k || norm.startsWith(`${k}_`) || norm.endsWith(`_${k}`) || norm.includes(`_${k}_`);
+  const pick = (row: Record<string, unknown>, keys: string[]): number | undefined => {
+    for (const [rawKey, rawValue] of Object.entries(row)) {
+      const norm = normalizeKey(rawKey);
+      if (keys.some((k) => keyMatches(norm, k))) {
+        const parsed = numberFrom(rawValue);
+        if (parsed !== null) return parsed;
+      }
+    }
+    return undefined;
+  };
+  const pickLabel = (row: Record<string, unknown>, index: number): string => {
+    for (const [rawKey, rawValue] of Object.entries(row)) {
+      const norm = normalizeKey(rawKey);
+      if ((norm.includes("stream") || norm.includes("name") || norm.includes("label") || norm.includes("source") || norm === "id")
+        && typeof rawValue === "string" && rawValue.trim()) {
+        return rawValue.trim();
+      }
+    }
+    return `Stream ${index + 1}`;
+  };
+
+  for (const arr of candidateArrays) {
+    if (!Array.isArray(arr)) continue;
+    const objectRows = arr.filter((item) => item && typeof item === "object" && !Array.isArray(item)) as Record<string, unknown>[];
+    const streams: WasteHeatStream[] = [];
+    objectRows.forEach((row, index) => {
+      const energy = pick(row, ["waste_heat_mwh", "energy_mwh", "heat_mwh", "waste_heat", "delivered_mwh", "annual_energy_mwh", "mwh"]);
+      const source = pick(row, ["source_temp_c", "exhaust_temp_c", "supply_temp_c", "hot_temp_c", "temperature_c", "source_temp"]);
+      if (energy === undefined || source === undefined) return;
+      streams.push({
+        label: pickLabel(row, index),
+        energy_mwh: energy,
+        source_temp_c: source,
+        ambient_temp_c: pick(row, ["ambient_temp_c", "reference_temp_c", "sink_temp_c", "t0_c", "return_temp_c", "ambient"]),
+        mass_flow_kg_s: pick(row, ["mass_flow_kg_s", "massflow_kg_s", "flow_kg_s", "mass_flow"]),
+        cp_kj_kg_k: pick(row, ["cp_kj_kg_k", "cp", "specific_heat"]),
+      });
+    });
+    if (streams.length >= 2) return { streams, droppedRows: objectRows.length - streams.length };
+  }
+  return { streams: [], droppedRows: 0 };
+}
+
+/**
+ * Public accessor used by callers that only need the parsed streams (e.g. to
+ * decide whether the ranking path applies). Returns [] when fewer than two
+ * usable streams are present so single-stream paths are unaffected.
+ */
+export function extractWasteHeatStreams(input: Record<string, unknown>): WasteHeatStream[] {
+  return selectStreamRows(input).streams;
+}
+
+export function runHeatRecoveryRankingSolver(input: Record<string, unknown>): EngineeringSolverResult {
+  const { streams, droppedRows } = selectStreamRows(input);
+  const assumptions: string[] = [];
+  const limitations: string[] = [];
+  if (droppedRows > 0) {
+    limitations.push(`${droppedRows} supplied row${droppedRows === 1 ? "" : "s"} could not be read as a stream (no usable energy quantity and source temperature) and ${droppedRows === 1 ? "is" : "are"} not part of the ranking.`);
+  }
+
+  if (streams.length < 2) {
+    return {
+      status: "needs_inputs",
+      solver_type: "physics",
+      title: "Waste-Heat Recovery Ranking",
+      executive_summary: "I need at least two streams, each with a heat quantity and a source temperature, to rank recovery priority.",
+      confidence: "needs_inputs",
+      computed_metrics: [],
+      assumptions,
+      limitations,
+      missing_inputs: ["two or more streams with energy (MWh) and source temperature (C)"],
+      normalized_params: {},
+    };
+  }
+
+  const ambients = streams.map((s) => s.ambient_temp_c).filter((v): v is number => v !== undefined);
+  const referenceTempC = ambients.length > 0 ? ambients[0] : 25;
+  if (ambients.length === 0) {
+    assumptions.push(`No ambient/reference temperature was supplied, so the dead state is assumed at ${referenceTempC} C. Exergy of low-temperature streams is highly sensitive to this choice.`);
+  }
+  const warmReferenceTempC = referenceTempC + REFERENCE_STATE_WARM_DELTA_C;
+
+  // Base exergy ranking, with per-stream validation of non-physical inputs.
+  const t0For = (s: WasteHeatStream): number => s.ambient_temp_c ?? referenceTempC;
+  const withExergy = streams.map((s) => {
+    const t0 = t0For(s);
+    const issues: string[] = [];
+    let valid = true;
+    const energyCheck = checkQuantity("magnitude", s.energy_mwh);
+    if (!energyCheck.physical) {
+      issues.push(`Reported energy ${energyCheck.reason}; treated as zero and excluded from the ranking.`);
+      valid = false;
+    }
+    const energy = Number.isFinite(s.energy_mwh) ? Math.max(0, s.energy_mwh) : 0;
+    const tempCheck = checkQuantity("absolute_temperature_c", s.source_temp_c);
+    if (!tempCheck.physical) {
+      issues.push(`Source temperature ${tempCheck.reason}. Correct the data before ranking.`);
+      valid = false;
+    } else if (outsideTypicalBand(s.source_temp_c, ABSOLUTE_ZERO_C, TYPICAL_MAX_SOURCE_C)) {
+      issues.push(`Source temperature ${s.source_temp_c} C is beyond the range of real process heat and is likely a unit error; confirm it before using this stream.`);
+      valid = false;
+    } else if (s.source_temp_c <= t0) {
+      issues.push("Source temperature is at or below the reference/ambient temperature, so there is no directly recoverable useful work (a heat pump would be required).");
+    }
+    const carnot = CARNOT_AT(s.source_temp_c, t0);
+    // An excluded (non-physical) stream carries no creditable useful work, so it
+    // sinks to the bottom of the ranking rather than leading it on a bad number.
+    const exergy = valid ? energy * carnot : 0;
+    return { stream: s, carnot, exergy, issues, valid };
+  });
+
+  const byExergy = [...withExergy].sort((a, b) => b.exergy - a.exergy);
+  const byEnergy = [...withExergy].sort((a, b) => b.stream.energy_mwh - a.stream.energy_mwh);
+  const energyRankOf = new Map(byEnergy.map((item, index) => [item.stream.label, index + 1]));
+
+  const invalidLabels = new Set(withExergy.filter((item) => !item.valid).map((item) => item.stream.label));
+  const ranked: RankedStream[] = byExergy.map((item, index) => {
+    const rank = index + 1;
+    const energyRank = energyRankOf.get(item.stream.label) ?? rank;
+    const grade = gradeFromCarnot(item.carnot);
+    const flags: string[] = [...item.issues];
+    const topHalfByEnergy = energyRank <= Math.ceil(streams.length / 2);
+    if (item.valid && grade === "low" && topHalfByEnergy && rank > energyRank) {
+      flags.push("High energy, low exergy: large heat quantity but poor thermodynamic quality. Do not prioritize on energy alone.");
+    }
+    return {
+      rank,
+      label: item.stream.label,
+      energy_mwh: item.stream.energy_mwh,
+      energy_rank: energyRank,
+      source_temp_c: item.stream.source_temp_c,
+      carnot_factor: Number(item.carnot.toFixed(4)),
+      exergy_mwh: Number(item.exergy.toFixed(2)),
+      grade,
+      flags,
+    };
+  });
+
+  // Reference-state (dead-state) sensitivity: re-rank at a warmer ambient, using
+  // the same validity zeroing as the base pass so excluded streams cannot
+  // reshuffle the order and manufacture spurious rank changes.
+  const warmRanked = [...withExergy]
+    .map((item) => {
+      const warmCarnot = CARNOT_AT(item.stream.source_temp_c, (item.stream.ambient_temp_c ?? referenceTempC) + REFERENCE_STATE_WARM_DELTA_C);
+      const warmEnergy = Number.isFinite(item.stream.energy_mwh) ? Math.max(0, item.stream.energy_mwh) : 0;
+      return { label: item.stream.label, exergy: item.valid ? warmEnergy * warmCarnot : 0 };
+    })
+    .sort((a, b) => b.exergy - a.exergy);
+  const warmRankOf = new Map(warmRanked.map((item, index) => [item.label, index + 1]));
+  const sensitivity: ReferenceStateSensitivity[] = ranked.map((rs) => {
+    const base = rs.exergy_mwh;
+    const warm = warmRanked.find((w) => w.label === rs.label)?.exergy ?? 0;
+    const pct = base > 0 ? ((warm - base) / base) * 100 : 0;
+    // Excluded streams carry no creditable exergy, so they are not part of the
+    // sensitivity story.
+    const excluded = invalidLabels.has(rs.label);
+    const rankChanged = !excluded && (warmRankOf.get(rs.label) ?? rs.rank) !== rs.rank;
+    const fragile = !excluded && (Math.abs(pct) >= REFERENCE_STATE_FRAGILE_PCT || rankChanged);
+    return {
+      label: rs.label,
+      exergy_mwh_base: base,
+      exergy_mwh_warm: Number(warm.toFixed(2)),
+      pct_change: Number(pct.toFixed(1)),
+      rank_changed: rankChanged,
+      fragile,
+    };
+  });
+  const fragileLabels = sensitivity.filter((s) => s.fragile).map((s) => s.label);
+  if (fragileLabels.length > 0) {
+    limitations.push(
+      `Reference-state sensitivity: the exergy of ${fragileLabels.join(", ")} changes by 30% or more (or its rank moves) when the dead-state temperature rises ${REFERENCE_STATE_WARM_DELTA_C} C. For these low-grade streams the ranking is not robust until the operative ambient (seasonal range) is confirmed.`,
+    );
+  }
+
+  // Mass-flow vs reported-energy consistency check.
+  const consistency: StreamConsistencyCheck[] = withExergy.map((item) => {
+    const s = item.stream;
+    const deltaT = s.source_temp_c - t0For(s);
+    if (!item.valid || s.mass_flow_kg_s === undefined || !(deltaT > 0)) {
+      return { label: s.label, delta_t_c: Number(deltaT.toFixed(1)), implied_hours_min: null, implied_hours_max: null, status: "not_checked", note: "No independent energy cross-check was possible for this stream." };
+    }
+    const energyKwh = Math.max(0, s.energy_mwh) * 1000;
+    const cpMax = s.cp_kj_kg_k ?? WATER_CP_KJ_KG_K; // liquid water -> fewest implied hours
+    const cpMin = s.cp_kj_kg_k ?? GAS_CP_KJ_KG_K; // gas -> most implied hours
+    const hoursMin = energyKwh / (s.mass_flow_kg_s * cpMax * deltaT);
+    const hoursMax = energyKwh / (s.mass_flow_kg_s * cpMin * deltaT);
+    let status: StreamConsistencyCheck["status"];
+    let note: string;
+    if (hoursMin > HOURS_PER_YEAR) {
+      status = "impossible";
+      note = `Mass flow and reported energy imply more than ${HOURS_PER_YEAR} full-load hours/yr even at the highest plausible specific heat. The mass-flow or energy figure is physically inconsistent and must be corrected before ranking.`;
+    } else if (hoursMax < PLAUSIBLE_MIN_FULL_LOAD_HOURS) {
+      status = "low_duty";
+      note = `Implied full-load operation is only ${roundHours(hoursMin)}-${roundHours(hoursMax)} h/yr (<10% utilization even for a gas stream). Confirm the duty cycle or correct the figures; do not attribute the gap to a specific-heat assumption without the actual fluid.`;
+    } else if (hoursMin < PLAUSIBLE_MIN_FULL_LOAD_HOURS) {
+      status = "unresolved";
+      note = `Implied full-load operation (${roundHours(hoursMin)}-${roundHours(hoursMax)} h/yr) depends strongly on the fluid and cannot be reconciled with steady operation from the data given. Resolve the fluid type and duty cycle before trusting this energy figure; do not explain the gap away with an assumed specific heat.`;
+    } else {
+      status = "ok";
+      note = `Mass flow and reported energy are mutually consistent with ${roundHours(hoursMin)}-${roundHours(hoursMax)} full-load hours/yr.`;
+    }
+    return { label: s.label, delta_t_c: Number(deltaT.toFixed(1)), implied_hours_min: roundHours(hoursMin), implied_hours_max: roundHours(hoursMax), status, note };
+  });
+  const unresolved = consistency.filter((c) => c.status === "impossible" || c.status === "low_duty" || c.status === "unresolved");
+  for (const check of unresolved) {
+    limitations.push(`Unresolved consistency check (${check.label}): ${check.note}`);
+  }
+
+  // Where adjacent streams are within ~10% on exergy, the order between them is
+  // not decision-significant; say so rather than implying a false precision.
+  for (let i = 0; i + 1 < ranked.length; i += 1) {
+    const a = ranked[i];
+    const b = ranked[i + 1];
+    if (a.exergy_mwh > 0 && b.exergy_mwh > 0 && reconcile([a.exergy_mwh, b.exergy_mwh], 1.1).agree) {
+      limitations.push(`${a.label} and ${b.label} are within about 10% on recoverable exergy, so the order between them is effectively a tie and should be broken on recoverability or economics, not exergy.`);
+    }
+  }
+  if (consistency.some((c) => c.status !== "not_checked")) {
+    assumptions.push("The energy cross-check brackets specific heat between a gas (1.0 kJ/kg-K) and liquid water (4.19 kJ/kg-K); the true fluid was not supplied.");
+  }
+
+  // Surface non-physical / unit-error streams as limitations rather than ranking on them.
+  const invalidStreams = withExergy.filter((item) => !item.valid);
+  for (const item of invalidStreams) {
+    limitations.push(`Excluded ${item.stream.label} from the ranking: ${item.issues.join(" ")}`);
+  }
+
+  // Metrics and recommendation.
+  const metrics: Metric[] = ranked.map((rs) =>
+    metric(`${rs.label} recoverable exergy`, rs.exergy_mwh, "MWh_ex", 2),
+  );
+  metrics.unshift(metric("Reference (dead-state) temperature", referenceTempC, "C", 1));
+
+  // The fund-first recommendation must rest on a stream that is physically
+  // valid, carries useful work, and is not flagged as data-inconsistent. A
+  // stream whose energy cannot be true is not a candidate, however large its
+  // nominal exergy.
+  const impossibleLabels = new Set(consistency.filter((c) => c.status === "impossible").map((c) => c.label));
+  const top = ranked.find((rs) => !invalidLabels.has(rs.label) && rs.exergy_mwh > 0 && !impossibleLabels.has(rs.label)) ?? null;
+  const trapStream = ranked.find((rs) => !invalidLabels.has(rs.label) && rs.flags.some((f) => /high energy, low exergy/i.test(f)));
+  const recommendationParts = top
+    ? [`Fund ${top.label} first: highest recoverable exergy at ${top.exergy_mwh} MWh_ex (Carnot factor ${top.carnot_factor}, ${top.grade}-grade).`]
+    : ["No stream has physically valid, data-consistent recoverable useful work; resolve the flagged issues before choosing one to fund."];
+  if (top && trapStream && trapStream.label !== top.label) {
+    recommendationParts.push(`Do not be drawn to ${trapStream.label} by its larger heat quantity — its low grade means most of that energy is not recoverable as useful work.`);
+  }
+  if (unresolved.length > 0) {
+    recommendationParts.push("Resolve the flagged data-consistency issues before committing budget; the ranking is screening-grade until then.");
+  }
+  limitations.push("Exergy ranks the size of the useful-work opportunity, not its recoverability. It does not account for heat-exchanger feasibility, pinch, fouling, distance to a matching demand, or economics.");
+
+  assumptions.unshift(`Recoverable exergy = energy x (1 - T0/T_source) with temperatures in Kelvin and the dead state at ${referenceTempC} C.`);
+
+  return {
+    status: "ran",
+    solver_type: "physics",
+    title: "Waste-Heat Recovery Ranking",
+    executive_summary: recommendationParts.join(" "),
+    confidence: unresolved.length > 0 || fragileLabels.length > 0 || invalidStreams.length > 0 ? "screening" : "computed",
+    computed_metrics: metrics,
+    assumptions,
+    limitations,
+    missing_inputs: unresolved.length > 0
+      ? ["fluid type and annual operating hours for streams with flagged consistency checks", "heat-exchanger feasibility and nearby demand for the top-ranked stream"]
+      : ["heat-exchanger feasibility and nearby demand for the top-ranked stream"],
+    normalized_params: {},
+    ranking: {
+      reference_temp_c: referenceTempC,
+      warm_reference_temp_c: warmReferenceTempC,
+      ranked_streams: ranked,
+      fund_first: top?.label ?? null,
+      reference_state_sensitivity: sensitivity,
+      consistency_checks: consistency,
+    },
   };
 }

@@ -50,7 +50,9 @@ import {
 import { buildActionResultSummary } from "@/lib/action-result-summary";
 import { collectEnvironmentalSiteData } from "@/lib/environmental-site-data";
 import {
+  extractWasteHeatStreams,
   runEconomicsSolver,
+  runHeatRecoveryRankingSolver,
   runPhysicsSolver,
   type EngineeringSolverResult,
 } from "@/lib/engineering-solvers";
@@ -599,6 +601,15 @@ async function handlePhysicsSimulation(
   // This keeps physics requests useful even when legacy Breakthrough Engine
   // solver modules are not installed in the current Python environment.
   if (solverFamily === "none" && nMetrics === 0) {
+    // A multi-stream waste-heat table is the case where free-form ranking goes
+    // wrong (energy vs. exergy, rationalized data anomalies). Use the
+    // deterministic ranking solver before falling back to the model.
+    if (extractWasteHeatStreams(input).length >= 2) {
+      const rankingResult = runHeatRecoveryRankingSolver(input);
+      if (rankingResult.status === "ran") {
+        return createEngineeringSolverArtifact(projectId, rankingResult, input, actionId, parentArtifactId);
+      }
+    }
     const solverResult = runPhysicsSolver(input);
     if (solverResult.status !== "needs_inputs") {
       return createEngineeringSolverArtifact(projectId, solverResult, input, actionId, parentArtifactId);

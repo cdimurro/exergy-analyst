@@ -1,6 +1,7 @@
 import {
   buildClaimLedger,
   buildSourceExtractionConfidence,
+  detectRationalizedAnomalies,
   evaluateScenarioReproducibility,
 } from "@/lib/agent-claim-ledger";
 import type { ProjectDocument } from "@/lib/storage/types";
@@ -167,5 +168,37 @@ describe("agent claim ledger", () => {
     expect(result.required).toBe(true);
     expect(result.checks.find((check) => check.id === "changed_inputs_visible")?.status).toBe("pass");
     expect(result.score).toBe(100);
+  });
+});
+
+describe("rationalized anomaly detection", () => {
+  it("flags a large cross-check discrepancy explained away by an assumed specific heat", () => {
+    const flags = detectRationalizedAnomalies(
+      [
+        "Quality Checks",
+        "| Stream | Expected MWh/yr | Reported MWh/yr | Ratio |",
+        "| Cooling-water loop | 185281 | 9000 | 0.05 |",
+        "The cooling-water loop shows a large ratio because the Cp of water is higher than used in the aggregated annual estimate; the actual operation likely has varying flow and temperatures.",
+      ].join("\n"),
+    );
+    expect(flags.length).toBeGreaterThan(0);
+    expect(flags[0].reason).toMatch(/explained away/i);
+  });
+
+  it("does not flag a consistency check that is reported, not rationalized", () => {
+    const flags = detectRationalizedAnomalies(
+      [
+        "Quality check: expected and reported energy agree within 3%, so the mass-flow basis is consistent.",
+        "I could not reconcile the dryer figure and flag it as an unresolved data-consistency issue pending the fluid and operating hours.",
+      ].join("\n"),
+    );
+    expect(flags).toHaveLength(0);
+  });
+
+  it("is surfaced on the claim ledger result", () => {
+    const ledger = buildClaimLedger({
+      finalAnswer: "The cross-check ratio of 0.05 can be explained by the specific heat of water being higher than assumed.",
+    });
+    expect(ledger.anomaly_flags.length).toBeGreaterThan(0);
   });
 });

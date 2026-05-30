@@ -101,10 +101,19 @@ async function repairAnswerWithModel(args: {
   claimLedger: ClaimLedgerResult;
 }): Promise<string | null> {
   if (!getEnvVar("DEEPSEEK_API_KEY") && !getEnvVar("DEEPSEEK_V3_API_KEY")) return null;
-  const findings = args.evaluation.findings
+  const findingLines = args.evaluation.findings
     .filter((finding) => finding.severity !== "info")
-    .map((finding, index) => `Issue ${index + 1}: ${finding.detail}`)
-    .join("\n");
+    .map((finding, index) => `Issue ${index + 1}: ${finding.detail}`);
+  // A detected-then-rationalized anomaly is rewritten in place: the draft should
+  // state the discrepancy is unresolved and what must be confirmed, rather than
+  // reconciling it with an unsupplied parameter. This keeps the answer's length
+  // and structure intact while removing the false reassurance.
+  args.claimLedger.anomaly_flags.forEach((flag, index) => {
+    findingLines.push(
+      `Anomaly ${index + 1}: ${flag.reason} Rewrite the relevant sentence to say the discrepancy is unresolved and what must be confirmed, without adding a new section or heading. Offending text: "${flag.text}"`,
+    );
+  });
+  const findings = findingLines.join("\n");
   const prompt = [
     `You are ${PUBLIC_AGENT_NAME}'s final answer quality editor.`,
     "Rewrite the answer only if needed to fix the listed quality issues.",
@@ -222,7 +231,7 @@ export async function runFinalQualityGate(args: {
   });
 
   let repaired = false;
-  if (shouldRepair(qualityEvaluation)) {
+  if (shouldRepair(qualityEvaluation) || claimLedger.anomaly_flags.length > 0) {
     const modelRepair = await repairAnswerWithModel({
       project,
       run: args.run,

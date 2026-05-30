@@ -24,9 +24,15 @@ export interface ClaimLedgerSummary {
   support_counts: Record<ClaimSupport, number>;
 }
 
+export interface AnomalyFlag {
+  text: string;
+  reason: string;
+}
+
 export interface ClaimLedgerResult {
   summary: ClaimLedgerSummary;
   claims: ClaimLedgerItem[];
+  anomaly_flags: AnomalyFlag[];
 }
 
 export interface SourceExtractionDiagnostic {
@@ -168,6 +174,51 @@ function inferRisk(kind: ClaimKind, support: ClaimSupport, numericValues: Numeri
   return "low";
 }
 
+// Detects the failure mode where the answer runs a consistency / cross-check,
+// finds a large discrepancy, then explains it away with an assumed parameter
+// (specific heat, varying flow, part-load) instead of surfacing it as an
+// unresolved limitation. A detected-then-rationalized anomaly is worse than an
+// undetected one: it launders a real data problem into a footnote.
+const CHECK_CONTEXT_RE = /\b(quality check|cross[- ]?check|consistency check|sanity check|independent check|expected\b.*\breported|implied|ratio)\b/i;
+const RATIONALIZE_RE = /\b(can be explained|explained by|likely (?:due|because|reflect|indicat)|probably (?:due|because)|attribut\w+\s+to|due to (?:the )?(?:higher|lower|different|differing|varying|assumed)|because (?:the )?(?:cp\b|c_p|specific heat)|may (?:indicate|reflect|be (?:due|because)))\b/i;
+const PARAM_EXPLANATION_RE = /\b(cp\b|c_p|specific heat|varying flow|part[- ]?load|different (?:flow|cp|specific heat|operating))\b/i;
+const LARGE_DEVIATION_RE = /\b(large|significant|order of magnitude|off by|huge|drastically?)\b/i;
+
+function ratioFarFromOne(unit: string): boolean {
+  const ratioMatches = unit.matchAll(/\b(?:ratio|factor)\b[^.\n]{0,24}?(\d+(?:\.\d+)?)/gi);
+  for (const match of ratioMatches) {
+    const value = Number(match[1]);
+    if (Number.isFinite(value) && value > 0 && (value < 0.5 || value > 2)) return true;
+  }
+  const multiple = unit.match(/\b(\d+(?:\.\d+)?)\s*[x×]\b/i);
+  if (multiple && Number(multiple[1]) >= 2) return true;
+  return false;
+}
+
+export function detectRationalizedAnomalies(answer: string): AnomalyFlag[] {
+  const lines = (answer || "").replace(/\r\n/g, "\n").split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const flags: AnomalyFlag[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < lines.length; i += 1) {
+    // Examine a line together with the next one so a table row of ratios
+    // followed by an explanatory note is read as a single unit.
+    const unit = [lines[i], lines[i + 1] || ""].join(" ");
+    if (!CHECK_CONTEXT_RE.test(unit)) continue;
+    const rationalized = RATIONALIZE_RE.test(unit) && PARAM_EXPLANATION_RE.test(unit);
+    if (!rationalized) continue;
+    const largeDeviation = LARGE_DEVIATION_RE.test(unit) || ratioFarFromOne(unit);
+    if (!largeDeviation) continue;
+    const text = normalizeText(lines[i]).slice(0, 280);
+    if (seen.has(text)) continue;
+    seen.add(text);
+    flags.push({
+      text,
+      reason: "A consistency check shows a large discrepancy that is explained away with an assumed parameter (e.g. specific heat, varying flow, part-load) instead of being reported as an unresolved data-quality issue.",
+    });
+  }
+  return flags.slice(0, 10);
+}
+
 export function buildClaimLedger(input: {
   finalAnswer: string;
   sourceTexts?: string[];
@@ -225,6 +276,7 @@ export function buildClaimLedger(input: {
       support_counts: supportCounts,
     },
     claims: items,
+    anomaly_flags: detectRationalizedAnomalies(input.finalAnswer || ""),
   };
 }
 

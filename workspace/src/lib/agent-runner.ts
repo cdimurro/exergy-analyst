@@ -775,6 +775,7 @@ async function routeRun(projectId: string, run: AgentRun, project: Project, docs
     "Ask for clarification only when missing information makes a useful answer impossible. Politely refuse only requests that are dangerous to execute or physically impossible as stated, and explain the specific reason.",
     "If tool use would have been helpful but is unavailable, still give the most useful answer possible and clearly state what would require a tool run or source data.",
     "For high-stakes outputs, separate what the supplied data supports from what it cannot prove.",
+    ...ANALYSIS_DISCIPLINE_RULES,
     `Project: ${project.name}`,
     project.description ? `Project description: ${project.description}` : "",
     docs.length ? `Current files: ${docs.map((doc) => doc.filename).join(", ")}` : "",
@@ -1431,6 +1432,14 @@ async function failRun(projectId: string, runId: string, error: unknown): Promis
   await emit(projectId, runId, "run.failed", message, { error: message });
 }
 
+// Shared technical-reasoning discipline applied to every synthesis path, so
+// quality comes from principle rather than per-topic instructions.
+const ANALYSIS_DISCIPLINE_RULES: string[] = [
+  "Rank and recommend on the quantity that actually drives the decision (useful work, marginal value, the limiting constraint), not on the largest or most prominent number. The bigger headline figure is often not the better option.",
+  "When an independent check or a second method disagrees with a reported value by more than roughly a factor of two, treat it as an unresolved discrepancy and say what must be confirmed to settle it. Do not reconcile the gap with an assumed parameter that was not actually supplied.",
+  "State the assumptions and reference conditions a result rests on, and note when the conclusion would change under a reasonable alternative assumption.",
+];
+
 async function synthesizePlanFinal(args: {
   run: AgentRun;
   project: Project;
@@ -1455,6 +1464,7 @@ async function synthesizePlanFinal(args: {
     "Choose the answer format dynamically from the user request and tool results. Use a brief answer, narrative, bullets, headings, tables, or a full technical breakdown only when that format genuinely improves the response.",
     "Do not reuse a fixed heading template. Do not add boilerplate sections just because this is an agent run.",
     "Be explicit about what the data supports and what it cannot prove when the answer is high stakes.",
+    ...ANALYSIS_DISCIPLINE_RULES,
     `Project: ${args.project.name}`,
     `User request: ${args.run.user_message}`,
     `Approved plan:\n${planText}`,
