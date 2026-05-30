@@ -35,6 +35,9 @@ const ROOT_ENV_PATH = join(REPO_ROOT, ".env");
 const DEFAULT_EXTRA_ENV_PATHS = [
   join(REPO_ROOT, ".env.local"),
   join(REPO_ROOT, "workspace", ".env.local"),
+  "/etc/secrets/.env",
+  "/etc/secrets/exergy-lab.env",
+  "/etc/secrets/exergy-agent.env",
   "/mnt/c/Users/Chris/nature-engine/config/.env",
   "/home/chris/nature-engine/config/.env",
   "/home/chris/breakthrough-engine/.env",
