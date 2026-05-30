@@ -155,7 +155,7 @@ export function ProjectCreator({ initialDescription = "", variant = "hero" }: Pr
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Describe the technology you would like to evaluate, or ask a research question..."
+          placeholder="Describe the challenge you are trying to solve, or ask the agent to conduct research on any topic..."
           rows={4}
           disabled={creating}
           className="w-full bg-transparent px-5 pt-5 pb-2 text-[15px] text-white placeholder:text-white/55 resize-none focus:outline-none focus:ring-0 disabled:opacity-50 leading-relaxed"
