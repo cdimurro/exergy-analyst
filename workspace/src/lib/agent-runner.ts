@@ -534,73 +534,6 @@ function actionAttemptTimeoutMs(actionType: ActionType): number {
   return Math.max(30_000, Math.min(max, Math.trunc(raw)));
 }
 
-function heartbeatMessagesForAction(actionType: ActionType): string[] {
-  const fallback = [
-    "Extracting the concrete variables, claims, and constraints from the request.",
-    "Running the selected analysis path and collecting outputs.",
-    "Reviewing intermediate outputs for unsupported claims or missing inputs.",
-    "Converting the finished work into a concise answer.",
-  ];
-  const byAction: Partial<Record<ActionType, string[]>> = {
-    agent_workspace: [
-      "Preparing a project workspace for this request.",
-      "Generating analysis code tailored to the current problem.",
-      "Executing the analysis and collecting generated tables, figures, and reports.",
-      "Reviewing outputs for missing values, unsupported claims, or runtime errors.",
-    ],
-    deep_agent: [
-      "Breaking the request into evidence, calculations, risks, and output needs.",
-      "Running the relevant research, modelling, and data steps.",
-      "Consolidating completed tool results into an evidence ledger.",
-      "Checking calculations, source support, and unresolved gaps.",
-      "Writing the final answer from the verified evidence ledger.",
-    ],
-    physics_simulation: [
-      "Setting up the physics model and boundary conditions.",
-      "Running the solver with the available inputs.",
-      "Checking units, conservation constraints, and solver outputs.",
-      "Summarizing what the simulation supports and what it cannot prove.",
-    ],
-    economics_analysis: [
-      "Structuring CAPEX, OPEX, revenue, and financing assumptions.",
-      "Running the economic model and sensitivity cases.",
-      "Checking NPV, payback, breakeven, and unit-cost outputs.",
-      "Preparing the economics conclusion and uncertainty drivers.",
-    ],
-    environmental_site_analysis: [
-      "Collecting the site, resource, and environmental context.",
-      "Estimating environmental impacts on the requested basis.",
-      "Checking assumptions against available source data.",
-      "Preparing the environmental findings and open data needs.",
-    ],
-    literature_search: [
-      "Searching for relevant technical and commercial sources.",
-      "Filtering sources for direct evidence and useful benchmarks.",
-      "Extracting findings that apply to the current request.",
-      "Preparing a sourced research summary.",
-    ],
-    deep_research: [
-      "Searching across technical sources and market context.",
-      "Filtering evidence for relevance, recency, and direct support.",
-      "Comparing claims against benchmarks and missing data.",
-      "Preparing the research synthesis and confidence limits.",
-    ],
-    document_analysis: [
-      "Reading the uploaded documents and extraction sidecars.",
-      "Extracting numeric values, units, tables, and assumptions.",
-      "Checking which claims are source-backed versus inferred.",
-      "Preparing the document-grounded answer.",
-    ],
-    comprehensive_analysis: [
-      "Reading the full document package and current project context.",
-      "Extracting parameters, tables, assumptions, and gaps.",
-      "Checking the extracted evidence before synthesis.",
-      "Preparing the comprehensive analysis response.",
-    ],
-  };
-  return byAction[actionType] || fallback;
-}
-
 function visibleRequestSubject(message: string): string {
   const text = stripAttachmentChrome(message).toLowerCase();
   if (/\b(nmc|lithium|battery|cathode|anode|electrolyte|cycle life)\b/.test(text)) return "battery material readiness";
@@ -610,6 +543,40 @@ function visibleRequestSubject(message: string): string {
   if (/\b(simulation|physics|solver|model|calculation)\b/.test(text)) return "physics and calculation request";
   if (/\b(research|benchmark|literature|market|competitor)\b/.test(text)) return "research and benchmark request";
   return "technical request";
+}
+
+function actionDisplayName(actionType: ActionType): string {
+  return actionType.replace(/_/g, " ");
+}
+
+function summarizeActionInputs(action: RoutedAction): string {
+  const config = action.config || {};
+  const attachments = Array.isArray(config.current_attachments)
+    ? config.current_attachments.map((value) => cleanString(value)).filter(Boolean)
+    : [];
+  const outputFormat = cleanString(config.output_format || config.format || config.deliverable_type);
+  const requestedOutputs = Array.isArray(config.required_outputs)
+    ? config.required_outputs.map((value) => cleanString(value)).filter(Boolean).slice(0, 3)
+    : [];
+  const namedInputs = [
+    attachments.length ? `${attachments.length} uploaded file${attachments.length === 1 ? "" : "s"}` : "",
+    outputFormat ? `${outputFormat} output` : "",
+    requestedOutputs.length ? `outputs: ${requestedOutputs.join(", ")}` : "",
+  ].filter(Boolean);
+  return namedInputs.length ? namedInputs.join("; ") : "prompt and saved project context";
+}
+
+function actionStartedMessage(action: RoutedAction): string {
+  const subject = visibleRequestSubject(action.content || cleanString(action.config.question || action.config.task));
+  return `Selected ${actionDisplayName(action.type)} for the ${subject} using ${summarizeActionInputs(action)}.`;
+}
+
+function actionCompletedMessage(action: RoutedAction, artifact: Artifact | null | undefined, files: AgentRunFile[]): string {
+  const pieces = [
+    artifact?.title ? `created "${artifact.title}"` : "returned a result",
+    files.length ? `prepared ${files.length} downloadable file${files.length === 1 ? "" : "s"}` : "",
+  ].filter(Boolean);
+  return `${actionDisplayName(action.type)} ${pieces.join(" and ")}.`;
 }
 
 function intakeProgressMessage(message: string, documentCount: number): string {
@@ -1137,24 +1104,12 @@ async function executeActionAttemptInRun(projectId: string, runId: string, actio
 }> {
   await ensureNotCancelled(projectId, runId);
   const toolCallId = `tool_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-  await emit(projectId, runId, "tool.started", `Running ${action.type.replace(/_/g, " ")}.`, {
+  await emit(projectId, runId, "tool.started", actionStartedMessage(action), {
     tool_call_id: toolCallId,
     action_type: action.type,
     input: action.config,
     attempt,
   });
-
-  const heartbeatMessages = heartbeatMessagesForAction(action.type);
-  let heartbeatIndex = 0;
-  const heartbeat = setInterval(() => {
-    void getStorage().getAgentRun(projectId, runId).then((run) => {
-      if (!run || run.status !== "running") return;
-      void emit(projectId, runId, "progress", heartbeatMessages[heartbeatIndex % heartbeatMessages.length], {
-        tool_call_id: toolCallId,
-      });
-      heartbeatIndex += 1;
-    }).catch(() => {});
-  }, 10_000);
 
   try {
     const timeoutMs = actionAttemptTimeoutMs(action.type);
@@ -1172,7 +1127,7 @@ async function executeActionAttemptInRun(projectId: string, runId: string, actio
     );
     const files = downloadableFilesForArtifact(projectId, runId, artifact);
 
-    await emit(projectId, runId, "tool.completed", `${action.type.replace(/_/g, " ")} completed.`, {
+    await emit(projectId, runId, "tool.completed", actionCompletedMessage(action, artifact, files), {
       tool_call_id: toolCallId,
       action_id: actionId,
       action_type: action.type,
@@ -1202,8 +1157,6 @@ async function executeActionAttemptInRun(projectId: string, runId: string, actio
       attempt,
     });
     throw error;
-  } finally {
-    clearInterval(heartbeat);
   }
 }
 

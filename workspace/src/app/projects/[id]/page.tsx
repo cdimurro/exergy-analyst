@@ -102,7 +102,7 @@ function latestVisibleActivity(message: Pick<Msg, "agentActivity" | "loadingText
   if (latest?.detail) return latest.detail;
   if (latest?.title) return latest.title;
   if (message.loadingText) return formatLoadingText(message.loadingText);
-  return message.loading ? "Reading the request and workspace context." : "Process details are available.";
+  return message.loading ? "Waiting for the next run update." : "Process details are available.";
 }
 
 function shouldRenderMessageBody(message: Msg): boolean {
@@ -268,14 +268,6 @@ function resizeChatInput(textarea: HTMLTextAreaElement | null, value: string) {
 
 const LOW_INFORMATION_STATUS = /^(?:run started|run created|starting run|working on your request|working through the request)\.?$/i;
 
-const LOADING_MESSAGES = [
-  "Mapping the request to the right analysis path",
-  "Extracting the concrete claims, variables, and constraints",
-  "Running the selected analysis workflow",
-  "Checking outputs for unsupported claims and missing inputs",
-  "Turning the results into clear next steps",
-];
-const progressMessages = LOADING_MESSAGES;
 const THINKING_MODE_STORAGE_KEY = "exergy_lab_thinking_mode";
 
 function cleanThinkingMode(value: string | null): "instant" | "expert" {
@@ -300,16 +292,6 @@ function useElapsedTime(active: boolean) {
   return elapsed;
 }
 
-function useRotatingMessage(active: boolean, messages: string[], intervalMs = 4000) {
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    if (!active) { setIdx(0); return; }
-    const iv = setInterval(() => setIdx(prev => (prev + 1) % messages.length), intervalMs);
-    return () => clearInterval(iv);
-  }, [active, messages.length, intervalMs]);
-  return messages[idx];
-}
-
 function useAnimatedDots(active: boolean, intervalMs = 500) {
   const [idx, setIdx] = useState(0);
   useEffect(() => {
@@ -321,16 +303,10 @@ function useAnimatedDots(active: boolean, intervalMs = 500) {
 }
 
 function useAgentProgressSentence(message: Pick<Msg, "agentActivity" | "loadingText" | "loading">, active: boolean) {
-  const fallbacks = useMemo(() => {
-    const base = latestVisibleActivity(message);
-    const values = [
-      LOW_INFORMATION_STATUS.test(base) ? "" : base,
-      ...LOADING_MESSAGES,
-    ].filter(Boolean);
-    return Array.from(new Set(values));
-  }, [message.agentActivity, message.loadingText, message.loading]);
-  const rotated = useRotatingMessage(active, fallbacks, 10_000);
-  return rotated || latestVisibleActivity(message);
+  const base = latestVisibleActivity(message);
+  if (!active) return base;
+  if (LOW_INFORMATION_STATUS.test(base)) return "Waiting for the next run update.";
+  return base;
 }
 
 /** Unwrap double-wrapped JSON content from LLM responses.
@@ -378,11 +354,10 @@ function stripLatex(text: string): string {
 }
 
 function LoadingIndicator({ message }: { message: Pick<Msg, "agentActivity" | "loadingText" | "loading"> }) {
-  const rotatingMsg = useRotatingMessage(true, LOADING_MESSAGES, 10_000);
   const progressSentence = useAgentProgressSentence(message, true);
   const dots = useAnimatedDots(true);
   const elapsed = useElapsedTime(true);
-  const displayText = formatLoadingText(progressSentence || rotatingMsg).replace(/[.。]+$/g, "");
+  const displayText = formatLoadingText(progressSentence).replace(/[.。]+$/g, "");
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
   const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
