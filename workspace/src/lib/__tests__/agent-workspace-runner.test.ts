@@ -142,7 +142,7 @@ describe("agent workspace runner", () => {
     });
 
     expect(findings.join("\n")).toContain("report.md was missing");
-    expect(findings.join("\n")).toContain("Support and limits");
+    expect(findings.join("\n")).toContain("support/limits");
   });
 
   it("contains the repair loop contract for output failures and best-effort preservation", () => {

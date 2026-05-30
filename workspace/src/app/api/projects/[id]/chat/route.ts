@@ -791,11 +791,18 @@ function shouldRunCurrentUploadUniversalAnalysis(args: {
 }
 
 function requestedWorkspaceOutputs(message: string): string[] {
-  const outputs = new Set(["markdown", "json"]);
+  if (!/\b(export|download|save|convert|attach|attachment|file|csv|xlsx|excel|spreadsheet|pdf|json|markdown|md|ppt|pptx|presentation|deck|slide|slides)\b/i.test(message)) {
+    return [];
+  }
+  const outputs = new Set<string>();
   if (/\b(csv|comma[-\s]?separated)\b/i.test(message)) outputs.add("csv");
-  if (/\b(spreadsheet|excel|xlsx|workbook|table|model)\b/i.test(message)) outputs.add("xlsx");
-  if (/\b(pdf|report|memo|brief)\b/i.test(message)) outputs.add("pdf");
-  if (/\b(chart|plot|graph|figure)\b/i.test(message)) outputs.add("png");
+  if (/\b(spreadsheet|excel|xlsx|workbook)\b/i.test(message)) outputs.add("xlsx");
+  if (/\b(pdf)\b/i.test(message)) outputs.add("pdf");
+  if (/\b(json)\b/i.test(message)) outputs.add("json");
+  if (/\b(markdown|md)\b/i.test(message)) outputs.add("markdown");
+  if (/\b(chart|plot|graph|figure|png)\b/i.test(message)) outputs.add("png");
+  if (/\b(ppt|pptx|presentation|deck|slide|slides)\b/i.test(message)) outputs.add("pptx");
+  if (outputs.size === 0 && /\b(export|download|save|convert|attach|attachment|file)\b/i.test(message)) outputs.add("markdown");
   return Array.from(outputs);
 }
 
@@ -910,7 +917,7 @@ function buildWorkspacePlanOutline(args: {
   if (wantsRisks) {
     add("Assess Risks And Constraints", "Evaluate technical, commercial, environmental, permitting, feedstock, reliability, and scale-up risks tied to the model outputs.");
   }
-  add("Generate Deliverables", "Return a detailed report directly in chat with tables and create structured output files when useful or requested.");
+  add("Generate Deliverables", "Return the answer directly in chat with tables when useful, and create structured output files only when requested.");
 
   return steps.slice(0, 9).map((step, index) => ({ ...step, step: index + 1 }));
 }
@@ -1107,7 +1114,7 @@ function buildProgrammaticWorkspaceAction(args: {
         "Execution plan to follow:",
         planOutlineText(planOutline),
         "",
-        "Implement this plan in the workspace run. Produce the requested calculations and tables directly in report.md. Create structured output files when useful or requested.",
+        "Implement this plan in the workspace run. Produce the requested calculations and tables directly in the answer. Create structured output files only when the user explicitly requested files or exports.",
       ].join("\n"),
     exportRequest || tableFollowupRequest
       ? "Use the recent conversation context to answer this follow-up. If an export is requested, create the requested file(s) in OUTPUT_DIR using the prior table/report values exactly and mention the file names in report.md."

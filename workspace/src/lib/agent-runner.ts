@@ -63,6 +63,8 @@ interface ToolFailureRecord {
 }
 
 const TERMINAL_RUN_STATUSES = new Set(["completed", "failed", "cancelled"]);
+const FILE_OUTPUT_REQUEST_RE =
+  /\b(export|download|save|convert|attach|attachment|file|csv|xlsx|excel|spreadsheet|pdf|json|markdown|md|ppt|pptx|presentation|deck|slide|slides)\b/i;
 
 function now(): string {
   return new Date().toISOString();
@@ -148,11 +150,49 @@ function mimeTypeFor(filename: string): string {
   return "application/octet-stream";
 }
 
+function requestedFileOutputs(message: string): string[] {
+  if (!FILE_OUTPUT_REQUEST_RE.test(message)) return [];
+  const outputs = new Set<string>();
+  if (/\bcsv\b/i.test(message)) outputs.add("csv");
+  if (/\b(xlsx|excel|spreadsheet|workbook)\b/i.test(message)) outputs.add("xlsx");
+  if (/\b(pdf)\b/i.test(message)) outputs.add("pdf");
+  if (/\b(json)\b/i.test(message)) outputs.add("json");
+  if (/\b(markdown|md)\b/i.test(message)) outputs.add("markdown");
+  if (/\b(png|chart|plot|graph|figure)\b/i.test(message)) outputs.add("png");
+  if (/\b(ppt|pptx|presentation|deck|slide|slides)\b/i.test(message)) outputs.add("pptx");
+  if (outputs.size === 0 && /\b(export|download|save|convert|attach|attachment|file)\b/i.test(message)) {
+    outputs.add("markdown");
+  }
+  return Array.from(outputs);
+}
+
+function actionRequestsVisibleFiles(action: RoutedAction): boolean {
+  const config = action.config || {};
+  const requestedOutputs = [
+    ...(Array.isArray(config.requested_outputs) ? config.requested_outputs : []),
+    ...(Array.isArray(config.required_outputs) ? config.required_outputs : []),
+  ].map((value) => cleanString(value)).filter(Boolean);
+  if (requestedOutputs.length > 0) return true;
+
+  if (action.type === "agent_workspace") {
+    return FILE_OUTPUT_REQUEST_RE.test(action.content || "");
+  }
+
+  const text = [
+    action.content,
+    cleanString(config.question),
+    cleanString(config.task),
+  ].filter(Boolean).join("\n");
+  return FILE_OUTPUT_REQUEST_RE.test(text);
+}
+
 function downloadableFilesForArtifact(
   projectId: string,
   runId: string,
   artifact: Artifact | null | undefined,
+  exposeFiles = true,
 ): AgentRunFile[] {
+  if (!exposeFiles) return [];
   if (!artifact || !isRecord(artifact.content) || !Array.isArray(artifact.content.files)) return [];
   return artifact.content.files
     .filter((file): file is Record<string, unknown> => isRecord(file))
@@ -411,12 +451,7 @@ async function buildInitialEvaluationState(projectId: string, projectDomain: str
 
 
 function requestedOutputs(message: string): string[] {
-  const outputs = new Set(["markdown", "json"]);
-  if (/\bcsv\b/i.test(message)) outputs.add("csv");
-  if (/\b(xlsx|excel|spreadsheet|workbook)\b/i.test(message)) outputs.add("xlsx");
-  if (/\b(pdf|report|brief|memo)\b/i.test(message)) outputs.add("pdf");
-  if (/\b(chart|plot|graph|figure|png)\b/i.test(message)) outputs.add("png");
-  return Array.from(outputs);
+  return requestedFileOutputs(message);
 }
 
 const DOCUMENT_BACKED_WORKSPACE_RE =
@@ -648,6 +683,7 @@ function hydrateActionWithRunContext(args: {
   }
   if (args.action.type === "agent_workspace" && !config.task) config.task = args.run.user_message;
   if (!config.question) config.question = args.run.user_message;
+  if (args.action.type === "agent_workspace" && !config.requested_outputs) config.requested_outputs = requestedOutputs(args.run.user_message);
   if (args.action.type === "deep_agent" && !config.required_outputs) config.required_outputs = requestedOutputs(args.run.user_message);
   if (attachments.length > 0 && !config.current_attachments) {
     config.current_attachments = attachments;
@@ -736,6 +772,7 @@ async function routeRun(projectId: string, run: AgentRun, project: Project, docs
     "The routing response was not usable, so answer the user directly from the full context.",
     "Use normal chat language. Do not mention router failures, internal event names, evidence cards, View Details, Export Report, or schema fields.",
     "Let the presentation fit the user's request. A small question may need only one or two sentences; a complex diligence request may need headings, bullets, tables, or a detailed breakdown. Do not force the same structure every time.",
+    "Ask for clarification only when missing information makes a useful answer impossible. Politely refuse only requests that are dangerous to execute or physically impossible as stated, and explain the specific reason.",
     "If tool use would have been helpful but is unavailable, still give the most useful answer possible and clearly state what would require a tool run or source data.",
     "For high-stakes outputs, separate what the supplied data supports from what it cannot prove.",
     `Project: ${project.name}`,
@@ -918,6 +955,7 @@ function hydrateRecoveryActionConfig(args: {
     const scenarioMemory = buildScenarioMemory({ prompt: args.run.user_message, documents: args.docs });
     if (args.action.type === "agent_workspace" && !config.task) config.task = args.run.user_message;
     if (!config.question) config.question = args.run.user_message;
+    if (args.action.type === "agent_workspace" && !config.requested_outputs) config.requested_outputs = requestedOutputs(args.run.user_message);
     if (args.action.type === "deep_agent" && !config.required_outputs) config.required_outputs = requestedOutputs(args.run.user_message);
     if (attachments.length > 0 && !config.current_attachments) config.current_attachments = attachments;
     if (!config.context) {
@@ -1126,7 +1164,7 @@ async function executeActionAttemptInRun(projectId: string, runId: string, actio
       payload.result_summary || buildActionResultSummary({ actionType: action.type, artifact }),
       artifact,
     );
-    const files = downloadableFilesForArtifact(projectId, runId, artifact);
+    const files = downloadableFilesForArtifact(projectId, runId, artifact, actionRequestsVisibleFiles(action));
 
     await emit(projectId, runId, "tool.completed", actionCompletedMessage(action, artifact, files), {
       tool_call_id: toolCallId,
@@ -1323,7 +1361,7 @@ async function createExportFilesInRun(args: {
     provenance: { source: "ai_synthesis", deterministic: true },
     pinned: false,
   });
-  const files = downloadableFilesForArtifact(args.projectId, args.runId, artifact);
+  const files = downloadableFilesForArtifact(args.projectId, args.runId, artifact, true);
   await emit(args.projectId, args.runId, "tool.completed", "Export files created.", {
     action_type: "run_export",
     artifact_id: artifact.id,

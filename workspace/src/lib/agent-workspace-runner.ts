@@ -49,6 +49,8 @@ const DEFAULT_ALLOWED_PACKAGES = new Set([
 
 const DEFAULT_AGENT_CONTAINER_IMAGE = "exergy-agent-workspace:2026-05-24";
 const PDF_TEXT_SIDECAR_SUFFIXES = [".gemini.md", ".gemini.json", ".mineru.md", ".mineru.json"];
+const FILE_OUTPUT_REQUEST_RE =
+  /\b(export|download|save|convert|attach|attachment|file|csv|xlsx|excel|spreadsheet|pdf|json|markdown|md|ppt|pptx|presentation|deck|slide|slides)\b/i;
 
 export interface AgentWorkspaceRunInput {
   projectId: string;
@@ -275,6 +277,24 @@ export function workspaceConsistencyFindings(
     );
   }
 
+  if (
+    /\btime\s+to\s+(?:failure|event|threshold|onset|runaway|shutdown|trip|breach|limit|critical|collapse)\b[\s\S]{0,160}\b10000(?:\.0)?\b/i.test(report) &&
+    !/\b(?:not\s+(?:triggered|reached|observed|crossed)|did\s+not\s+(?:trigger|reach|occur|cross)|no\s+(?:event|failure|threshold|onset|runaway)|censored|maximum\s+(?:integration|simulation)\s+time|simulation\s+limit|not\s+within\s+the\s+(?:simulated|modeled)\s+window)\b/i.test(report)
+  ) {
+    findings.push(
+      "The output appears to report a maximum simulation time as an event time without saying whether the event threshold was actually reached. Treat the result as censored until the threshold crossing is explicitly verified.",
+    );
+  }
+
+  if (
+    /\b(?:most\s+sensitive|dominant\s+(?:driver|parameter)|largest\s+(?:impact|driver)|main\s+(?:driver|sensitivity)|ranked\s+by\s+sensitivity)\b/i.test(report) &&
+    /\bSensitivity\b[\s\S]{0,320}\b0(?:\.0+)?\b[\s\S]{0,320}\b0(?:\.0+)?\b[\s\S]{0,320}\b0(?:\.0+)?\b/i.test(report)
+  ) {
+    findings.push(
+      "The sensitivity narrative claims a dominant driver even though the visible sensitivity values are zero or unchanged. Recompute the ranking from numeric output deltas or state that the tested range produced no meaningful sensitivity.",
+    );
+  }
+
   if (/\bthermal\s+runaway\b/i.test(`${task}\n${report}`)) {
     if (
       /\btime\s+to\s+runaway\b[\s\S]{0,120}\b10000(?:\.0)?\b/i.test(report) &&
@@ -485,14 +505,23 @@ function scenarioTask(task: string): boolean {
   return /\b(re-?run|scenario|sensitivity|case|compare|all other|hold(?:ing)?|constant|lower|higher|increase|decrease|reduce|change|changed)\b/i.test(task);
 }
 
-export function requestedWorkspaceOutputExtensions(input: AgentWorkspaceRunInput): string[] {
+export function requestedUserWorkspaceOutputExtensions(input: AgentWorkspaceRunInput): string[] {
   const text = `${input.task}\n${input.requestedOutputs?.join(" ") || ""}`;
-  const out = new Set<string>(["md", "json"]);
+  if (!FILE_OUTPUT_REQUEST_RE.test(text)) return [];
+  const out = new Set<string>();
   if (/\bcsv\b/i.test(text)) out.add("csv");
-  if (/\b(pdf|brief|report|memo)\b/i.test(text)) out.add("pdf");
+  if (/\b(pdf)\b/i.test(text)) out.add("pdf");
   if (/\b(xlsx|excel|spreadsheet|workbook)\b/i.test(text)) out.add("xlsx");
   if (/\b(png|chart|plot|figure|graph)\b/i.test(text)) out.add("png");
+  if (/\b(json)\b/i.test(text)) out.add("json");
+  if (/\b(markdown|md)\b/i.test(text)) out.add("md");
+  if (/\b(ppt|pptx|presentation|deck|slide|slides)\b/i.test(text)) out.add("pptx");
+  if (out.size === 0 && /\b(export|download|save|convert|attach|attachment|file)\b/i.test(text)) out.add("md");
   return Array.from(out);
+}
+
+export function requestedWorkspaceOutputExtensions(input: AgentWorkspaceRunInput): string[] {
+  return Array.from(new Set(["md", "json", ...requestedUserWorkspaceOutputExtensions(input)]));
 }
 
 export function workspaceOutputContractFindings(args: {
@@ -509,6 +538,20 @@ export function workspaceOutputContractFindings(args: {
   if (!filenames.has("results.json")) {
     findings.push("results.json was missing or renamed; the workspace must always publish machine-readable results.");
   }
+  const requestedUserOutputs = requestedUserWorkspaceOutputExtensions(args.input);
+  const requestedUserSet = new Set(requestedUserOutputs);
+  const extraVisibleFiles = args.files.filter((file) => {
+    const lower = file.filename.toLowerCase();
+    if (/^(report\.md|results\.json)$/i.test(lower)) return false;
+    const ext = extname(lower).replace(/^\./, "");
+    if (!["csv", "xlsx", "pdf", "json", "md", "png", "jpg", "jpeg", "txt", "pptx"].includes(ext)) return false;
+    return requestedUserOutputs.length === 0 || !requestedUserSet.has(ext);
+  });
+  if (extraVisibleFiles.length > 0) {
+    findings.push(
+      `Workspace created downloadable output files that were not explicitly requested: ${extraVisibleFiles.slice(0, 5).map((file) => file.filename).join(", ")}.`,
+    );
+  }
   for (const ext of requestedWorkspaceOutputExtensions(args.input)) {
     if (ext === "md" || ext === "json") continue;
     if (!args.files.some((file) => file.filename.toLowerCase().endsWith(`.${ext}`))) {
@@ -516,7 +559,7 @@ export function workspaceOutputContractFindings(args: {
     }
   }
   if (/\b(simulat|model|economic|environmental|safety|decision|recommend|physics|thermal|finance)\b/i.test(args.input.task) && !hasSupportLimitsLanguage(args.reportMarkdown)) {
-    findings.push("High-stakes workspace output is missing a Support and limits section.");
+    findings.push("High-stakes workspace output is missing clear support/limits language.");
   }
   if (scenarioTask(args.input.task)) {
     if (!/\b(changed input|changed variable|only change|all other|unchanged|held constant|constant)\b/i.test(args.reportMarkdown)) {
@@ -553,6 +596,43 @@ function flattenResultsRows(value: unknown, prefix = ""): string[][] {
     });
   }
   return [[prefix || "value", String(value ?? "")]];
+}
+
+function resultHasAnyKey(value: unknown, patterns: RegExp[]): boolean {
+  if (Array.isArray(value)) return value.some((item) => resultHasAnyKey(item, patterns));
+  if (!value || typeof value !== "object") return false;
+  return Object.entries(value as Record<string, unknown>).some(([key, item]) =>
+    patterns.some((pattern) => pattern.test(key)) || resultHasAnyKey(item, patterns)
+  );
+}
+
+function attachWorkspaceResultMetadata(args: {
+  results: Record<string, unknown>;
+  input: AgentWorkspaceRunInput;
+  files: AgentWorkspaceRunResult["files"];
+  consistencyFindings: string[];
+  outputContractFindings: string[];
+}): void {
+  args.results.agent_metadata = {
+    schema_version: "workspace_result_metadata_v1",
+    internal_only: true,
+    user_requested_files: requestedUserWorkspaceOutputExtensions(args.input),
+    generated_files: args.files.map((file) => ({
+      filename: file.filename,
+      bytes: file.bytes,
+      kind: file.kind,
+    })),
+    normalized_sections_present: {
+      inputs: resultHasAnyKey(args.results, [/^inputs?$/i, /parameters?/i, /source_values?/i, /user_inputs?/i]),
+      assumptions: resultHasAnyKey(args.results, [/assumptions?/i, /defaults?/i]),
+      outputs: resultHasAnyKey(args.results, [/^outputs?$/i, /results?/i, /summary/i, /metrics?/i]),
+      sensitivity: resultHasAnyKey(args.results, [/sensitivity/i, /scenario/i, /cases?/i]),
+      quality_checks: resultHasAnyKey(args.results, [/quality_checks?/i, /independent_checks?/i, /validation/i]),
+      limits: resultHasAnyKey(args.results, [/limits?/i, /limitations?/i, /cannot_prove/i, /uncertainty/i]),
+    },
+    validation_findings: args.consistencyFindings,
+    output_contract_findings: args.outputContractFindings,
+  };
 }
 
 function simpleWorkspacePdfBytes(lines: string[]): Buffer {
@@ -1891,12 +1971,13 @@ async function generatePythonForTask(input: AgentWorkspaceRunInput, copiedFiles:
     "Available helper functions from agent_workspace_helpers: write_json, write_markdown, write_csv, write_xlsx, write_pdf, fetch_url, search_github_repositories, search_huggingface_models, extract_text, extract_all_input_texts, extract_all_input_documents, summarize_documents, extract_numeric_evidence, extract_markdown_tables, load_tabular_inputs, capital_recovery_factor, npv, irr, financial_metrics, pvlib_cell_temperature, pvlib_fixed_tilt_day.",
     "Output helper signatures: write_json(name, data); write_markdown(name, text); write_csv(name, rows) or write_csv(name, headers, rows); write_xlsx(name, rows) or write_xlsx(name, headers, rows); write_pdf(name, text). Underscore-free aliases such as writecsv and writepdf are also available.",
     "PV helper signatures: pvlib_fixed_tilt_day(latitude, longitude, pdc0_w, gamma_pdc_per_c=-0.0037, date=\"2023-03-20\", tz=None, tilt_deg=None, azimuth_deg=180, albedo=0.2, temp_air_c=25.0, wind_speed_mps=1.0, inverter_efficiency=0.96, system_losses=0.14, module_efficiency=0.18) and pvlib_cell_temperature(poa_global, temp_air=25.0, wind_speed=1.0, module_efficiency=0.18). The third argument is module STC power in W, not a day number. pvlib_fixed_tilt_day returns summary, hourly, and top-level aliases including peak_power_w, daily_energy_wh, daily_ac_energy_kwh, poa, cell_temp, dc_power, and ac_power.",
-    "Always create report.md and results.json. Create CSV/XLSX/PDF/PNG outputs when useful or requested.",
-    "If the user requested a specific output type, create that file type when feasible. If it is not feasible, write a Completion Notes section explaining exactly which requested output is missing and why.",
+    "Always create report.md and results.json as internal workspace outputs. Create user-downloadable CSV/XLSX/PDF/PNG/JSON/Markdown/PPTX files only when the user explicitly requests that output type.",
+    "If the user requested a specific output type, create that file type when feasible. If it is not feasible, explain the missing requested output naturally in the answer.",
     "Do not read outside the input file paths provided in INPUT_FILES. Do not write outside OUTPUT_DIR.",
     input.allowNetwork ? "Network is allowed for public URLs/APIs if relevant." : "Network is not allowed; do not fetch internet resources.",
     "If inputs include PDFs, first use extract_all_input_texts() so Gemini/MinerU extraction sidecars are used when present and PyMuPDF/pypdf are used otherwise. extract_all_input_texts() returns a list of strings suitable for '\\n'.join(...). Use extract_all_input_documents() only when you need filename/path/text metadata records. Sidecar .gemini.json files usually contain text/markdown fields, not a normalized parameter schema; parse their text/markdown content unless you have verified specific structured keys exist.",
     "Use a domain-agnostic tool workflow: inspect documents, extract tables and numeric evidence, infer the task-specific physics/economics equations from the prompt and evidence, run calculations, and synthesize a direct answer. Do not assume the platform only supports a fixed list of domains.",
+    "If a request is too under-specified for meaningful execution, write a concise clarification request instead of inventing decisive inputs. If a request is dangerous to execute or physically impossible as stated, politely refuse in report.md and explain the specific reason.",
     "Do not use canned application templates or domain-specific shortcuts. Treat the prompt and uploaded files as the source of truth, then write task-specific code with the helper tools.",
     "Never substitute generic placeholder inputs when source previews or uploaded files contain specific values. The first section of report.md must show the source-backed inputs actually used; any invented or assumed value must be labeled as an assumption and kept separate.",
     "Before modeling, parse extract_all_input_texts() and extract_numeric_evidence(...) for the uploaded files. If source-backed values conflict with generic examples or prior defaults, use the source-backed values. Use permissive context regexes that capture forms like '<label> ... 440 W' or '<label> ... -0.37 percent', not only colon-separated fields.",
@@ -1907,6 +1988,7 @@ async function generatePythonForTask(input: AgentWorkspaceRunInput, copiedFiles:
     "Keep scenario definitions isolated and explicit. A scenario named low-cost should not also change production, capacity factor, output, or utilization unless the user explicitly asked for a combined low-cost/high-output case. State every changed variable in the scenario table.",
     "Before writing the final narrative, compare every conclusion against computed result signs and ranges. Do not say positive NPV, viable, lower cost, within payback, or best case unless the computed table supports that exact claim.",
     "Before exiting, run a self-check in code: verify source-backed inputs against extracted text, verify simple derived values with independent formulas where possible, and write those checks into results.json under quality_checks or independent_checks.",
+    "Structure results.json for backend validation with clear inputs or parameters, assumptions, outputs or metrics, sensitivity/scenario data when applicable, quality_checks or independent_checks, and limits/uncertainty. Keep source-backed values separate from assumed values.",
     "Check physical bounds before writing the narrative. Efficiency metrics should not exceed 100% unless explicitly defined as a ratio outside ordinary efficiency; if a computed efficiency exceeds its bound, flag it as a calculation/unit issue instead of treating it as valid.",
     "Never leave unresolved self-review language such as '[check]', '[verify]', TODO, or 'Actually check' in report.md. Resolve the inconsistency or state the result as uncertain.",
     "For unfamiliar domains, still proceed: identify governing variables, construct a first-pass model with equations and assumptions, show ranges/sensitivities, and explain which measured inputs would improve the result.",
@@ -1915,7 +1997,7 @@ async function generatePythonForTask(input: AgentWorkspaceRunInput, copiedFiles:
     "The report must include the final answer directly, not just an inventory or links to files. Include the key result table inline in valid Markdown, with a separator row like |---|---| immediately after the header.",
     "The final report must clearly state which outputs/calculations were executable-verified and which are best-effort. Never describe a failed executable verification as normal success.",
     "Keep Markdown table cells short and scannable. If an explanation needs more than one sentence, put it below the table as bullets instead of stuffing paragraphs into table cells.",
-    "Every report.md for simulation, economics, safety, environmental, or other high-stakes work must include a brief Support and limits section explaining what the supplied data supports and what it cannot prove.",
+    "Every report.md for simulation, economics, safety, environmental, or other high-stakes work must clearly explain what the supplied data supports and what it cannot prove, without forcing a fixed heading.",
     "Prefer the Python standard library. If a common package is essential, list it in requirements.",
     "Return strict JSON with keys: requirements (array of pip package names), code (string), expected_outputs (array).",
     "",
@@ -1956,7 +2038,7 @@ async function generatePythonForTask(input: AgentWorkspaceRunInput, copiedFiles:
         content: [
           "The previous response did not include executable Python code.",
           "Return only strict JSON now: {\"requirements\": [], \"code\": \"...\", \"expected_outputs\": []}.",
-          "The code must be a complete Python script that imports agent_workspace_helpers, writes report.md and results.json, and creates any requested CSV/PDF/XLSX files. CSV helpers accept write_csv(name, rows) or write_csv(name, headers, rows).",
+          "The code must be a complete Python script that imports agent_workspace_helpers, writes internal report.md and results.json, and creates user-downloadable CSV/PDF/XLSX/JSON/Markdown/PPTX files only when requested. CSV helpers accept write_csv(name, rows) or write_csv(name, headers, rows).",
           "Do not provide analysis prose outside the code string.",
         ].join("\n"),
       },
@@ -1994,7 +2076,7 @@ async function repairPythonAfterExecutionFailure(args: {
     "- for PV simulations use pvlib_fixed_tilt_day(latitude, longitude, pdc0_w, gamma_pdc_per_c, date=..., tilt_deg=..., azimuth_deg=..., temp_air_c=..., inverter_efficiency=..., system_losses=...) and pvlib_cell_temperature(...) instead of deprecated pvlib temperature calls",
     "- underscore-free aliases writejson, writemarkdown, writecsv, writexlsx, writepdf are available",
     "The script must always create report.md and results.json before exiting.",
-    "report.md must include inline key result tables in valid Markdown and a Support and limits section for high-stakes work.",
+    "report.md must include inline key result tables in valid Markdown when useful, and high-stakes work must clearly explain what the supplied data supports and cannot prove.",
     "If a requested export is missing, repair the script to create it before returning. If executable verification cannot pass, label the report best-effort and do not claim normal success.",
     "Remove unresolved self-review language such as '[check]', TODO, or 'Actually check' before writing outputs.",
     "Keep all file writes under OUTPUT_DIR. Prefer standard library.",
@@ -2652,13 +2734,19 @@ export async function runAgentWorkspaceTask(input: AgentWorkspaceRunInput): Prom
     reportMarkdown,
     results,
   });
+  attachWorkspaceResultMetadata({
+    results,
+    input,
+    files: finalFiles,
+    consistencyFindings: consistencyChecks,
+    outputContractFindings,
+  });
   const qualityBlockers = qualityEvaluation.findings.filter((finding) => finding.severity === "blocker");
-  if ((qualityBlockers.length > 0 || outputContractFindings.length > 0) && !/\n## Completion Notes\b/i.test(reportMarkdown)) {
+  if ((qualityBlockers.length > 0 || outputContractFindings.length > 0) && !/\bThe completed workspace output still has these limitations\b/i.test(reportMarkdown)) {
     reportMarkdown = [
       reportMarkdown.trimEnd(),
       "",
-      "## Completion Notes",
-      "",
+      "The completed workspace output still has these limitations:",
       ...qualityBlockers.map((finding) => `- ${finding.detail}`),
       ...outputContractFindings.map((finding) => `- ${finding}`),
     ].join("\n");
@@ -2674,6 +2762,7 @@ export async function runAgentWorkspaceTask(input: AgentWorkspaceRunInput): Prom
   }
   results.output_contract = {
     required_outputs: requestedWorkspaceOutputExtensions(input),
+    user_requested_outputs: requestedUserWorkspaceOutputExtensions(input),
     initial_findings: outputContractFindings,
     remaining_findings: workspaceOutputContractFindings({
       input,

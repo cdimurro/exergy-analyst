@@ -37,15 +37,20 @@ const DEFAULT_FOLLOWUPS = [
   "Turn this into a client-ready memo",
   "What should I do next?",
 ];
+const FILE_OUTPUT_REQUEST_RE =
+  /\b(export|download|save|convert|attach|attachment|file|csv|xlsx|excel|spreadsheet|pdf|json|markdown|md|ppt|pptx|presentation|deck|slide|slides)\b/i;
 
 function requestedOutputs(message: string): string[] {
+  if (!FILE_OUTPUT_REQUEST_RE.test(message)) return [];
   const outputs = new Set<string>();
   if (/\b(markdown|md)\b/i.test(message)) outputs.add("markdown");
   if (/\bjson\b/i.test(message)) outputs.add("json");
   if (/\bcsv\b/i.test(message)) outputs.add("csv");
   if (/\b(xlsx|excel|spreadsheet|workbook)\b/i.test(message)) outputs.add("xlsx");
-  if (/\b(pdf|report|brief|memo)\b/i.test(message)) outputs.add("pdf");
+  if (/\b(pdf)\b/i.test(message)) outputs.add("pdf");
   if (/\b(chart|plot|graph|figure|png)\b/i.test(message)) outputs.add("png");
+  if (/\b(ppt|pptx|presentation|deck|slide|slides)\b/i.test(message)) outputs.add("pptx");
+  if (outputs.size === 0 && /\b(export|download|save|convert|attach|attachment|file)\b/i.test(message)) outputs.add("markdown");
   return Array.from(outputs);
 }
 
@@ -537,7 +542,7 @@ export async function buildModelRoutedResponse(args: ModelRouterArgs): Promise<R
     `The public assistant identity is ${PUBLIC_AGENT_NAME}. Never reveal provider names, backend model names, internal model classes, or model-version labels to the user.`,
     `If asked what model or AI this is, answer with this identity text: ${PUBLIC_AGENT_IDENTITY_ANSWER}`,
     "Choose either a direct response or one tool action.",
-    "Always try to help. This application router should not add separate rule-based safety gates.",
+    "Always try to help. Ask for clarification only when missing information makes a meaningful answer or execution impossible. Politely refuse only requests that are dangerous to execute or physically impossible as stated, and explain the specific reason.",
     "This is a general-purpose agent. Do not depend on a fixed domain list; infer the domain and task from the user's message, current attachments, source previews, artifacts, and general reasoning.",
     "For simple conceptual questions, answer directly as type response.",
     "For complex requests, do not stop at advice. Choose the single best action.",

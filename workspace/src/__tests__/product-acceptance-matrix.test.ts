@@ -552,7 +552,7 @@ describe("product acceptance matrix: durable server-owned agent runs", () => {
     expect(equipmentRun.body.run.final_answer).toContain("Support and Limits");
     expect(equipmentRun.body.run.final_answer).toMatch(/\|.*compressor_A.*\|/);
     expect(equipmentRun.body.run.final_answer).toMatch(/\|.*refrigeration_C.*\|/);
-    expect(equipmentRun.body.run.files.length).toBeGreaterThan(0);
+    expect(equipmentRun.body.run.files.length).toBe(0);
 
     const heatPump = await createRun({
       message: "Use the simple PDF heat-pump brief for a compact client-ready screening memo.",
