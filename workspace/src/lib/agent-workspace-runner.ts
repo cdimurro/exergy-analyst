@@ -274,8 +274,44 @@ export function workspaceConsistencyFindings(
       "The report contains an unresolved template placeholder. Treat the affected section as incomplete until the placeholder is replaced with the computed table or value.",
     );
   }
+
+  if (/\bthermal\s+runaway\b/i.test(`${task}\n${report}`)) {
+    if (
+      /\btime\s+to\s+runaway\b[\s\S]{0,120}\b10000(?:\.0)?\b/i.test(report) &&
+      !/\b(?:not\s+(?:triggered|reached|observed)|did\s+not\s+(?:trigger|reach|occur)|no\s+runaway|censored|maximum\s+(?:integration|simulation)\s+time|simulation\s+limit)\b/i.test(report)
+    ) {
+      findings.push(
+        "Thermal-runaway output reports the maximum integration time as a time-to-runaway without saying the runaway criterion was not reached. Treat this as a censored/non-triggering simulation, not a predicted onset time.",
+      );
+    }
+    if (
+      /\b(?:most\s+sensitive|dominant|dominated\s+by)\b/i.test(report) &&
+      /\bSensitivity\b[\s\S]{0,240}\b0(?:\.0+)?\b[\s\S]{0,240}\b0(?:\.0+)?\b[\s\S]{0,240}\b0(?:\.0+)?\b/i.test(report)
+    ) {
+      findings.push(
+        "Thermal-runaway sensitivity narrative claims a dominant parameter even though the reported sensitivity values are zero or unchanged. Recompute the sensitivity ranking from threshold crossings or state that the tested range produced no meaningful sensitivity.",
+      );
+    }
+    const thresholdMatches = Array.from(report.matchAll(/\b(?:vent(?:\s+onset)?|runaway|separator(?:\s+shutdown)?)\s*(?:threshold|onset)?\s*(?:at|=|:)?\s*(\d+(?:\.\d+)?)\s*°?\s*C/gi))
+      .map((match) => Number(match[1]))
+      .filter((value) => Number.isFinite(value));
+    const maxTempMatch = report.match(/\b(?:max(?:imum)?\s+temperature|temperature\s+(?:with|at).{0,40}reaches?)\D+(\d+(?:\.\d+)?)\s*°?\s*C/i);
+    const maxTemp = maxTempMatch ? Number(maxTempMatch[1]) : NaN;
+    const ventThreshold = thresholdMatches.find((value) => value >= 120 && value <= 170);
+    if (
+      Number.isFinite(maxTemp) &&
+      ventThreshold &&
+      maxTemp >= ventThreshold &&
+      /\bprevents?\s+reaching\s+the\s+vent\b/i.test(report)
+    ) {
+      findings.push(
+        "Thermal-runaway narrative says the case prevents reaching the vent threshold, but the reported maximum temperature is above the stated vent threshold. Correct the threshold conclusion before treating the result as verified.",
+      );
+    }
+  }
+
   const scenarios = scenarioRecords(results);
-  if (scenarios.length === 0) return findings;
+  if (scenarios.length === 0) return Array.from(new Set(findings));
 
   for (const scenario of scenarios) {
     for (const entry of numericEntries(scenario.record)) {
@@ -489,6 +525,9 @@ export function workspaceOutputContractFindings(args: {
     if (!/\|.*(?:scenario|case|base|input|output|result).*\|/i.test(args.reportMarkdown)) {
       findings.push("Scenario output does not include a visible comparison table.");
     }
+  }
+  for (const finding of workspaceConsistencyFindings(args.reportMarkdown, args.results, args.input.task)) {
+    findings.push(finding);
   }
   if (/^\s*\|.*\|\s*$/m.test(args.reportMarkdown)) {
     const longCells = args.reportMarkdown

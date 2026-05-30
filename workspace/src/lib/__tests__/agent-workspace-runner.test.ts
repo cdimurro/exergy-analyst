@@ -320,6 +320,56 @@ describe("agent workspace runner", () => {
     expect(findings.join("\n")).toContain("unresolved template placeholder");
   });
 
+  it("flags thermal runaway runs that report max integration time as an onset", () => {
+    const findings = workspaceConsistencyFindings(
+      [
+        "# Thermal Runaway Simulation",
+        "",
+        "| Case | T_critical (°C) | Time to runaway (s) |",
+        "|---|---:|---:|",
+        "| Base | 40.0 | 10000.0 |",
+        "| E_SEI=1.2eV | 40.0 | 10000.0 |",
+        "",
+        "The most sensitive parameter is E_SEI.",
+        "",
+        "| Parameter | T Range (°C) | Time Range (s) | Sensitivity (%) |",
+        "|---|---:|---:|---:|",
+        "| E_SEI | 0.0 | 0.0 | 0.0 |",
+        "| H_cath | 0.0 | 0.0 | 0.0 |",
+      ].join("\n"),
+      {},
+      "Run a thermal runaway sensitivity simulation.",
+    );
+
+    const text = findings.join("\n");
+    expect(text).toContain("maximum integration time as a time-to-runaway");
+    expect(text).toContain("reported sensitivity values are zero");
+  });
+
+  it("makes thermal runaway consistency findings repair-blocking output contract findings", () => {
+    const findings = workspaceOutputContractFindings({
+      input: {
+        projectId: "project",
+        actionId: "action",
+        task: "Run a thermal runaway simulation and sensitivity analysis.",
+      },
+      files: [
+        { filename: "report.md", path: "/tmp/report.md", bytes: 100, kind: "md" },
+        { filename: "results.json", path: "/tmp/results.json", bytes: 100, kind: "json" },
+      ],
+      reportMarkdown: [
+        "# Thermal Runaway",
+        "Support and limits: this is screening only and cannot prove field safety.",
+        "| Case | Time to runaway (s) |",
+        "|---|---:|",
+        "| Base | 10000.0 |",
+      ].join("\n"),
+      results: {},
+    });
+
+    expect(findings.join("\n")).toContain("maximum integration time as a time-to-runaway");
+  });
+
   it("prefers substantive markdown outputs over generic missing-report placeholders", () => {
     const placeholder = [
       "# Analysis Result",

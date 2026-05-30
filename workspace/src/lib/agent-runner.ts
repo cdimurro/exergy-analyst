@@ -160,7 +160,7 @@ function downloadableFilesForArtifact(
       const filename = cleanString(file.filename);
       const path = cleanString(file.path);
       if (!filename || !path) return false;
-      if (/^(results\.json|input_manifest\.xlsx)$/i.test(filename)) return false;
+      if (/^input_manifest\.xlsx$/i.test(filename)) return false;
       if (/\.py$/i.test(filename)) return false;
       return /\.(csv|xlsx|pdf|md|json|png|jpg|jpeg|txt)$/i.test(filename);
     })
