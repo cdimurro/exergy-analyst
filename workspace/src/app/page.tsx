@@ -86,7 +86,7 @@ export default function HomePage() {
             <span className="text-[#e8ecf4]">A Scientifically Rigorous Agent</span>
             <br />
             <span className="text-[#e8ecf4]">
-              Designed Specifically for{" "}
+              Specifically Designed for{" "}
               <span className="bg-gradient-to-r from-[#4db8a4] via-[#5ba8c8] to-[#5b8dd9] bg-clip-text text-transparent">
                 Solving Deep Tech Challenges.
               </span>
