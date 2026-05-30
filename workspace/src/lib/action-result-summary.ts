@@ -931,7 +931,9 @@ function buildStructuredArtifactResultSummary(actionType: string, artifact: Arti
   if (actionType === "agent_workspace" || artifact.type === "workspace_run" || content.analysis_type === "agent_workspace") {
     const report = typeof content.report_markdown === "string" ? content.report_markdown.trim() : "";
     if (report) {
-      return ensureWorkspaceSupportLimits(appendWorkspaceFileTablesForChat(cleanWorkspaceReportForChat(report), content));
+      // Answer-first: keep the cleaned report and any inline result tables, but
+      // do not force a support-limits caveat paragraph onto the end.
+      return appendWorkspaceFileTablesForChat(cleanWorkspaceReportForChat(report), content);
     }
     const resultSummary = firstText(
       isRecord(content.results) ? content.results.summary : "",

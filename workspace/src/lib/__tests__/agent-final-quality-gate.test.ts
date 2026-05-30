@@ -93,17 +93,21 @@ describe("final quality gate", () => {
     jest.clearAllMocks();
   });
 
-  it("adds support limits and produces persisted diagnostics without needing model repair", async () => {
+  it("keeps the answer as-is and produces persisted diagnostics without forcing scaffolding", async () => {
+    const answer = "I extracted 77 MWe and 92 percent. I calculated annual generation as 620,000 MWh and LCOE as 118 USD/MWh.";
     const result = await runFinalQualityGate({
       projectId: project.id,
       run,
-      finalAnswer: "I extracted 77 MWe and 92 percent. I calculated annual generation as 620,000 MWh and LCOE as 118 USD/MWh.",
+      finalAnswer: answer,
       patch: { files: [] },
     });
 
-    expect(result.finalAnswer).toContain("Support and Limits");
-    expect(result.finalAnswer).toContain("Calculation execution");
-    expect(result.appendedLimitNote).toBe(true);
+    // Answer-first: no forced Support-and-Limits scaffolding is appended.
+    expect(result.finalAnswer).not.toContain("Support and Limits");
+    expect(result.finalAnswer).not.toContain("Calculation execution");
+    expect(result.appendedLimitNote).toBe(false);
+    expect(result.finalAnswer).toContain("620,000 MWh");
+    // Diagnostics are still computed and persisted.
     expect(result.answerContract.highStakes).toBe(true);
     expect(result.qualityEvaluation.score).toBeGreaterThan(0);
     expect(result.claimLedger.summary.total_claims).toBeGreaterThan(0);

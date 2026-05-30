@@ -691,7 +691,8 @@ describe("buildActionResultSummary", () => {
 
     const summary = buildActionResultSummary({ actionType: "agent_workspace", artifact: art });
     expect(summary).toContain(report);
-    expect(summary).toContain("Treat the computed values as decision support");
+    // Answer-first: no forced support-limits caveat paragraph is appended.
+    expect(summary).not.toContain("Treat the computed values as decision support");
     expect(isChatOnlyArtifact(art, "agent_workspace")).toBe(true);
   });
 

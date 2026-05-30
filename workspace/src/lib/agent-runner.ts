@@ -256,8 +256,13 @@ function addLimitedWorkspaceNotice(answer: string, artifact: Artifact | null | u
   ].join("\n");
 }
 
-function appendDownloadLinks(answer: string, files: AgentRunFile[]): string {
-  if (files.length === 0) return answer;
+// Generated files are always reachable from the artifact card, so we only put a
+// Downloads list inside the response text when the user actually asked for a
+// file/export. Otherwise the response stays focused on the answer.
+const PROMPT_WANTS_FILE_RE = /\b(file|csv|tsv|xlsx|excel|spreadsheet|pdf|json|markdown|download|export|deliverable)\b/i;
+
+function appendDownloadLinks(answer: string, files: AgentRunFile[], requested = false): string {
+  if (files.length === 0 || !requested) return answer;
   const links = files.map((file) => `- [Download ${file.filename}](${file.url})`);
   return `${answer.trim()}\n\nDownloads\n${links.join("\n")}`;
 }
@@ -862,7 +867,7 @@ async function routeRun(projectId: string, run: AgentRun, project: Project, docs
     "Let the presentation fit the user's request. A small question may need only one or two sentences; a complex diligence request may need headings, bullets, tables, or a detailed breakdown. Do not force the same structure every time.",
     "Ask for clarification only when missing information makes a useful answer impossible. Politely refuse only requests that are dangerous to execute or physically impossible as stated, and explain the specific reason.",
     "If tool use would have been helpful but is unavailable, still give the most useful answer possible and clearly state what would require a tool run or source data.",
-    "For high-stakes outputs, separate what the supplied data supports from what it cannot prove.",
+    "Lead with the answer. Keep any caveats to the one or two that would change the decision, woven into the prose — do not add fixed 'Support and Limits', 'Assumptions', or 'Downloads' sections.",
     ...ANALYSIS_DISCIPLINE_RULES,
     `Project: ${project.name}`,
     project.description ? `Project description: ${project.description}` : "",
@@ -1221,7 +1226,7 @@ async function synthesizeToolFailureAnswer(args: {
   ].join("\n");
 }
 
-async function executeActionAttemptInRun(projectId: string, runId: string, action: RoutedAction, trigger: "user" | "plan_step" = "user", attempt = 1): Promise<{
+async function executeActionAttemptInRun(projectId: string, runId: string, action: RoutedAction, trigger: "user" | "plan_step" = "user", attempt = 1, requestedFiles = false): Promise<{
   answer: string;
   artifact: Artifact | null;
   actionId?: string;
@@ -1279,7 +1284,7 @@ async function executeActionAttemptInRun(projectId: string, runId: string, actio
       await emit(projectId, runId, "file.created", `Created ${file.filename}.`, file as unknown as Record<string, unknown>);
     }
     return {
-      answer: appendDownloadLinks(sanitizeUserFacingAgentText(summary), files),
+      answer: appendDownloadLinks(sanitizeUserFacingAgentText(summary), files, requestedFiles),
       artifact,
       actionId,
       files,
@@ -1296,7 +1301,7 @@ async function executeActionAttemptInRun(projectId: string, runId: string, actio
   }
 }
 
-async function executeActionInRun(projectId: string, runId: string, action: RoutedAction, trigger: "user" | "plan_step" = "user"): Promise<{
+async function executeActionInRun(projectId: string, runId: string, action: RoutedAction, trigger: "user" | "plan_step" = "user", requestedFiles = false): Promise<{
   answer: string;
   artifact: Artifact | null;
   actionId?: string;
@@ -1309,7 +1314,7 @@ async function executeActionInRun(projectId: string, runId: string, action: Rout
 
   for (let attempt = 1; attempt <= maxRecovery + 1; attempt += 1) {
     try {
-      return await executeActionAttemptInRun(projectId, runId, currentAction, trigger, attempt);
+      return await executeActionAttemptInRun(projectId, runId, currentAction, trigger, attempt, requestedFiles);
     } catch (error) {
       if (error instanceof Error && error.message === "Run was cancelled") throw error;
       lastError = error;
@@ -1472,7 +1477,9 @@ async function createExportFilesInRun(args: {
     await emit(args.projectId, args.runId, "file.created", `Created ${file.filename}.`, file as unknown as Record<string, unknown>);
   }
   return {
-    answer: appendDownloadLinks(artifact.summary, files),
+    // This is the explicit export deliverable, so the download links belong in
+    // the response itself.
+    answer: appendDownloadLinks(artifact.summary, files, true),
     artifact,
     files,
   };
@@ -1533,7 +1540,7 @@ async function failRun(projectId: string, runId: string, error: unknown): Promis
 const ANALYSIS_DISCIPLINE_RULES: string[] = [
   "Rank and recommend on the quantity that actually drives the decision (useful work, marginal value, the limiting constraint), not on the largest or most prominent number. The bigger headline figure is often not the better option.",
   "When an independent check or a second method disagrees with a reported value by more than roughly a factor of two, treat it as an unresolved discrepancy and say what must be confirmed to settle it. Do not reconcile the gap with an assumed parameter that was not actually supplied.",
-  "State the assumptions and reference conditions a result rests on, and note when the conclusion would change under a reasonable alternative assumption.",
+  "When a result hinges on a key assumption, name it briefly inline — only the assumptions that would materially change the answer, not an exhaustive list.",
 ];
 
 async function synthesizePlanFinal(args: {
@@ -1559,9 +1566,11 @@ async function synthesizePlanFinal(args: {
     "Use natural first-person past tense. Say 'I extracted...' or 'I ran...' instead of 'I've already extracted...' or 'I've already run...'.",
     "Choose the answer format dynamically from the user request and tool results. Use a brief answer, narrative, bullets, headings, tables, or a full technical breakdown only when that format genuinely improves the response.",
     "Do not reuse a fixed heading template. Do not add boilerplate sections just because this is an agent run.",
-    "Be explicit about what the data supports and what it cannot prove when the answer is high stakes.",
+    "Lead with the answer. Give the user exactly what they asked for, directly and confidently.",
+    "Keep caveats minimal and woven into the prose: mention only the one or two limitations that would actually change the decision. Do not enumerate everything that could not be done — credibility comes from a correct, useful answer, not from listing gaps.",
+    "Do not add fixed sections such as 'Support and Limits', 'Source-Backed Inputs', 'Assumptions', 'Calculation Basis', or 'Downloads'. Do not include download links unless the user explicitly asked for a file.",
     args.run.parent_run_id
-      ? "This is a follow-up turn. Answer the specific follow-up directly and conversationally. Do not restate the structure, tables, or support-and-limits sections from earlier answers unless the user is asking for a new calculation, model, or analysis. If they only want a file, produce it and share the link with a one-line summary."
+      ? "This is a follow-up turn. Answer the specific follow-up directly and conversationally; do not restate earlier structure. If they only want a file, produce it and share the link with a one-line summary."
       : "",
     ...ANALYSIS_DISCIPLINE_RULES,
     `Project: ${args.project.name}`,
@@ -1579,7 +1588,7 @@ async function synthesizePlanFinal(args: {
   if (typeof text !== "string" || !text.trim()) {
     throw new Error("The Exergy Lab Agent did not return a final synthesis for the approved plan.");
   }
-  return appendDownloadLinks(sanitizeUserFacingAgentText(text), args.files);
+  return appendDownloadLinks(sanitizeUserFacingAgentText(text), args.files, PROMPT_WANTS_FILE_RE.test(args.run.user_message));
 }
 
 export async function createAgentRun(projectId: string, input: CreateRunInput): Promise<AgentRun> {
@@ -1653,7 +1662,7 @@ export async function startAgentRun(projectId: string, runId: string): Promise<v
     }
 
     if (decision?.kind === "action" && decision.action) {
-      const result = await executeActionInRun(projectId, runId, decision.action);
+      const result = await executeActionInRun(projectId, runId, decision.action, "user", PROMPT_WANTS_FILE_RE.test(run.user_message));
       await completeRun(projectId, runId, result.answer, {
         action_ids: result.actionId ? [result.actionId] : [],
         artifact_ids: result.artifact?.id ? [result.artifact.id] : [],
@@ -1711,7 +1720,7 @@ export async function executeApprovedPlan(projectId: string, runId: string): Pro
       type: step.action_type as ActionType,
       config: step.config || {},
       content: step.description || step.title,
-    }, "plan_step");
+    }, "plan_step", PROMPT_WANTS_FILE_RE.test(run.user_message));
     if (result.actionId) actionIds.push(result.actionId);
     if (result.artifact?.id) artifactIds.push(result.artifact.id);
     files.push(...result.files);

@@ -583,10 +583,10 @@ describe("product acceptance matrix: durable server-owned agent runs", () => {
       thinking_level: "expert",
     });
     const scenarioRun = await waitForRun(scenario.body.run.id, "completed");
-    expect(scenarioRun.body.run.final_answer).toMatch(/Changed inputs|Scenario Reproducibility/i);
-    expect(scenarioRun.body.run.final_answer).toMatch(/Held constants|all other/i);
-    expect(scenarioRun.body.run.final_answer).toMatch(/Assumption drift/i);
-    expect(scenarioRun.body.run.final_answer).toMatch(/\|.*Scenario|Requirement.*\|/);
+    // Answer-first: a scenario follow-up returns a usable answer and is not
+    // forced into a "Scenario Reproducibility" scaffold of changed-input tables.
+    expect(scenarioRun.body.run.status).toBe("completed");
+    expect(scenarioRun.body.run.final_answer.trim().length).toBeGreaterThan(40);
 
     const exportRun = await createRun({
       message: "Export the assumptions ledger as JSON and a client memo as Markdown or PDF.",

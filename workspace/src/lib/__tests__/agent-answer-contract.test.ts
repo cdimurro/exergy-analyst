@@ -1,6 +1,6 @@
 import { enforceAnswerContract } from "@/lib/agent-answer-contract";
 import { buildDocumentEvidenceDigest } from "@/lib/document-evidence";
-import type { AgentEvent, Artifact, ProjectDocument } from "@/lib/storage/types";
+import type { Artifact, ProjectDocument } from "@/lib/storage/types";
 
 function docWithEvidence(): ProjectDocument {
   const digest = buildDocumentEvidenceDigest(
@@ -24,25 +24,29 @@ function docWithEvidence(): ProjectDocument {
   };
 }
 
-describe("agent answer contract", () => {
-  it("adds support limits, source values, table structure, and calculation basis for high-stakes uploaded modelling answers", () => {
+describe("agent answer contract (answer-first)", () => {
+  it("does not append scaffolding to a verified high-stakes modeling answer", () => {
+    const answer = "I found compressor_A at 620 kW, pump_B at 74 kW, and refrigeration_C at 710 kW.";
     const result = enforceAnswerContract({
       prompt: "Analyze this compressor, pump, and refrigeration utility log and rank efficiency opportunities.",
-      answer: "I found compressor_A at 620 kW, pump_B at 74 kW, and refrigeration_C at 710 kW.",
+      answer,
       documents: [docWithEvidence()],
-      artifactTexts: ["workspace tool_execution_completed true"],
+      artifactTexts: ["workspace simulation completed"],
     });
 
     expect(result.highStakes).toBe(true);
     expect(result.numericOrModeling).toBe(true);
-    expect(result.answer).toContain("## Source-Backed Input Summary");
-    expect(result.answer).toContain("## Calculation Basis");
-    expect(result.answer).toContain("## Support and Limits");
-    expect(result.answer).toContain("Calculation execution");
-    expect(result.answer).toContain("verified");
+    expect(result.executionStatus).toBe("verified");
+    // Answer-first: the answer is returned as-is, with no forced sections.
+    expect(result.answer).toBe(answer);
+    expect(result.answer).not.toContain("## Source-Backed Input Summary");
+    expect(result.answer).not.toContain("## Calculation Basis");
+    expect(result.answer).not.toContain("## Support and Limits");
+    expect(result.answer).not.toContain("## Scenario Reproducibility");
+    expect(result.answer).not.toMatch(/^Downloads$/m);
   });
 
-  it("labels nonzero executable outputs as best-effort in support limits", () => {
+  it("adds a single short honest note when execution was not verified", () => {
     const artifact: Artifact = {
       id: "art-limited",
       schema_version: 1,
@@ -63,103 +67,48 @@ describe("agent answer contract", () => {
     };
 
     const result = enforceAnswerContract({
-      prompt: "Export a client-ready risk memo from this uploaded case.",
+      prompt: "Build a client-ready risk memo from this uploaded case.",
       answer: "I created a risk memo from the uploaded case.",
       documents: [docWithEvidence()],
       artifacts: [artifact],
     });
 
     expect(result.executionStatus).toBe("best_effort");
-    expect(result.answer).toContain("best effort");
-    expect(result.answer).toContain("executable verification did not fully pass");
-  });
-
-  it("adds the structured support contract when an existing limits heading is incomplete", () => {
-    const result = enforceAnswerContract({
-      prompt: "Run a geothermal physics and economic screening model from this uploaded note.",
-      answer: [
-        "# Geothermal Result",
-        "",
-        "## Support and Limits",
-        "- This screening uses constant reservoir temperature.",
-        "- No well test or scaling chemistry was provided.",
-      ].join("\n"),
-      documents: [docWithEvidence()],
-    });
-
     expect(result.supportLimitsAdded).toBe(true);
-    expect(result.answer).toContain("| What the data supports |");
-    expect(result.answer).toContain("| What it does not prove |");
-    expect(result.answer).toContain("| Missing inputs |");
-    expect(result.answer).toContain("| Calculation execution |");
+    expect(result.answer).toContain("best-effort");
+    // It is one short note, not a Support-and-Limits table.
+    expect(result.answer).not.toContain("## Support and Limits");
+    expect(result.answer).not.toContain("| What the data supports |");
   });
 
-  it("replaces duplicate support sections with one normalized status block", () => {
-    const events: AgentEvent[] = [
-      {
-        id: "evt-1",
-        project_id: "project",
-        run_id: "run",
-        sequence: 1,
-        type: "tool.failed",
-        message: "workspace timed out",
-        data: {},
-        created_at: "2026-05-01T00:00:00.000Z",
-      },
-      {
-        id: "evt-2",
-        project_id: "project",
-        run_id: "run",
-        sequence: 2,
-        type: "tool.completed",
-        message: "workspace completed",
-        data: {},
-        created_at: "2026-05-01T00:01:00.000Z",
-      },
-    ];
+  it("does not duplicate the note when the answer already hedges", () => {
+    const artifact: Artifact = {
+      id: "art-limited-2",
+      schema_version: 1,
+      type: "workspace_run",
+      title: "Workspace",
+      summary: "Best-effort report.",
+      content: { results: { tool_execution_completed: false } },
+      source: "ai_synthesis",
+      raw: {},
+      metadata: {},
+      action_id: "act-2",
+      provenance: { source: "ai_synthesis", deterministic: false },
+      created_at: "2026-05-01T00:00:00.000Z",
+      pinned: false,
+    };
+    const answer = "Here is the estimate. Treat it as a best-effort screening-level result pending a clean rerun.";
     const result = enforceAnswerContract({
-      prompt: "Run a document-backed techno-economic model and export a PDF.",
-      answer: [
-        "# Result",
-        "",
-        "## Support and Limits",
-        "- Calculations executed successfully: Yes",
-        "",
-        "Downloads",
-        "- [Download report.md](#)",
-        "",
-        "## Support and Limits",
-        "| Item | Status |",
-        "|---|---|",
-        "| Result status | Best-effort: useful output was preserved, but executable verification did not fully pass. |",
-      ].join("\n"),
+      prompt: "Run a techno-economic model from this uploaded note.",
+      answer,
       documents: [docWithEvidence()],
-      files: [{ filename: "report.md", mime_type: "text/markdown", run_id: "run", url: "/file/report.md" }],
-      events,
+      artifacts: [artifact],
     });
-
-    expect(result.executionStatus).toBe("verified");
-    expect(result.answer.match(/^## Support and Limits/gm)).toHaveLength(1);
-    expect(result.answer).toContain("Verified after recovery");
-    expect(result.answer).not.toContain("executable verification did not fully pass");
-    expect(result.answer).toContain("Downloads");
+    expect(result.supportLimitsAdded).toBe(false);
+    expect(result.answer).toBe(answer);
   });
 
-  it("adds scenario reproducibility requirements for changed-input follow-ups", () => {
-    const result = enforceAnswerContract({
-      prompt: "Now rerun with electricity price reduced by 50% and hold all other assumptions constant.",
-      answer: "The lower electricity price improves the case.",
-      documents: [docWithEvidence()],
-      followup: true,
-    });
-
-    expect(result.answer).toContain("## Scenario Reproducibility");
-    expect(result.answer).toContain("Changed inputs");
-    expect(result.answer).toContain("Held constants");
-    expect(result.answer).toContain("Assumption drift");
-  });
-
-  it("keeps simple follow-ups light instead of repeating the full format", () => {
+  it("keeps simple follow-ups light and untouched", () => {
     const question = enforceAnswerContract({
       prompt: "Thanks — why is the kiln the best stream to start with?",
       answer: "Because it has the highest recoverable useful work for its temperature.",
@@ -167,8 +116,7 @@ describe("agent answer contract", () => {
       followup: true,
     });
     expect(question.highStakes).toBe(false);
-    expect(question.answer).not.toContain("## Support and Limits");
-    expect(question.answer).not.toContain("## Calculation Basis");
+    expect(question.answer).toBe("Because it has the highest recoverable useful work for its temperature.");
 
     const fileRequest = enforceAnswerContract({
       prompt: "Can you export that ranking as a CSV file and give me the link?",
@@ -178,27 +126,5 @@ describe("agent answer contract", () => {
     });
     expect(fileRequest.highStakes).toBe(false);
     expect(fileRequest.answer).not.toContain("## Support and Limits");
-  });
-
-  it("still applies the full contract when a follow-up is a new modeling request", () => {
-    const result = enforceAnswerContract({
-      prompt: "Now run a sensitivity model on the kiln recovery at three different ambient temperatures.",
-      answer: "I modeled the kiln recovery at 5, 15, and 25 C ambient.",
-      documents: [docWithEvidence()],
-      followup: true,
-    });
-    expect(result.highStakes).toBe(true);
-    expect(result.answer).toContain("## Support and Limits");
-  });
-
-  it("does not add scenario reproducibility for ordinary change metrics", () => {
-    const result = enforceAnswerContract({
-      prompt: "Extract the key values and calculate annual electricity use, emissions change, operating-cost change, payback, and exergy limitations.",
-      answer: "The annual electricity use is 2,516 MWh and the emissions change is lower by 862 tCO2/year.",
-      documents: [docWithEvidence()],
-    });
-
-    expect(result.scenarioSectionAdded).toBe(false);
-    expect(result.answer).not.toContain("## Scenario Reproducibility");
   });
 });
