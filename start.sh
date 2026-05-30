@@ -19,4 +19,4 @@ mkdir -p \
 "$PYTHON_PATH" -c "import exergy_analyst; print('Exergy Analyst Python OK')" >/dev/null
 
 cd /app/nextjs
-HOSTNAME="${HOSTNAME:-0.0.0.0}" PORT="${PORT:-10000}" node server.js
+HOSTNAME="0.0.0.0" PORT="${PORT:-10000}" node server.js
