@@ -21,7 +21,7 @@ describe("agent workspace runner", () => {
     expect(source).toContain("return [doc.get(\"text\", \"\") for doc in extract_all_input_documents() if doc.get(\"text\")]");
     expect(source).toContain("extract_all_input_texts() returns a list of strings");
     expect(source).toContain("extract_all_input_documents()");
-    expect(source).toContain("Gemini/MinerU extraction sidecars");
+    expect(source).toContain("sidecars and parser-specific extraction paths");
     expect(source).toContain(".gemini.md");
     expect(source).toContain("def write_csv(*args):");
     expect(source).toContain("write_csv(name, headers, rows)");
@@ -66,6 +66,18 @@ describe("agent workspace runner", () => {
     expect(source).toContain("def load_tabular_inputs");
     expect(source).toContain("CSV/TSV/JSON/YAML inputs");
     expect(source).toContain('lower.endswith((".yaml", ".yml"))');
+    expect(source).toContain("def search_literature");
+    expect(source).toContain("def source_value_table");
+    expect(source).toContain("def run_sensitivity_grid");
+    expect(source).toContain("def rank_sensitivity");
+    expect(source).toContain('lower.endswith((".xlsx", ".xlsm", ".xltx", ".xltm"))');
+    expect(source).toContain('lower.endswith(".parquet")');
+    expect(source).toContain('path_suffix in (".docx",)');
+    expect(source).toContain('path_suffix in (".pptx",)');
+    expect(source).toContain('path_suffix == ".dxf"');
+    expect(source).toContain('path_suffix == ".ifc"');
+    expect(source).toContain("search_crossref_works");
+    expect(source).toContain("search_openalex_works");
     expect(source).toContain("def financial_metrics");
     expect(source).toContain("Use a domain-agnostic tool workflow");
     expect(source).toContain("Do not assume the platform only supports a fixed list of domains");
@@ -194,11 +206,14 @@ describe("agent workspace runner", () => {
       "numpy",
       "pandas>=2.0",
       "requests",
+      "python-docx",
+      "python-pptx",
+      "pdfplumber",
       "evil-package",
       "numpy; rm -rf /",
       "../local",
       42,
-    ])).toEqual(["numpy", "pandas>=2.0", "requests"]);
+    ])).toEqual(["numpy", "pandas>=2.0", "requests", "python-docx", "python-pptx", "pdfplumber"]);
   });
 
   it("rejects shell-like package strings", () => {

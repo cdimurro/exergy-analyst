@@ -34,4 +34,4 @@ services:
       - key: EXERGY_AGENT_ALLOW_DEPENDENCY_INSTALL
         value: "true"
       - key: EXERGY_AGENT_ALLOW_NETWORK
-        value: "false"
+        value: "auto"

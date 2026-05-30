@@ -21,14 +21,24 @@ RUN python -m pip install --upgrade pip setuptools wheel \
     && python -m pip install \
       beautifulsoup4 \
       coolprop \
+      duckdb \
+      ezdxf \
+      h5py \
       lxml \
       matplotlib \
+      netcdf4 \
       networkx \
       numpy \
+      odfpy \
       openpyxl \
       pandas \
+      pdfplumber \
       pillow \
+      polars \
       pvlib \
+      pyarrow \
+      python-docx \
+      python-pptx \
       pymupdf \
       pypdf \
       reportlab \

@@ -21,17 +21,22 @@ const DEFAULT_ALLOWED_PACKAGES = new Set([
   "duckdb",
   "ezdxf",
   "h5py",
+  "ifcopenshell",
   "netcdf4",
   "lxml",
   "matplotlib",
   "networkx",
   "numpy",
+  "odfpy",
   "openpyxl",
   "pandas",
+  "pdfplumber",
   "pillow",
   "polars",
   "pvlib",
   "pyarrow",
+  "python-docx",
+  "python-pptx",
   "pymupdf",
   "pypdf",
   "pyyaml",
@@ -780,7 +785,7 @@ export function sanitizePythonRequirements(values: unknown): string[] {
     .split(",")
     .map((item) => item.trim().toLowerCase())
     .filter(Boolean);
-  const allowed = configured.length > 0 ? new Set(configured) : DEFAULT_ALLOWED_PACKAGES;
+  const allowed = new Set([...DEFAULT_ALLOWED_PACKAGES, ...configured]);
   const clean: string[] = [];
   for (const value of values) {
     if (typeof value !== "string") continue;
@@ -806,6 +811,7 @@ function networkAllowed(input?: boolean): boolean {
   if (input === false) return false;
   const env = getEnvVar("EXERGY_AGENT_ALLOW_NETWORK");
   if (env === "0" || env === "false") return false;
+  if (env === "auto" || env === "request") return input === true;
   return input === true || env === "1" || env === "true";
 }
 
@@ -1133,6 +1139,245 @@ def search_huggingface_models(query, limit=5):
     data = json.loads(fetch_url(url))
     return [{"id": item.get("modelId") or item.get("id"), "downloads": item.get("downloads"), "likes": item.get("likes"), "pipeline_tag": item.get("pipeline_tag")} for item in data]
 
+def search_crossref_works(query, limit=5):
+    q = urllib.parse.quote(str(query))
+    url = f"https://api.crossref.org/works?query={q}&rows={max(1, min(int(limit), 20))}"
+    data = json.loads(fetch_url(url))
+    rows = []
+    for item in data.get("message", {}).get("items", []):
+        rows.append({
+            "title": " ".join(item.get("title") or [])[:400],
+            "doi": item.get("DOI"),
+            "year": ((item.get("published-print") or item.get("published-online") or item.get("created") or {}).get("date-parts") or [[None]])[0][0],
+            "container": " ".join(item.get("container-title") or [])[:240],
+            "url": item.get("URL"),
+            "score": item.get("score"),
+        })
+    return rows
+
+def search_openalex_works(query, limit=5):
+    q = urllib.parse.quote(str(query))
+    url = f"https://api.openalex.org/works?search={q}&per-page={max(1, min(int(limit), 20))}"
+    data = json.loads(fetch_url(url))
+    rows = []
+    for item in data.get("results", []):
+        rows.append({
+            "title": item.get("title"),
+            "doi": item.get("doi"),
+            "year": item.get("publication_year"),
+            "cited_by_count": item.get("cited_by_count"),
+            "source": ((item.get("primary_location") or {}).get("source") or {}).get("display_name"),
+            "url": item.get("id"),
+        })
+    return rows
+
+def search_literature(query, limit=8):
+    results = []
+    errors = []
+    for name, fn in (("crossref", search_crossref_works), ("openalex", search_openalex_works)):
+        try:
+            for row in fn(query, limit=limit):
+                row = dict(row)
+                row["source_api"] = name
+                results.append(row)
+        except Exception as exc:
+            errors.append({"source_api": name, "error": str(exc)})
+    seen = set()
+    deduped = []
+    for row in results:
+        key = (row.get("doi") or row.get("title") or "").lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(row)
+        if len(deduped) >= limit:
+            break
+    return {"query": query, "results": deduped, "errors": errors}
+
+def _zip_xml_text(path, member_patterns):
+    parts = []
+    try:
+        import xml.etree.ElementTree as ET
+        with zipfile.ZipFile(path) as z:
+            for name in sorted(z.namelist()):
+                lower = name.lower()
+                if not any(re.search(pattern, lower) for pattern in member_patterns):
+                    continue
+                try:
+                    root = ET.fromstring(z.read(name))
+                except Exception:
+                    continue
+                text = " ".join((node.text or "").strip() for node in root.iter() if (node.text or "").strip())
+                if text:
+                    parts.append(text)
+    except Exception:
+        return ""
+    return "\n".join(parts)
+
+def _docx_text(path):
+    try:
+        from docx import Document
+        doc = Document(str(path))
+        lines = [p.text for p in doc.paragraphs if p.text]
+        for table in doc.tables:
+            for row in table.rows:
+                cells = [cell.text.replace("\n", " ").strip() for cell in row.cells]
+                if any(cells):
+                    lines.append(" | ".join(cells))
+        if lines:
+            return "\n".join(lines)
+    except Exception:
+        pass
+    return _zip_xml_text(path, [r"word/document\.xml$", r"word/header\d*\.xml$", r"word/footer\d*\.xml$"])
+
+def _pptx_text(path):
+    try:
+        from pptx import Presentation
+        prs = Presentation(str(path))
+        lines = []
+        for idx, slide in enumerate(prs.slides, start=1):
+            slide_lines = []
+            for shape in slide.shapes:
+                text = getattr(shape, "text", "")
+                if text:
+                    slide_lines.append(re.sub(r"\s+", " ", text).strip())
+            if slide_lines:
+                lines.append(f"Slide {idx}: " + " | ".join(slide_lines))
+        if lines:
+            return "\n".join(lines)
+    except Exception:
+        pass
+    return _zip_xml_text(path, [r"ppt/slides/slide\d+\.xml$", r"ppt/notesSlides/notesSlide\d+\.xml$"])
+
+def _xlsx_text(path, max_rows=200):
+    rows = []
+    try:
+        from openpyxl import load_workbook
+        wb = load_workbook(str(path), data_only=True, read_only=True)
+        for sheet in wb.worksheets:
+            rows.append(f"## Sheet: {sheet.title}")
+            for index, row in enumerate(sheet.iter_rows(values_only=True), start=1):
+                if index > max_rows:
+                    rows.append(f"... truncated after {max_rows} rows")
+                    break
+                values = ["" if value is None else str(value) for value in row]
+                if any(value.strip() for value in values):
+                    rows.append(" | ".join(values))
+        if rows:
+            return "\n".join(rows)
+    except Exception:
+        pass
+    return _zip_xml_text(path, [r"xl/sharedstrings\.xml$", r"xl/worksheets/sheet\d+\.xml$"])
+
+def _pdf_text(path):
+    candidates = []
+    try:
+        import fitz
+        parts = []
+        with fitz.open(str(path)) as doc:
+            for page_num, page in enumerate(doc, start=1):
+                page_text = page.get_text("text")
+                if page_text.strip():
+                    parts.append(f"--- Page {page_num} ---\n{page_text}")
+        text = "\n".join(parts).strip()
+        if text:
+            candidates.append(text)
+    except Exception:
+        pass
+    try:
+        import pdfplumber
+        parts = []
+        with pdfplumber.open(str(path)) as pdf:
+            for page_num, page in enumerate(pdf.pages, start=1):
+                page_text = page.extract_text() or ""
+                tables = page.extract_tables() or []
+                table_lines = []
+                for table in tables:
+                    for row in table:
+                        table_lines.append(" | ".join("" if cell is None else str(cell) for cell in row))
+                combined = "\n".join([page_text, *table_lines]).strip()
+                if combined:
+                    parts.append(f"--- Page {page_num} ---\n{combined}")
+        text = "\n".join(parts).strip()
+        if text:
+            candidates.append(text)
+    except Exception:
+        pass
+    try:
+        from pypdf import PdfReader
+        reader = PdfReader(str(path))
+        text = "\n".join((page.extract_text() or "") for page in reader.pages).strip()
+        if text:
+            candidates.append(text)
+    except Exception:
+        pass
+    return max(candidates, key=len) if candidates else ""
+
+def _dxf_text(path, limit=800):
+    try:
+        import ezdxf
+        doc = ezdxf.readfile(str(path))
+        rows = []
+        for index, entity in enumerate(doc.modelspace(), start=1):
+            if index > limit:
+                rows.append(f"... truncated after {limit} DXF entities")
+                break
+            data = {"type": entity.dxftype()}
+            for attr in ("layer", "color", "linetype"):
+                try:
+                    data[attr] = getattr(entity.dxf, attr)
+                except Exception:
+                    pass
+            try:
+                if entity.dxftype() in ("TEXT", "MTEXT"):
+                    data["text"] = entity.plain_text() if hasattr(entity, "plain_text") else entity.dxf.text
+            except Exception:
+                pass
+            rows.append(json.dumps(data, default=str))
+        return "\n".join(rows)
+    except Exception:
+        try:
+            return Path(path).read_text(encoding="utf-8", errors="replace")[:120000]
+        except Exception:
+            return ""
+
+def _ifc_text(path, limit=1200):
+    try:
+        import ifcopenshell
+        model = ifcopenshell.open(str(path))
+        rows = []
+        for index, entity in enumerate(model.by_type("IfcProduct"), start=1):
+            if index > limit:
+                rows.append(f"... truncated after {limit} IFC products")
+                break
+            rows.append(json.dumps({
+                "type": entity.is_a(),
+                "name": getattr(entity, "Name", None),
+                "global_id": getattr(entity, "GlobalId", None),
+            }, default=str))
+        return "\n".join(rows)
+    except Exception:
+        try:
+            return Path(path).read_text(encoding="utf-8", errors="replace")[:120000]
+        except Exception:
+            return ""
+
+def _image_metadata_text(path):
+    try:
+        from PIL import Image
+        with Image.open(str(path)) as img:
+            return json.dumps({
+                "image_filename": Path(path).name,
+                "format": img.format,
+                "width": img.width,
+                "height": img.height,
+                "mode": img.mode,
+                "metadata": {str(k): str(v)[:500] for k, v in (img.info or {}).items()},
+                "note": "Image metadata was extracted. OCR requires an OCR-capable parser or sidecar text.",
+            }, indent=2)
+    except Exception:
+        return ""
+
 def extract_text(path):
     path = Path(path)
     path_suffix = path.suffix.lower()
@@ -1154,28 +1399,30 @@ def extract_text(path):
             except Exception:
                 pass
     if path_suffix == ".pdf":
-        try:
-            import fitz
-            parts = []
-            with fitz.open(str(path)) as doc:
-                for page in doc:
-                    parts.append(page.get_text("text"))
-            text = "\n".join(parts).strip()
-            if text:
-                candidates.append(text)
-        except Exception:
-            pass
-        try:
-            from pypdf import PdfReader
-            reader = PdfReader(str(path))
-            text = "\n".join((page.extract_text() or "") for page in reader.pages).strip()
-            if text:
-                candidates.append(text)
-        except Exception:
-            pass
+        text = _pdf_text(path)
+        if text:
+            candidates.append(text)
         if candidates:
             return max(candidates, key=len)
         return ""
+    if path_suffix in (".docx",):
+        text = _docx_text(path)
+        return text or (max(candidates, key=len) if candidates else "")
+    if path_suffix in (".pptx",):
+        text = _pptx_text(path)
+        return text or (max(candidates, key=len) if candidates else "")
+    if path_suffix in (".xlsx", ".xlsm", ".xltx", ".xltm"):
+        text = _xlsx_text(path)
+        return text or (max(candidates, key=len) if candidates else "")
+    if path_suffix == ".dxf":
+        text = _dxf_text(path)
+        return text or (max(candidates, key=len) if candidates else "")
+    if path_suffix == ".ifc":
+        text = _ifc_text(path)
+        return text or (max(candidates, key=len) if candidates else "")
+    if path_suffix in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff"):
+        text = _image_metadata_text(path)
+        return text or (max(candidates, key=len) if candidates else "")
     if candidates:
         return max(candidates, key=len)
     try:
@@ -1233,6 +1480,89 @@ def extract_numeric_evidence(text, limit=160):
         if len(rows) >= limit:
             break
     return rows
+
+def parse_number(value):
+    if value is None:
+        return None
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return float(value)
+    text = str(value).strip().replace(",", "")
+    match = re.search(r"-?\d+(?:\.\d+)?", text)
+    return float(match.group(0)) if match else None
+
+def source_value_table(text, labels=None, limit=120):
+    """Extract a source-backed parameter table with value, unit, label/context, and confidence hints."""
+    evidence = extract_numeric_evidence(text, limit=limit)
+    wanted = [str(label).lower() for label in (labels or []) if str(label).strip()]
+    rows = []
+    for item in evidence:
+        context = item.get("context", "")
+        label = ""
+        before = context[: max(0, context.find(str(item.get("value", ""))))].strip(" :-–—|,\n\t")
+        if before:
+            label = re.sub(r"\s+", " ", before.split(".")[-1].split(";")[-1])[-90:]
+        if wanted and not any(term in context.lower() for term in wanted):
+            continue
+        rows.append({
+            "label": label or "source value",
+            "value": parse_number(item.get("value")),
+            "raw_value": item.get("value"),
+            "unit": item.get("unit", ""),
+            "context": context,
+            "source": "uploaded_text_or_prompt",
+            "confidence": "source-backed" if item.get("unit") else "source-backed, unit not explicit",
+        })
+    return rows
+
+def run_sensitivity_grid(base_params, model_fn, variations=None):
+    """Run one-at-a-time low/base/high sensitivity cases for any deterministic model_fn(params)->dict."""
+    base_params = dict(base_params or {})
+    variations = variations or {}
+    cases = []
+    base_output = model_fn(dict(base_params))
+    cases.append({"case": "base", "changed_input": None, "params": dict(base_params), "outputs": base_output})
+    for name, values in variations.items():
+        for label, value in (values.items() if isinstance(values, dict) else enumerate(values)):
+            params = dict(base_params)
+            params[name] = value
+            cases.append({
+                "case": f"{name}_{label}",
+                "changed_input": name,
+                "changed_value": value,
+                "params": params,
+                "outputs": model_fn(params),
+            })
+    return cases
+
+def rank_sensitivity(cases, metric):
+    """Rank sensitivity cases by absolute delta from the base case for a numeric output metric."""
+    if not cases:
+        return []
+    base = None
+    for case in cases:
+        if case.get("case") == "base":
+            base = parse_number((case.get("outputs") or {}).get(metric))
+            break
+    if base is None:
+        return []
+    rows = []
+    for case in cases:
+        if case.get("case") == "base":
+            continue
+        value = parse_number((case.get("outputs") or {}).get(metric))
+        if value is None:
+            continue
+        rows.append({
+            "case": case.get("case"),
+            "changed_input": case.get("changed_input"),
+            "changed_value": case.get("changed_value"),
+            "metric": metric,
+            "base_value": base,
+            "case_value": value,
+            "delta": value - base,
+            "abs_delta": abs(value - base),
+        })
+    return sorted(rows, key=lambda row: row["abs_delta"], reverse=True)
 
 def extract_markdown_tables(text):
     text = "" if text is None else str(text)
@@ -1305,6 +1635,54 @@ def load_tabular_inputs(max_rows=5000):
                             break
                 for row in values[:max_rows]:
                     records.append({"filename": filename, **row} if isinstance(row, dict) else {"filename": filename, "value": row})
+            elif lower.endswith((".xlsx", ".xlsm", ".xltx", ".xltm")):
+                try:
+                    from openpyxl import load_workbook
+                    wb = load_workbook(str(path), data_only=True, read_only=True)
+                    for sheet in wb.worksheets:
+                        rows_iter = sheet.iter_rows(values_only=True)
+                        headers = None
+                        for idx, values in enumerate(rows_iter):
+                            if idx >= max_rows:
+                                break
+                            values = list(values or [])
+                            if headers is None:
+                                headers = [str(value).strip() if value is not None else f"Column {i + 1}" for i, value in enumerate(values)]
+                                continue
+                            if not any(value is not None and str(value).strip() for value in values):
+                                continue
+                            row = {headers[i] if i < len(headers) and headers[i] else f"Column {i + 1}": values[i] if i < len(values) else "" for i in range(max(len(headers), len(values)))}
+                            records.append({"filename": filename, "sheet": sheet.title, **row})
+                except Exception as exc:
+                    records.append({"filename": filename, "error": f"Excel parse failed: {exc}"})
+            elif lower.endswith(".parquet"):
+                try:
+                    import pandas as pd
+                    for row in pd.read_parquet(path).head(max_rows).to_dict(orient="records"):
+                        records.append({"filename": filename, **row})
+                except Exception as exc:
+                    records.append({"filename": filename, "error": f"Parquet parse failed: {exc}"})
+            elif lower.endswith((".h5", ".hdf5")):
+                try:
+                    import h5py
+                    with h5py.File(path, "r") as h5:
+                        def visit(name, obj):
+                            if len(records) >= max_rows:
+                                return
+                            if hasattr(obj, "shape"):
+                                records.append({"filename": filename, "dataset": name, "shape": getattr(obj, "shape", None), "dtype": str(getattr(obj, "dtype", ""))})
+                        h5.visititems(visit)
+                except Exception as exc:
+                    records.append({"filename": filename, "error": f"HDF5 parse failed: {exc}"})
+            elif lower.endswith(".nc"):
+                try:
+                    import netCDF4
+                    ds = netCDF4.Dataset(path)
+                    for name, variable in list(ds.variables.items())[:max_rows]:
+                        records.append({"filename": filename, "variable": name, "shape": getattr(variable, "shape", None), "dimensions": getattr(variable, "dimensions", None), "units": getattr(variable, "units", "")})
+                    ds.close()
+                except Exception as exc:
+                    records.append({"filename": filename, "error": f"NetCDF parse failed: {exc}"})
         except Exception as exc:
             records.append({"filename": filename, "error": str(exc)})
     return records
@@ -1968,20 +2346,22 @@ async function generatePythonForTask(input: AgentWorkspaceRunInput, copiedFiles:
   const prompt = [
     "Write a Python 3 script for a project-local agent workspace run. You are the planner and analyst for any technical, scientific, economic, or research domain the user requests.",
     "The script will run in WORK_DIR. It must write all outputs under OUTPUT_DIR.",
-    "Available helper functions from agent_workspace_helpers: write_json, write_markdown, write_csv, write_xlsx, write_pdf, fetch_url, search_github_repositories, search_huggingface_models, extract_text, extract_all_input_texts, extract_all_input_documents, summarize_documents, extract_numeric_evidence, extract_markdown_tables, load_tabular_inputs, capital_recovery_factor, npv, irr, financial_metrics, pvlib_cell_temperature, pvlib_fixed_tilt_day.",
+    "Available helper functions from agent_workspace_helpers: write_json, write_markdown, write_csv, write_xlsx, write_pdf, fetch_url, search_github_repositories, search_huggingface_models, search_crossref_works, search_openalex_works, search_literature, extract_text, extract_all_input_texts, extract_all_input_documents, summarize_documents, extract_numeric_evidence, source_value_table, extract_markdown_tables, load_tabular_inputs, run_sensitivity_grid, rank_sensitivity, capital_recovery_factor, npv, irr, financial_metrics, pvlib_cell_temperature, pvlib_fixed_tilt_day.",
     "Output helper signatures: write_json(name, data); write_markdown(name, text); write_csv(name, rows) or write_csv(name, headers, rows); write_xlsx(name, rows) or write_xlsx(name, headers, rows); write_pdf(name, text). Underscore-free aliases such as writecsv and writepdf are also available.",
     "PV helper signatures: pvlib_fixed_tilt_day(latitude, longitude, pdc0_w, gamma_pdc_per_c=-0.0037, date=\"2023-03-20\", tz=None, tilt_deg=None, azimuth_deg=180, albedo=0.2, temp_air_c=25.0, wind_speed_mps=1.0, inverter_efficiency=0.96, system_losses=0.14, module_efficiency=0.18) and pvlib_cell_temperature(poa_global, temp_air=25.0, wind_speed=1.0, module_efficiency=0.18). The third argument is module STC power in W, not a day number. pvlib_fixed_tilt_day returns summary, hourly, and top-level aliases including peak_power_w, daily_energy_wh, daily_ac_energy_kwh, poa, cell_temp, dc_power, and ac_power.",
     "Always create report.md and results.json as internal workspace outputs. Create user-downloadable CSV/XLSX/PDF/PNG/JSON/Markdown/PPTX files only when the user explicitly requests that output type.",
     "If the user requested a specific output type, create that file type when feasible. If it is not feasible, explain the missing requested output naturally in the answer.",
     "Do not read outside the input file paths provided in INPUT_FILES. Do not write outside OUTPUT_DIR.",
     input.allowNetwork ? "Network is allowed for public URLs/APIs if relevant." : "Network is not allowed; do not fetch internet resources.",
-    "If inputs include PDFs, first use extract_all_input_texts() so Gemini/MinerU extraction sidecars are used when present and PyMuPDF/pypdf are used otherwise. extract_all_input_texts() returns a list of strings suitable for '\\n'.join(...). Use extract_all_input_documents() only when you need filename/path/text metadata records. Sidecar .gemini.json files usually contain text/markdown fields, not a normalized parameter schema; parse their text/markdown content unless you have verified specific structured keys exist.",
+    "If inputs include PDFs, Office documents, spreadsheets, CAD/BIM files, images, or scientific data files, first use extract_all_input_texts(), extract_all_input_documents(), and load_tabular_inputs() so sidecars and parser-specific extraction paths are used before falling back to assumptions. extract_all_input_texts() returns a list of strings suitable for '\\n'.join(...). Use extract_all_input_documents() when you need filename/path/text metadata records. Sidecar .gemini.json files usually contain text/markdown fields, not a normalized parameter schema; parse their text/markdown content unless you have verified specific structured keys exist.",
     "Use a domain-agnostic tool workflow: inspect documents, extract tables and numeric evidence, infer the task-specific physics/economics equations from the prompt and evidence, run calculations, and synthesize a direct answer. Do not assume the platform only supports a fixed list of domains.",
     "If a request is too under-specified for meaningful execution, write a concise clarification request instead of inventing decisive inputs. If a request is dangerous to execute or physically impossible as stated, politely refuse in report.md and explain the specific reason.",
     "Do not use canned application templates or domain-specific shortcuts. Treat the prompt and uploaded files as the source of truth, then write task-specific code with the helper tools.",
     "Never substitute generic placeholder inputs when source previews or uploaded files contain specific values. The first section of report.md must show the source-backed inputs actually used; any invented or assumed value must be labeled as an assumption and kept separate.",
     "Before modeling, parse extract_all_input_texts() and extract_numeric_evidence(...) for the uploaded files. If source-backed values conflict with generic examples or prior defaults, use the source-backed values. Use permissive context regexes that capture forms like '<label> ... 440 W' or '<label> ... -0.37 percent', not only colon-separated fields.",
     "For simulation/economics requests in any domain, build a transparent calculation model from extracted numeric values. If key values are missing, use clearly named assumption variables, run at least low/base/high cases, and state which assumptions control the result.",
+    "For literature or benchmark requests, use search_literature(), search_crossref_works(), or search_openalex_works() when network is enabled. If network is disabled or sources are missing, benchmark against supplied evidence and clearly separate source-backed benchmarks from assumptions.",
+    "For source extraction, use source_value_table() to build parameter rows with context and confidence before modeling. For sensitivities, prefer run_sensitivity_grid() and rank_sensitivity() so rankings come from numeric deltas instead of narrative guesses.",
     "For physics or conceptual simulation requests, prefer a lightweight standard-library or numpy script, bounded sample counts, and tabular numeric outputs. Avoid slow dependency installs or heavy plotting unless the user explicitly asked for plots.",
     "For PV module/site simulations, prefer pvlib_fixed_tilt_day(...) and pvlib_cell_temperature(...) from the helper module. Do not call deprecated/missing pvlib temperature APIs such as temperature.pvwatts_cell or temperature.sapm_celltemp. If you call temperature.sapm_cell directly, pass a, b, and deltaT from pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS.",
     "For Monte Carlo or stochastic simulations, cap runtime intentionally: set a fixed seed, use enough trajectories for a stable directional result, and write a convergence or sensitivity note instead of running an open-ended simulation.",
