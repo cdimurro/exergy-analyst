@@ -238,6 +238,118 @@ export async function callDeepSeekV3(
   return text;
 }
 
+export interface DeepSeekStreamHandlers {
+  /** Called with the full accumulated reasoning trace each time it grows. */
+  onReasoning?: (full: string) => void;
+  /** Called with the full accumulated answer content each time it grows. */
+  onContent?: (full: string) => void;
+}
+
+/**
+ * Streaming variant of {@link callDeepSeekV3}. Reads server-sent chunks and
+ * surfaces the model's `reasoning_content` (its actual thinking) as it arrives,
+ * so callers can show real-time progress. Resolves to the final answer content.
+ * Pair with `thinking: "enabled"` to populate the reasoning stream.
+ */
+export async function callDeepSeekV3Stream(
+  messages: Array<{ role: string; content: string }>,
+  opts: {
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+    thinking?: "disabled" | "enabled" | "adaptive";
+    reasoningEffort?: "low" | "medium" | "high" | "max" | "xhigh";
+    timeoutMs?: number;
+  } = {},
+  handlers: DeepSeekStreamHandlers = {},
+): Promise<string> {
+  const apiKey = getEnvVar("DEEPSEEK_API_KEY") || getEnvVar("DEEPSEEK_V3_API_KEY");
+  if (!apiKey) throw new Error("DEEPSEEK_API_KEY not set — required for DeepSeek V4-Flash agent");
+
+  const explicitThinking = opts.thinking !== undefined;
+  const isThinking = opts.thinking === "enabled";
+  const model = opts.model || getEnvVar("BT_DEEPSEEK_TEXT_MODEL") || DEEPSEEK_FLASH_MODEL;
+  const body: Record<string, unknown> = {
+    model,
+    messages,
+    stream: true,
+    temperature: opts.temperature ?? (isThinking ? 1.0 : 0.2),
+    max_tokens: opts.maxTokens ?? (isThinking ? 24_000 : 8_000),
+    ...(explicitThinking ? { thinking: { type: opts.thinking } } : {}),
+    ...(isThinking ? { reasoning_effort: opts.reasoningEffort ?? "high" } : {}),
+  };
+
+  const t0 = Date.now();
+  const inputTokenEstimate = Math.round(JSON.stringify(body).length / 4);
+  const controller = new AbortController();
+  const timeoutMs = opts.timeoutMs ?? (isThinking ? 180_000 : 75_000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  let res: Response;
+  try {
+    res = await fetch(DEEPSEEK_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timeout);
+    const msg = err instanceof Error ? err.message : String(err);
+    _logLLM(model, 0, Date.now() - t0, inputTokenEstimate, false, msg);
+    throw new Error(`DeepSeek V4-Flash stream network error: ${msg}`);
+  }
+
+  if (!res.ok || !res.body) {
+    clearTimeout(timeout);
+    const errText = await res.text().catch(() => "");
+    _logLLM(model, res.status, Date.now() - t0, inputTokenEstimate, false, errText.slice(0, 200));
+    throw new Error(`DeepSeek V4-Flash stream API error (${res.status}): ${errText.slice(0, 200)}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let content = "";
+  let reasoning = "";
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) continue;
+        const payload = trimmed.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+        try {
+          const json = JSON.parse(payload);
+          const delta = json?.choices?.[0]?.delta || {};
+          if (typeof delta.reasoning_content === "string" && delta.reasoning_content) {
+            reasoning += delta.reasoning_content;
+            handlers.onReasoning?.(reasoning);
+          }
+          if (typeof delta.content === "string" && delta.content) {
+            content += delta.content;
+            handlers.onContent?.(content);
+          }
+        } catch {
+          // Ignore keep-alive or partial frames; the next read completes them.
+        }
+      }
+    }
+  } finally {
+    clearTimeout(timeout);
+    try { reader.releaseLock(); } catch { /* already released */ }
+  }
+
+  _logLLM(model, 200, Date.now() - t0, inputTokenEstimate, false);
+  if (!content.trim()) throw new Error("DeepSeek V4-Flash stream returned empty content");
+  return content;
+}
+
 // Benchmark-tuned (CC-BE-INFRA-0109): below this, non-think dispatches
 // action/response schema correctly and ~40% faster; above it, reasoning
 // starts to add net value on multi-clause prompts.

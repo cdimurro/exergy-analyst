@@ -10,7 +10,7 @@ import {
 } from "@/lib/agent-output";
 import { runFinalQualityGate } from "@/lib/agent-final-quality-gate";
 import { formatAgentToolRegistryForPrompt, isAgentActionType } from "@/lib/agent-tool-registry";
-import { callDeepSeekV3, getEnvVar, RUNTIME_DIR } from "@/lib/backend";
+import { callDeepSeekV3, callDeepSeekV3Stream, getEnvVar, RUNTIME_DIR } from "@/lib/backend";
 import { buildEnvironmentReadiness } from "@/lib/environment-readiness";
 import { buildModelRoutedResponse } from "@/lib/model-router";
 import { executeProjectAction } from "@/lib/project-action-dispatcher";
@@ -326,6 +326,61 @@ async function emit(
     message,
     data,
   });
+}
+
+// Condense the model's running reasoning trace into one short, readable line
+// suitable for the live "thinking" indicator.
+function reasoningSnippet(text: string): string {
+  const clean = (text || "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!clean) return "";
+  const sentences = clean.split(/(?<=[.!?])\s+/);
+  let snippet = sentences[sentences.length - 1] || clean;
+  if (snippet.length < 25 && sentences.length > 1) snippet = sentences.slice(-2).join(" ");
+  snippet = snippet.replace(/[#*_`>]+/g, "").trim();
+  return snippet.length > 160 ? `${snippet.slice(0, 157)}...` : snippet;
+}
+
+/**
+ * Generate an answer with a normal (fast) streaming completion and surface the
+ * forming answer to the client as `progress` events, flushed at most once every
+ * 5 seconds. This gives real-time visibility into what the agent is producing
+ * with no extra latency over a non-streaming call — it is the same generation,
+ * just shown as it arrives. Falls back to a plain call if streaming fails.
+ */
+async function streamAnswerWithProgress(args: {
+  projectId: string;
+  runId: string;
+  prompt: string;
+  temperature?: number;
+  maxTokens?: number;
+}): Promise<string> {
+  let latest = "";
+  let lastEmitted = "";
+  const flush = () => {
+    const snippet = reasoningSnippet(latest);
+    if (snippet && snippet !== lastEmitted) {
+      lastEmitted = snippet;
+      void emit(args.projectId, args.runId, "progress", snippet).catch(() => {});
+    }
+  };
+  const interval = setInterval(flush, 5000);
+  try {
+    return await callDeepSeekV3Stream(
+      [{ role: "user", content: args.prompt }],
+      { temperature: args.temperature ?? 0.2, maxTokens: args.maxTokens },
+      { onContent: (full) => { latest = full; } },
+    );
+  } catch {
+    return await callDeepSeekV3([{ role: "user", content: args.prompt }], {
+      temperature: args.temperature ?? 0.2,
+      maxTokens: args.maxTokens,
+    });
+  } finally {
+    clearInterval(interval);
+  }
 }
 
 async function getRunOrThrow(projectId: string, runId: string): Promise<AgentRun> {
@@ -782,10 +837,7 @@ async function routeRun(projectId: string, run: AgentRun, project: Project, docs
     history.length ? `Full available context:\n${history.map((entry) => `${entry.role}: ${entry.content}`).join("\n\n")}` : "",
     `User request:\n${message}`,
   ].filter(Boolean).join("\n\n");
-  const direct = await callDeepSeekV3([{ role: "user", content: directPrompt }], {
-    temperature: 0.2,
-    maxTokens: run.thinking_level === "instant" ? 1400 : 3600,
-  });
+  const direct = await streamAnswerWithProgress({ projectId, runId: run.id, prompt: directPrompt, temperature: 0.2, maxTokens: 3600 });
   if (typeof direct === "string" && direct.trim()) {
     return { kind: "direct", content: direct };
   }
@@ -1473,7 +1525,10 @@ async function synthesizePlanFinal(args: {
     `Approved plan:\n${planText}`,
     `Tool results:\n${base}`,
   ].filter(Boolean).join("\n\n");
-  const text = await callDeepSeekV3([{ role: "user", content: prompt }], {
+  const text = await streamAnswerWithProgress({
+    projectId: args.run.project_id,
+    runId: args.run.id,
+    prompt,
     temperature: 0.2,
     maxTokens: 2200,
   });
