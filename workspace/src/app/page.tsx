@@ -83,13 +83,12 @@ export default function HomePage() {
 
         <div className="relative w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-20 pb-12">
           <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] xl:text-[44px] font-bold tracking-[-0.02em] leading-[1.08] text-center mb-5 mt-4">
-            <span className="text-[#e8ecf4]">A Scientifically Rigorous Agent</span>
+            <span className="bg-gradient-to-r from-[#4db8a4] via-[#5ba8c8] to-[#5b8dd9] bg-clip-text text-transparent">
+              A Scientifically Rigorous Agent
+            </span>
             <br />
             <span className="text-[#e8ecf4]">
-              Designed for{" "}
-              <span className="bg-gradient-to-r from-[#4db8a4] via-[#5ba8c8] to-[#5b8dd9] bg-clip-text text-transparent">
-                Solving Deep Tech Challenges.
-              </span>
+              Designed for Solving Deep Tech Challenges.
             </span>
           </h1>
           <p className="text-[18px] sm:text-[20px] text-[#d0d8e4] mx-auto leading-relaxed text-center mb-10 max-w-4xl">
