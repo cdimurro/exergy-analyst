@@ -691,7 +691,7 @@ describe("buildActionResultSummary", () => {
 
     const summary = buildActionResultSummary({ actionType: "agent_workspace", artifact: art });
     expect(summary).toContain(report);
-    expect(summary).toContain("## Important Limits");
+    expect(summary).toContain("Treat the computed values as decision support");
     expect(isChatOnlyArtifact(art, "agent_workspace")).toBe(true);
   });
 
@@ -714,7 +714,6 @@ describe("buildActionResultSummary", () => {
 
     const summary = buildActionResultSummary({ actionType: "agent_workspace", artifact: art });
 
-    expect(summary).toContain("## Results Table");
     expect(summary).toContain("| Case | Cost | Conclusion |");
     expect(summary).toContain("| Low power | 80 | Improved |");
   });

@@ -1590,19 +1590,19 @@ export default function WorkspacePage() {
       const failureContext = failedEntries.length > 0
         ? `\n\nIMPORTANT: ${failedEntries.length} of ${executableEntries.length} analysis steps did not complete:\n${failedEntries.join("\n")}\nYou MUST acknowledge these gaps in your report. Do not present the analysis as complete. Explain what could not be assessed and what the user can do to recover (provide different parameters, retry, or skip that dimension).\n`
         : "";
-      const synthMsg = `All ${executableEntries.length} workspace execution steps are complete. Write a clear, professional technical report that provides GENUINE VALUE to the user.${failureContext}
+      const synthMsg = `All ${executableEntries.length} workspace execution steps are complete. Write the user-facing answer that best fits the user's original request and the completed results.${failureContext}
 
 RULES:
 1. NO LaTeX. Write all math and units in plain text.
-2. Lead with the MOST IMPORTANT FINDING — what does the user need to know? Is this technology viable? What are the real risks?
+2. Choose the response format dynamically. It may be a short direct answer, a paragraph, bullets, headings, a table, or a detailed technical breakdown depending on what the user asked and what the results support.
 3. Synthesize ALL results — literature findings, evaluation scores, physics data, and deep analysis — into a coherent narrative. Do NOT just report each step separately.
 4. If the evaluation engine returned sparse results (low score, few modules), DO NOT lead with "insufficient data." Instead, focus on what the literature search and deep analysis DID find. There is always something useful to say.
-5. Include a metrics table ONLY if computed physics data is available. If not, use a comparison table: | Parameter | User's Spec | Published Benchmark | Assessment |
-6. Write 3-5 paragraphs of substantive analysis: What works? What are the risks? How does this compare to alternatives? What should the user do next?
+5. Use tables only when they make the answer clearer. Do not force a comparison table or repeated section template.
+6. Match the length to the request complexity. Do not pad a simple answer, and do not compress a complex diligence result into a stub.
 7. Reference specific findings from the literature with citations where possible.
 8. Be direct and opinionated — the user is paying for expert judgment, not hedging.
 9. Use exact numbers from solver output when available. Do NOT invent values.
-10. Target 400-800 words depending on complexity. Deliver a complete analysis, not a stub.`;
+10. For high-stakes claims, make clear what the data supports and what it cannot prove, but do not force a fixed heading for that distinction.`;
       // Smart context trimming for synthesis — prioritize high-value data.
       // Instead of hard-cutting at 24KB (which loses literature and claims),
       // build a structured summary: brief data first, then literature, then details.

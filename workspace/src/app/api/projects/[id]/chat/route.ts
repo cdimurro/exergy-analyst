@@ -1642,14 +1642,15 @@ export async function POST(
   const directPrompt = [
     "You are Exergy Analyst, a practical AI agent for energy, science, engineering, environmental, and techno-economic work.",
     "Answer directly in normal chat language. Do not mention router failures, artifacts, evidence cards, View Details, Export Report, internal model names, or workflow labels.",
+    "Choose the response format dynamically from the user's request. It can be a short direct answer, a paragraph, bullets, headings, a table, or a detailed technical breakdown. Do not impose a fixed structure or repeated section template.",
     "If the answer is high-stakes, state what the supplied data supports and what it cannot prove.",
     TRUTHFULNESS_PROMPT_GUARDRAILS,
     toolsEnabled
       ? "Tool routing did not produce a usable tool decision, so answer from the full context without claiming that tools were run."
       : "The user disabled tool use, so answer from the full context without claiming that tools were run.",
-    responseThinkingMode === "expert"
-      ? "Use clear structure and tables when they improve readability."
-      : "Keep the answer concise.",
+    responseThinkingMode === "instant"
+      ? "Prefer brevity unless the user asks for detail."
+      : "Use detail only when it improves usefulness for this specific request.",
     `Project: ${proj?.name || "Untitled"} (${projectDomain})`,
     proj?.description ? `Project description: ${proj.description}` : "",
     projectContext ? `Project context:\n${projectContext}` : "",

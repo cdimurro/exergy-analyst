@@ -128,7 +128,7 @@ function appendWorkspaceFileTablesForChat(report: string, content: Record<string
     const replaced = report.replace(/\{[a-zA-Z0-9_]*(?:table|rows|results)[a-zA-Z0-9_]*\}/gi, table);
     if (replaced !== report) return replaced;
   }
-  return `${report.trim()}\n\n## Results Table\n${table}`;
+  return `${report.trim()}\n\n${table}`;
 }
 
 function ensureWorkspaceSupportLimits(report: string): string {
@@ -138,7 +138,6 @@ function ensureWorkspaceSupportLimits(report: string): string {
   return [
     report.trim(),
     "",
-    "## Important Limits",
     "This is a tool-backed engineering analysis from the supplied workspace context. Treat the computed values as decision support, not as validated design, safety, finance, or permitting evidence until the underlying assumptions are checked against source data, measurements, and project-specific boundary conditions.",
   ].join("\n");
 }
