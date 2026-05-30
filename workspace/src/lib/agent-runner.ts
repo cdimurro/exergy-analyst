@@ -656,9 +656,42 @@ function summarizeActionInputs(action: RoutedAction): string {
   return namedInputs.length ? namedInputs.join("; ") : "prompt and saved project context";
 }
 
+function friendlyActionLabel(actionType: ActionType): string {
+  const labels: Record<string, string> = {
+    physics_simulation: "the physics simulation",
+    simulation_run: "the simulation",
+    agent_workspace: "the workspace analysis",
+    evidence_evaluation: "the evidence analysis",
+    economics_analysis: "the economic analysis",
+    document_analysis: "the document extraction",
+    comprehensive_analysis: "the document analysis",
+    literature_search: "the literature search",
+    deep_research: "the deep research",
+    deep_analysis: "the deep analysis",
+    scientific_review: "the technical review",
+    custom_chart: "the visualization",
+    environmental_site_analysis: "the environmental site data collection",
+    update_project: "the project context update",
+  };
+  return labels[actionType] || `the ${actionDisplayName(actionType)}`;
+}
+
 function actionStartedMessage(action: RoutedAction): string {
-  const subject = visibleRequestSubject(action.content || cleanString(action.config.question || action.config.task));
-  return `Selected ${actionDisplayName(action.type)} for the ${subject} using ${summarizeActionInputs(action)}.`;
+  return `Running ${friendlyActionLabel(action.type)}.`;
+}
+
+// Accurate, ordered descriptions of the phases an analysis moves through, used
+// to narrate a tool run so the live indicator updates with real activity rather
+// than stalling on a single line.
+function actionPhaseLines(action: RoutedAction): string[] {
+  const label = friendlyActionLabel(action.type);
+  const domain = cleanString(action.config?.domain).replace(/_/g, " ");
+  return [
+    `Running ${label}${domain ? ` for the ${domain} case` : ""}`,
+    "Processing the inputs and running the calculations",
+    "Checking the results against physical limits",
+    "Assembling the findings into a response",
+  ];
 }
 
 function actionCompletedMessage(action: RoutedAction, artifact: Artifact | null | undefined, files: AgentRunFile[]): string {
@@ -1203,6 +1236,15 @@ async function executeActionAttemptInRun(projectId: string, runId: string, actio
     attempt,
   });
 
+  // Narrate the real phases of the tool run on a steady cadence so the user sees
+  // movement during a long-running calculation instead of a stalled line.
+  const phases = actionPhaseLines(action);
+  let phaseIdx = 1;
+  const narrator = setInterval(() => {
+    void emit(projectId, runId, "progress", phases[Math.min(phaseIdx, phases.length - 1)]).catch(() => {});
+    phaseIdx += 1;
+  }, 8000);
+
   try {
     const timeoutMs = actionAttemptTimeoutMs(action.type);
     const payload = await withTimeout(
@@ -1210,6 +1252,7 @@ async function executeActionAttemptInRun(projectId: string, runId: string, actio
       timeoutMs,
       `${action.type.replace(/_/g, " ")} did not complete within ${Math.round(timeoutMs / 1000)} seconds.`,
     );
+    clearInterval(narrator);
     await ensureNotCancelled(projectId, runId);
     const actionId = cleanString(payload.action.id);
     const artifact = payload.artifact;
@@ -1242,6 +1285,7 @@ async function executeActionAttemptInRun(projectId: string, runId: string, actio
       files,
     };
   } catch (error) {
+    clearInterval(narrator);
     const message = error instanceof Error ? error.message : "Tool run did not finish";
     await emit(projectId, runId, "tool.failed", message, {
       tool_call_id: toolCallId,
