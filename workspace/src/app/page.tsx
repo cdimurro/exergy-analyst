@@ -81,8 +81,8 @@ export default function HomePage() {
         <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[1000px] h-[500px] opacity-[0.15]"
           style={{ background: "radial-gradient(ellipse at center, #3a8a7a 0%, #2a5a6a 35%, transparent 70%)", filter: "blur(60px)" }} />
 
-        <div className="relative w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pt-12 sm:pt-20 pb-12">
-          <h1 className="text-[30px] sm:text-[38px] lg:text-[46px] font-bold tracking-[-0.02em] leading-[1.08] text-center mb-5 mt-4">
+        <div className="relative w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-20 pb-12">
+          <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] xl:text-[44px] font-bold tracking-[-0.02em] leading-[1.08] text-center mb-5 mt-4">
             <span className="text-[#e8ecf4]">A Scientifically Rigorous Agent</span>
             <br />
             <span className="text-[#e8ecf4]">
@@ -93,8 +93,9 @@ export default function HomePage() {
             </span>
           </h1>
           <p className="text-[18px] sm:text-[20px] text-[#d0d8e4] mx-auto leading-relaxed text-center mb-10 max-w-4xl">
-            Exergy Lab is a powerful technical agent that reads messy files, extracts useful signals, builds
-            working models, generates visuals, and turns deep tech uncertainty into clearer next moves.
+            Exergy Lab Agent is a powerful agent with built-in tools that allow it to read messy files, run custom
+            physics simulations, extract useful insights, generate documents, and turn technical problems into clear
+            next moves.
           </p>
 
           <ProjectCreator variant="hero" />
