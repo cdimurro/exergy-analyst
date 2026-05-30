@@ -126,7 +126,7 @@ export default function ExergyMatchingPage() {
 
             <div className="mt-14 pt-8 border-t border-[var(--border)]">
               <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
-                Exergy Lab is a platform for discovering and validating energy innovations &mdash; purpose-built for the energy and deep-tech industries. It is free for anyone working to advance clean energy deployment.
+                Exergy Lab is a powerful, scientifically rigorous agent for deep tech teams working through messy energy evidence, unfinished models, hard technical questions, and decision-focused artifacts.
               </p>
             </div>
 

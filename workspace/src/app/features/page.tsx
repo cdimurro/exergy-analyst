@@ -10,12 +10,12 @@ export default function FeaturesPage() {
           style={{ background: "radial-gradient(circle at center, #4db8a4 0%, transparent 70%)", filter: "blur(80px)" }} />
         <div className="relative max-w-5xl mx-auto px-6 sm:px-10 lg:px-16 text-center">
           <h1 className="text-[36px] sm:text-[46px] font-bold tracking-tight text-[#d0d8e4] mb-6">
-            Platform{" "}
-            <span className="bg-gradient-to-r from-[#4db8a4] to-[#5b8dd9] bg-clip-text text-transparent">features</span>
+            Agent{" "}
+            <span className="bg-gradient-to-r from-[#4db8a4] to-[#5b8dd9] bg-clip-text text-transparent">capabilities</span>
           </h1>
           <p className="text-[18px] sm:text-[20px] text-[#8a9aae] leading-[1.8] max-w-3xl mx-auto">
-            Exergy Lab combines physics simulation, AI-powered research and strict governance frameworks into a
-            single platform built specifically for evaluating any energy technology.
+            Exergy Lab can read, extract, reason, model, chart, brief, and iterate across technical evidence in
+            one workspace for energy work that does not fit a template.
           </p>
         </div>
       </section>
@@ -30,27 +30,27 @@ export default function FeaturesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {[
               {
-                title: "Physics-backed simulations",
-                desc: "Every analysis runs through real computational engines — not large language model approximations. CoolProp for refrigerant cycles, Cantera for electrochemistry, pvlib for photovoltaics, analytical models for power electronics.",
-                example: "Example: Simulate a 580W TOPCon solar module at 50°C and get real I-V curves, thermal derating, and annual yield.",
+                title: "Powerful evidence intake",
+                desc: "Upload messy technical material and ask the agent to find the useful structure inside it. Datasheets, PDFs, CSVs, notes, and project context can all become part of the same working brief.",
+                example: "Example: Bring a spec sheet and a rough site description, then ask the agent to extract the signals, claims, gaps, and next questions.",
                 color: "#4db8a4",
               },
               {
-                title: "10-module governance framework",
-                desc: "Every technology is evaluated across 10 independent dimensions, each with 6 must-pass gates. Physics, performance, economics, safety, regulatory, manufacturing, environmental, scalability, system integration, and strategic value.",
-                example: "Example: A battery cathode that scores well on energy density but fails the manufacturability gates gets flagged and surfaced right away.",
+                title: "Model-aware execution",
+                desc: "When the inputs support it, Exergy Lab can help structure calculations, compare assumptions, sketch model logic, and turn raw parameters into a clearer analytical surface.",
+                example: "Example: Ask which operating assumptions matter most before building a financial, performance, or risk model.",
                 color: "#5ba8c8",
               },
               {
-                title: "Multi-domain coverage",
-                desc: "Over 100 built-in energy domains from lithium-ion batteries to nuclear reactors, from heat pumps to carbon capture systems. Each domain has its own physics models, reference cases, and specific evaluation criteria.",
-                example: "Example: Evaluate a small modular reactor with neutron multiplication, DNBR calculations, and decay heat analysis and conduct a deployment assessment.",
+                title: "Broad deep tech reach",
+                desc: "The workspace is designed to move across energy systems of many kinds: heat, power, storage, fuels, industrial processes, buildings, infrastructure, and emerging technologies.",
+                example: "Example: Use the same agent to reason about waste heat, district energy, solar performance, or a new technical concept.",
                 color: "#5b8dd9",
               },
               {
-                title: "AI-powered research",
-                desc: "An extremely capable and powerful agent enhanced with dozens of tools and sophisticated harnesses, serves as the main interface between the user and the platform's engine. The agent's job is produce exactly what you need to solve the problem you are working on.",
-                example: "Example: Ask the agent to compare NMC 811 vs LFP cathodes for grid storage by running simulations to stress each cathode and then generate a detailed report with the findings.",
+                title: "Agentic output generation",
+                desc: "The agent is the interface for collecting context, asking follow-up questions, shaping analysis, and turning the work into artifacts a team can read, challenge, and improve.",
+                example: "Example: Ask for a technical brief, a next-measurement plan, a model outline, charts, or a clearer explanation of the assumptions.",
                 color: "#4db8a4",
               },
             ].map(item => (
@@ -69,27 +69,27 @@ export default function FeaturesPage() {
       <section className="py-24">
         <div className="max-w-5xl mx-auto px-6 sm:px-10 lg:px-16">
           <h2 className="text-[28px] sm:text-[34px] font-bold text-[#d0d8e4] tracking-tight text-center mb-16">
-            Everything you need all in one place
+            A complete technical workspace
           </h2>
 
           <div className="space-y-10">
             {[
               {
-                title: "Decision briefs & PDF reports",
-                desc: "Every evaluation produces a structured Decision Brief — a human-readable document with score summaries, economic comparisons, risk caveats, and recommended next actions. Download as PDF or review interactively in the platform.",
-                points: ["Score breakdown across all 10 modules", "Economic analysis with LCOE/LCOS/TCO", "Risk identification and mitigation paths", "Comparison against published benchmarks"],
+                title: "Decision briefs and working reports",
+                desc: "Turn scattered technical material into a readable brief with supporting artifacts, assumptions, limits, visuals, and recommended next questions.",
+                points: ["Evidence summaries", "Assumption ledgers", "Support and limits language", "Generated artifacts"],
                 color: "#4db8a4",
               },
               {
-                title: "Interactive simulation & visualization",
-                desc: "Run simulations and see results in real time. The platform generates interactive charts, parameter sweeps, and sensitivity analyses that you can manipulate directly. Ask the agent to modify parameters and see how results change instantly.",
-                points: ["I-V curves, thermal profiles, degradation models", "Custom chart builder via natural language", "Parameter sensitivity tornado plots", "Side-by-side technology comparison"],
+                title: "Charts, tables, and model surfaces",
+                desc: "Use the workspace to turn extracted data, calculations, and model outputs into visuals that make a technical story easier to inspect.",
+                points: ["Custom charts from available data", "Sensitivity views", "Parameter summaries", "Side-by-side comparisons"],
                 color: "#5ba8c8",
               },
               {
-                title: "Research & due diligence workflows",
-                desc: "Three connected workflows share the same evaluation backbone. Validate a technology against physics benchmarks. Research the scientific literature with engine-grounded prompts. Run due diligence with structured assessment frameworks.",
-                points: ["Validate — physics-backed benchmark evaluation", "Research — literature search with real citations", "Due Diligence — structured investment assessment", "All results unified in a single workspace"],
+                title: "Research and diligence support",
+                desc: "Bring research, project evidence, and diligence questions into one thread so the reasoning stays connected to the source material and the next action.",
+                points: ["Research framing", "Evidence checks", "Technical question lists", "Workspace memory"],
                 color: "#5b8dd9",
               },
             ].map(item => (
@@ -122,19 +122,19 @@ export default function FeaturesPage() {
       <section className="relative border-y border-[#141c2c] bg-[#0a0e18] py-24">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
           <h2 className="text-[28px] sm:text-[34px] font-bold text-[#d0d8e4] tracking-tight text-center mb-16">
-            And much more
+            More capabilities inside the agent
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { title: "400+ reference cases", desc: "Every domain ships with calibrated reference cases from published literature and commercial datasheets." },
-              { title: "23 physics solvers", desc: "Domain-specific computational engines covering thermodynamics, electrochemistry, nuclear physics, power systems, and more." },
-              { title: "Advanced reasoning", desc: "An AI reasoning engine specifically tuned for scientific analysis, grounded in the platform's physics backbone." },
-              { title: "PDF extraction", desc: "Upload research papers, datasheets, or spec sheets. The platform automatically extracts parameters and begins evaluation." },
-              { title: "Memory vault", desc: "Every evaluation, every result, and every failure mode is stored. The platform learns from every use to improve future evaluations." },
-              { title: "API access", desc: "Programmatic access to run evaluations, retrieve results, and integrate Exergy Lab into your existing workflows." },
-              { title: "Exergy-aware analysis", desc: "Evaluations account for thermodynamic quality — not just energy quantity. This is critical for honest efficiency comparisons." },
-              { title: "Regulatory pathway maps", desc: "Standards matrices, certification pathways, and permitting timelines for each technology domain." },
-              { title: "Manufacturing readiness", desc: "BOM analysis, process routes, yield models, and supply concentration risk assessment for every evaluated technology." },
+              { title: "File understanding", desc: "Read across common technical files and turn scattered inputs into structured context the agent can use." },
+              { title: "Parser-aware workflow", desc: "Explain when a file is readable, partially readable, or needs another extraction path before the analysis goes too far." },
+              { title: "Technical reasoning", desc: "Reason from source evidence, calculations, project context, and physical constraints instead of a blank prompt." },
+              { title: "PDF extraction", desc: "Upload papers, decks, reports, and spec sheets so the first pass starts from the material you already have." },
+              { title: "Project workspace", desc: "Keep files, runs, notes, artifacts, generated outputs, and follow-up questions connected to the same project." },
+              { title: "Exports", desc: "Create briefs, reports, and supporting artifacts that can travel outside the workspace." },
+              { title: "Exergy-aware lens", desc: "Bring thermodynamic quality into conversations where raw energy totals can be misleading." },
+              { title: "Risk language", desc: "Surface uncertainty, missing inputs, unsupported claims, and weak assumptions in plain language." },
+              { title: "Next-measurement plans", desc: "Turn uncertainty into a practical list of data, tests, or context that would make the work stronger." },
             ].map(item => (
               <div key={item.title} className="p-6 rounded-xl border border-[#1a2538] bg-[#0d1220]/60 transition-all hover:border-[#2a3a5e]">
                 <h3 className="text-[17px] font-semibold text-[#d0d8e4] mb-2">{item.title}</h3>
@@ -156,7 +156,7 @@ export default function FeaturesPage() {
             </span>
           </h2>
           <p className="text-[17px] text-[#7a8a9e] mb-10 leading-relaxed">
-            Create a project and run your first evaluation in minutes. No setup required.
+            Create a project and let the agent start turning messy technical evidence into a useful brief.
           </p>
           <a href="/">
             <button className="group relative px-12 py-4 rounded-xl text-[17px] font-semibold text-white overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#3a7a6a]/20">

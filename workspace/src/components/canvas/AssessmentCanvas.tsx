@@ -345,7 +345,7 @@ function synthesizeRegulatory(evaluation: Record<string, unknown>): string {
   // Compliance gaps
   const gaps = regDet.compliance_gaps as string[] | undefined;
   if (gaps && gaps.length > 0) {
-    parts.push(`Open compliance items currently flagged: ${gaps.slice(0, 5).join("; ")}. Each has to be retired with documented evidence before a commercial deployment decision is defensible.`);
+    parts.push(`Open compliance items currently flagged: ${gaps.slice(0, 5).join("; ")}. Each has to be retired with documented evidence before a high-stakes project decision is defensible.`);
   }
 
   const regKey = reg.key_detail as string | undefined;

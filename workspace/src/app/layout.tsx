@@ -8,8 +8,8 @@ import { Footer } from "@/components/layout/Footer";
 const PRE_LAUNCH = process.env.NEXT_PUBLIC_PRE_LAUNCH === "true";
 
 export const metadata: Metadata = {
-  title: "Exergy Lab — Energy Technology Evaluation Platform",
-  description: "Evaluate any energy technology across physics, economics, safety, and 7 more dimensions. Purpose-built for the energy transition.",
+  title: "Exergy Lab — Powerful Agent for Deep Tech Challenges",
+  description: "A powerful, scientifically rigorous agent for turning messy energy evidence into clearer models, generated briefs, and better next moves.",
   icons: { icon: "/favicon.png" },
 };
 

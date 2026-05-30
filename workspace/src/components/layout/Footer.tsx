@@ -16,11 +16,11 @@ export function Footer() {
           <div className="md:col-span-2">
             <div className="text-[20px] font-semibold text-[var(--text-primary)] mb-3">Exergy Lab</div>
             <p className="text-[16px] text-[var(--text-muted)] leading-relaxed max-w-lg mb-4">
-              Evaluate any energy technology across the dimensions that determine commercial success.
-              Purpose-built for scientists, engineers, researchers, founders and investors.
+              A powerful, scientifically rigorous agent for deep tech teams working through messy energy evidence,
+              unfinished models, technical uncertainty, and hard decisions.
             </p>
             <p className="text-[14px] text-white">
-              A new engine for accelerating energy innovation and scientific discovery.
+              Built to read, extract, model, brief, and make the next move clearer.
             </p>
           </div>
 

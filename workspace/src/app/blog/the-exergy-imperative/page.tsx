@@ -352,12 +352,11 @@ export default function TheExergyImperativePage() {
             </p>
 
             <p className="text-[17px] text-[var(--text-secondary)] leading-[1.8]">
-              This is precisely why Exergy Lab is not an exergy analysis tool. It is a technology
-              deployment readiness platform that uses exergy-aware analysis as one of ten evaluation
-              dimensions — alongside physics, economics, safety, regulatory compliance, manufacturing
-              readiness, environmental impact, scalability, system integration, and novelty. The
-              exergy lens is baked into how we evaluate every candidate technology, but it is not the
-              only lens.
+              This is precisely why Exergy Lab is not just an exergy analysis tool. It is an
+              agentic workspace for deep tech questions: a place to bring technical evidence,
+              organize assumptions, explore physical constraints, and make the next decision easier
+              to discuss. The exergy lens is one way the system keeps energy quality visible, but it
+              is part of a broader way of thinking.
             </p>
 
             <p className="text-[17px] text-[var(--text-secondary)] leading-[1.8]">
@@ -504,9 +503,8 @@ export default function TheExergyImperativePage() {
                 you give appropriate credit.
               </p>
               <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
-                Exergy Lab is a platform for discovering and validating energy innovations —
-                purpose-built for the energy and deep-tech industries. It is free for anyone working
-                to advance clean energy deployment and reduce greenhouse gas emissions.
+                Exergy Lab is a powerful, scientifically rigorous agent for deep tech teams working through
+                messy energy evidence, unfinished models, hard technical questions, and decision-focused artifacts.
               </p>
             </div>
 

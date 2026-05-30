@@ -77,7 +77,7 @@ export default function AnalyzePage() {
       "Extracting text and tables...",
       "Identifying parameters and claims...",
       "Cross-validating against source text...",
-      "Assessing technology readiness...",
+      "Finding supported claims and open questions...",
       "Generating comprehensive analysis...",
     ];
     let step = 0;
@@ -134,7 +134,7 @@ export default function AnalyzePage() {
   const handleEvaluate = useCallback(async () => {
     if (!extraction) return;
     setStage("analyzing");
-    setProgress("Running 10-module deployment readiness evaluation...");
+    setProgress("Building a structured technical brief...");
 
     try {
       // Create a project and run evaluation
@@ -145,7 +145,7 @@ export default function AnalyzePage() {
           name: extraction.product_name || extraction.title || "Analysis",
           domain: extraction.detected_domain || "general",
           description: extraction.system_summary || "",
-          goal: "Deployment readiness evaluation",
+          goal: "Structured technical brief",
         }),
       });
       const project = await projRes.json();

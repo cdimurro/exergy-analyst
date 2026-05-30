@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "Exergy Lab — Coming Soon",
+  title: "Exergy Lab — Powerful Agent for Deep Tech Challenges",
   description:
-    "A platform for discovering and validating energy innovations. Purpose-built for scientists, engineers, researchers, founders and investors. Free for anyone working to advance clean energy.",
+    "A powerful, scientifically rigorous agent designed for deep tech teams working through complex energy evidence, models, and decisions.",
 };
 
 export default function LandingPage() {
@@ -33,17 +33,17 @@ export default function LandingPage() {
         />
 
         {/* Headline */}
-        <h1 className="text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-tight tracking-[-0.02em] text-[var(--text-primary)] mb-5">
+        <h1 className="text-[36px] sm:text-[46px] font-semibold leading-tight tracking-[-0.02em] text-[var(--text-primary)] mb-5">
           Coming Soon
         </h1>
 
         {/* Subheading */}
         <p className="text-[var(--text-secondary)] text-lg leading-relaxed max-w-lg mb-4">
-          A platform for discovering and validating energy innovations.
-          Purpose-built for scientists, engineers, researchers, founders and investors.
+          A powerful, scientifically rigorous agent designed for deep tech teams working through complex energy
+          evidence, models, and decisions.
         </p>
         <p className="text-[var(--text-muted)] text-base leading-relaxed max-w-md mb-12">
-          Free for anyone to use to advance clean energy solutions.
+          Built to read scattered technical material, extract useful signals, generate briefs, and sharpen the next step.
         </p>
 
         {/* Divider */}

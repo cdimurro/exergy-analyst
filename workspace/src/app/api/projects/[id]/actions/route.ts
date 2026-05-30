@@ -704,7 +704,7 @@ async function createEngineeringSolverArtifact(
             ? `Tighten ${result.missing_inputs[0]} next`
             : "Compare the computed result with measured data",
           rationale: result.missing_inputs[0]
-            ? "This is the highest-value missing input for making the result more decision-grade."
+            ? "This is the highest-value missing input for making the result more useful for decisions."
             : "Solver outputs become much more valuable when checked against operating data or a published benchmark.",
         },
       },
@@ -1081,8 +1081,8 @@ async function handleResearch(
 
   const apiKey = getEnvVar("DEEPSEEK_API_KEY") || getEnvVar("DEEPSEEK_V3_API_KEY");
   if (apiKey) {
-    const systemPrompt = `You are a technical research analyst for Exergy Lab, an energy technology evaluation platform.
-Your role is to provide structured, evidence-based research findings grounded in real published literature.
+    const systemPrompt = `You are Exergy Lab, a scientifically rigorous technical agent for deep tech teams working through messy energy evidence, unfinished models, and hard technical questions.
+Your role is to provide structured, evidence-based research findings grounded in real published literature, visible assumptions, and clear limits.
 
 PROJECT CONTEXT:
 ${contextParts.join("\n")}
@@ -3026,7 +3026,7 @@ async function handleEnvironmentalSiteAnalysis(
   const notProven = result.limitations.slice(0, 4);
   const dataRequests = result.recommended_actions.map((action) => ({
     request: action,
-    why_it_matters: "Turns remote environmental context into decision-grade evidence.",
+    why_it_matters: "Turns remote environmental context into stronger decision evidence.",
   }));
 
   return storage.createArtifact(projectId, {
