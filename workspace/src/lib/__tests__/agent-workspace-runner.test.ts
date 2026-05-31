@@ -4,6 +4,7 @@ import {
   isGenericWorkspaceMissingReport,
   repairGeneratedPython,
   requestedWorkspaceOutputExtensions,
+  sanitizeWorkspaceReportForSourceDisclosure,
   sanitizePythonRequirements,
   scoreWorkspaceMarkdownReport,
   workspaceOutputContractFindings,
@@ -41,6 +42,35 @@ describe("agent workspace runner", () => {
     expect(source).toContain("cell_temp");
     expect(source).toContain("m3/day");
     expect(source).toContain("Workspace code generation did not return executable Python after retry");
+  });
+
+  it("keeps evidence provenance out of workspace reports unless the user asks for it", () => {
+    const report = [
+      "# Result",
+      "According to turbine-study.pdf, the measured capacity is 42 MW.",
+      "Source: https://example.com/paper",
+      "| Value | Source |",
+      "|---|---|",
+      "| 42 MW | uploaded file |",
+      "This is source-backed.",
+    ].join("\n");
+
+    const hidden = sanitizeWorkspaceReportForSourceDisclosure({
+      projectId: "project",
+      actionId: "action",
+      task: "Analyze the turbine capacity.",
+    }, report);
+
+    expect(hidden).toContain("42 MW");
+    expect(hidden).not.toMatch(/turbine-study\.pdf|https?:\/\/|Source:|source-backed/i);
+    expect(hidden).toContain("| Value | Basis |");
+
+    const shown = sanitizeWorkspaceReportForSourceDisclosure({
+      projectId: "project",
+      actionId: "action",
+      task: "Analyze the turbine capacity and cite sources.",
+    }, report);
+    expect(shown).toContain("turbine-study.pdf");
   });
 
   it("uses Gemini PDF vision before local MinerU when configured", () => {
@@ -82,7 +112,9 @@ describe("agent workspace runner", () => {
     expect(source).toContain("Use a domain-agnostic tool workflow");
     expect(source).toContain("Do not assume the platform only supports a fixed list of domains");
     expect(source).toContain("Never substitute generic placeholder inputs");
-    expect(source).toContain("source-backed inputs actually used");
+    expect(source).toContain("input-supported values");
+    expect(source).toContain("do not tell the user where evidence came from unless they ask");
+    expect(source).toContain("Keep provenance internal by default");
     expect(source).toContain("parse their text/markdown content");
     expect(source).toContain("permissive context regexes");
     expect(source).toContain("SOURCE_PREVIEWS");
@@ -383,6 +415,138 @@ describe("agent workspace runner", () => {
     });
 
     expect(findings.join("\n")).toContain("maximum integration time as a time-to-runaway");
+  });
+
+  it("flags data-center turbine capacity and availability overclaims", () => {
+    const findings = workspaceConsistencyFindings(
+      [
+        "# Data Center Power Readiness",
+        "",
+        "The N+1 availability is excellent at 97.31%, and the project should proceed with conditions.",
+      ].join("\n"),
+      {
+        metrics: {
+          total_load_mw: 219.6,
+          hot_total_mw: 187.1,
+          n1_hot_plus_grid_firm_mw: 230.9,
+          n2_hot_plus_grid_firm_mw: 199.7,
+          prob_n_plus_1: 0.9731,
+        },
+      },
+      "Evaluate a behind-the-meter gas turbine architecture for a five-nines data center load.",
+    );
+
+    const text = findings.join("\n");
+    expect(text).toContain("Hot-day all-unit generation is 187.1 MW against 219.6 MW");
+    expect(text).toContain("N-1 plus firm grid leaves only 11.3 MW");
+    expect(text).toContain("N-2 plus firm grid is 199.7 MW");
+    expect(text).toContain("97.31%");
+  });
+
+  it("flags invented short-circuit topology and unsupported ride-through claims", () => {
+    const findings = workspaceConsistencyFindings(
+      [
+        "# Electrical Assessment",
+        "",
+        "The 13.8 kV short-circuit duty is acceptable using an assumed 30 MVA transformer at 7% impedance.",
+        "The 10 second ride-through is likely achievable from the available generation capacity.",
+      ].join("\n"),
+      {},
+      "Evaluate 13.8 kV short-circuit duty, switchgear adequacy, and 10 second ride-through for a gas turbine data center.",
+    );
+
+    const text = findings.join("\n");
+    expect(text).toContain("assumed 30 MVA, 7% transformer");
+    expect(text).toContain("10-second voltage sag cannot be verified");
+  });
+
+  it("flags transformer loss basis errors at rated loading", () => {
+    const findings = workspaceConsistencyFindings(
+      [
+        "# Transformer Losses",
+        "",
+        "| Loading | Loss |",
+        "|---|---:|",
+        "| 100% | 268.2 kW |",
+      ].join("\n"),
+      {},
+      "Evaluate a 55 MVA transformer with no-load loss 45 kW and load loss 310 kW at rated loading for a data center.",
+    );
+
+    expect(findings.join("\n")).toContain("below the supplied no-load plus load-loss basis of 355");
+  });
+
+  it("flags missing heat-rate penalty when the task asks for it", () => {
+    const findings = workspaceConsistencyFindings(
+      "Fuel consumption uses a constant heat rate across all turbine loading cases.",
+      {},
+      "Calculate gas turbine fuel consumption including heat-rate penalty at part load for a data center.",
+    );
+
+    expect(findings.join("\n")).toContain("does not compute a load/temperature heat-rate correction");
+  });
+
+  it("makes data-center power consistency findings repair-blocking output contract findings", () => {
+    const findings = workspaceOutputContractFindings({
+      input: {
+        projectId: "project",
+        actionId: "action",
+        task: "Evaluate a gas turbine data center power architecture with five-nines reliability.",
+      },
+      files: [
+        { filename: "report.md", path: "/tmp/report.md", bytes: 100, kind: "md" },
+        { filename: "results.json", path: "/tmp/results.json", bytes: 100, kind: "json" },
+      ],
+      reportMarkdown: [
+        "# Readiness",
+        "Support and limits: this cannot prove final interconnection approval.",
+        "N+1 availability is excellent at 97.31%.",
+      ].join("\n"),
+      results: { metrics: { prob_n_plus_1: 0.9731 } },
+    });
+
+    expect(findings.join("\n")).toContain("not compatible with a five-nines-class data-center reliability claim");
+  });
+
+  it("flags battery material readiness claims that skip application and rate constraints", () => {
+    const findings = workspaceConsistencyFindings(
+      [
+        "# NMC 811 Readiness",
+        "",
+        "The material is competitive for grid storage and commercially ready. The 200 mAh/g capacity at 1C is routine, and the 245 Wh/kg energy density is benchmarked favorably.",
+      ].join("\n"),
+      {},
+      "Evaluate an NMC 811 lithium-ion battery cathode with energy density 245 Wh/kg, specific capacity 200 mAh/g, cycle life of 1200 cycles to 80% retention at 1C, charging rate up to 3C, cathode loading of 25 mg/cm2, and suitability for EV or grid storage applications.",
+    );
+
+    const text = findings.join("\n");
+    expect(text).toContain("1,200 cycles to 80% retention is below");
+    expect(text).toContain("200 mAh/g for NMC-class material at 1C is a high-end claim");
+    expect(text).toContain("implies about 15 mA/cm2");
+    expect(text).toContain("energy-density claims need an explicit basis");
+  });
+
+  it("flags hydrogen, heat-pump, and generation claims that violate physics bounds", () => {
+    const hydrogen = workspaceConsistencyFindings(
+      "A PEM electrolyzer at 28 kWh/kg H2 is feasible and highly efficient.",
+      {},
+      "Evaluate green hydrogen production with electrolyzer specific energy of 28 kWh/kg H2.",
+    ).join("\n");
+    expect(hydrogen).toContain("below the lower-heating-value thermodynamic floor");
+
+    const heatPump = workspaceConsistencyFindings(
+      "The heat pump COP 7 is feasible and suitable for this lift.",
+      {},
+      "Assess a heat pump with source temperature 5 C and sink temperature 80 C.",
+    ).join("\n");
+    expect(heatPump).toContain("exceeds the Carnot heating limit");
+
+    const generation = workspaceConsistencyFindings(
+      "The 1 MW generator can credibly produce 10,000 MWh per year.",
+      {},
+      "Check annual generation from nameplate capacity 1 MW and annual generation 10000 MWh.",
+    ).join("\n");
+    expect(generation).toContain("implies a 114.2% capacity factor");
   });
 
   it("prefers substantive markdown outputs over generic missing-report placeholders", () => {

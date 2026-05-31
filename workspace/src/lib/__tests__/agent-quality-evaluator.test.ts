@@ -94,4 +94,61 @@ describe("agent quality evaluator", () => {
 
     expect(result.findings.map((item) => item.type)).not.toContain("quality_tool_fallback_answer");
   });
+
+  it("downgrades data-center power answers with reliability and electrical overclaims", () => {
+    const result = evaluateAgentQuality({
+      prompt: "Evaluate a behind-the-meter gas turbine and transformer architecture for a five-nines data center.",
+      finalAnswer: [
+        "The N+1 availability is excellent at 97.31%, so the project should proceed with conditions.",
+        "The 13.8 kV short-circuit duty is acceptable using an assumed 30 MVA transformer at 7% impedance.",
+        "The 10 second ride-through is likely achievable from generation capacity.",
+      ].join("\n"),
+      sourceTexts: [],
+      requiresTool: true,
+    });
+
+    expect(result.findings.map((item) => item.type)).toEqual(expect.arrayContaining([
+      "technical_availability_overclaim",
+      "technical_invented_short_circuit_topology",
+      "technical_ride_through_overclaim",
+    ]));
+    expect(result.score).toBeLessThan(70);
+  });
+
+  it("downgrades battery readiness answers that overstate grid suitability", () => {
+    const result = evaluateAgentQuality({
+      prompt: "Assess NMC 811 battery cathode readiness for EV and grid storage. Specs: 245 Wh/kg, 200 mAh/g, 1200 cycles to 80%, 3C charge, 25 mg/cm2 cathode loading.",
+      finalAnswer: "The NMC 811 cathode is commercially ready and competitive for grid storage. The 200 mAh/g at 1C claim is routine, and the 245 Wh/kg benchmark is favorable.",
+      sourceTexts: [],
+      requiresTool: true,
+    });
+
+    expect(result.findings.map((item) => item.type)).toEqual(expect.arrayContaining([
+      "technical_battery_grid_cycle_life_overclaim",
+      "technical_battery_capacity_rate_overclaim",
+      "technical_battery_high_areal_current_missing",
+      "technical_battery_energy_density_basis_missing",
+    ]));
+    expect(result.score).toBeLessThan(80);
+  });
+
+  it("downgrades answers that violate thermodynamic or generation bounds", () => {
+    const result = evaluateAgentQuality({
+      prompt: "Evaluate hydrogen, heat pump, and generator feasibility: electrolyzer 28 kWh/kg H2, heat pump source temperature 5 C and sink temperature 80 C, 1 MW nameplate with annual generation 10000 MWh.",
+      finalAnswer: [
+        "The electrolyzer at 28 kWh/kg H2 is feasible and efficient.",
+        "The heat pump COP 7 is suitable for the lift.",
+        "The generator output of 10,000 MWh per year from 1 MW nameplate is credible.",
+      ].join("\n"),
+      sourceTexts: [],
+      requiresTool: true,
+    });
+
+    expect(result.findings.map((item) => item.type)).toEqual(expect.arrayContaining([
+      "technical_hydrogen_specific_energy_below_lhv",
+      "technical_heat_pump_cop_above_carnot",
+      "technical_generation_capacity_factor_above_100",
+    ]));
+    expect(result.score).toBeLessThan(50);
+  });
 });

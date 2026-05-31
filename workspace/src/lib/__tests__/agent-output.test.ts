@@ -63,7 +63,8 @@ describe("agent output sanitizer", () => {
     expect(text).not.toContain("model residual table");
     expect(text).not.toContain("bounded posterior set");
     expect(text).toContain("Language to avoid");
-    expect(text).toContain("source-backed statements");
+    expect(text).toContain("supported statements");
+    expect(text).not.toMatch(/source-backed/i);
   });
 
   it("removes final-quality repair preambles and private finding labels", () => {
@@ -78,7 +79,8 @@ describe("agent output sanitizer", () => {
     ].join("\n"));
 
     expect(text).toContain("# Geothermal Report");
-    expect(text).toContain("The calculation completed with source-backed inputs.");
+    expect(text).toContain("The calculation completed with supported inputs.");
+    expect(text).not.toMatch(/source-backed/i);
     expect(text).not.toMatch(/draft answer|quality_unsupported_source_number|warning points|rephrased/i);
   });
 

@@ -573,7 +573,8 @@ describe("product acceptance matrix: durable server-owned agent runs", () => {
     const teaRun = await waitForRun(tea.body.run.id, "completed");
     expect(teaRun.body.run.final_answer).toContain("Download decision_brief.csv");
     expect(teaRun.body.run.final_answer).toContain("Support and Limits");
-    expect(teaRun.body.run.final_answer).toMatch(/Source-Backed Inputs[\s\S]*\|\s*(Input|Source value)\s*\|\s*Value\s*\|/i);
+    expect(teaRun.body.run.final_answer).toMatch(/Input Values[\s\S]*\|\s*Input\s*\|\s*Value\s*\|/i);
+    expect(teaRun.body.run.final_answer).not.toMatch(/source-backed/i);
 
     const scenario = await createRun({
       message: "Now rerun with electricity cost reduced by 50% while holding all other assumptions constant. Compare to the base case.",

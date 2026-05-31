@@ -8,7 +8,7 @@ export const PUBLIC_AGENT_IDENTITY_ANSWER = [
   "Examples of useful requests:",
   "- Upload a datasheet or report and ask me to extract the key assumptions, risks, and missing data.",
   "- Ask me to run a thermodynamic, process, or economic scenario model from supplied inputs.",
-  "- Ask for a source-backed research brief, decision memo, CSV, PDF, or spreadsheet export.",
+  "- Ask for a research brief, decision memo, CSV, PDF, or spreadsheet export.",
 ].join("\n");
 
 export function isAgentIdentityQuestion(message: string): boolean {
@@ -171,12 +171,17 @@ export function sanitizeUserFacingAgentText(text: string): string {
     .replace(/\bproduction screen\b/gi, "production estimate")
     .replace(/\bplant screen\b/gi, "plant estimate")
     .replace(/\bfor screening\b/gi, "for early analysis")
+    .replace(/^(\s*#{1,6}\s*)source-backed\s+inputs\b/gim, "$1Input Values")
+    .replace(/\bsource-backed\b/gi, "supported")
+    .replace(/\bsource evidence\b/gi, "evidence")
     .split(/\r?\n/)
     .map(cleanLine)
     .filter((line): line is string => line !== null);
   return repairMarkdownTables(sanitizeInternalModelNames(lines.join("\n")))
     .replace(/\bunsupported claims?\b/gi, "statements needing evidence")
-    .replace(/\bsupported claims?\b/gi, "source-backed statements")
+    .replace(/\bsupported claims?\b/gi, "supported statements")
+    .replace(/\bsource-backed\b/gi, "supported")
+    .replace(/\bsource evidence\b/gi, "evidence")
     .replace(/\bclaim\s+status\b/gi, "review status")
     .replace(/\bclaim\s+ladder\b/gi, "review")
     .replace(/\bhidden residuals?\b/gi, "remaining model error")

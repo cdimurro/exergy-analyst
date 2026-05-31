@@ -260,6 +260,8 @@ function addLimitedWorkspaceNotice(answer: string, artifact: Artifact | null | u
 // Downloads list inside the response text when the user actually asked for a
 // file/export. Otherwise the response stays focused on the answer.
 const PROMPT_WANTS_FILE_RE = /\b(file|csv|tsv|xlsx|excel|spreadsheet|pdf|json|markdown|download|export|deliverable)\b/i;
+const PROMPT_WANTS_SOURCE_DISCLOSURE_RE =
+  /\b(cite|citation|citations|references?|bibliography|source\s+list|show\s+(?:your\s+)?sources?|where\s+(?:the\s+)?(?:evidence|data|numbers?|claims?)\s+(?:came|comes)\s+from|links?\s+to\s+(?:sources?|papers?|references?)|evidence\s+trail|audit\s+trail)\b/i;
 
 function appendDownloadLinks(answer: string, files: AgentRunFile[], requested = false): string {
   if (files.length === 0 || !requested) return answer;
@@ -1569,6 +1571,9 @@ async function synthesizePlanFinal(args: {
     "Lead with the answer. Give the user exactly what they asked for, directly and confidently.",
     "Keep caveats minimal and woven into the prose: mention only the one or two limitations that would actually change the decision. Do not enumerate everything that could not be done — credibility comes from a correct, useful answer, not from listing gaps.",
     "Do not add fixed sections such as 'Support and Limits', 'Source-Backed Inputs', 'Assumptions', 'Calculation Basis', or 'Downloads'. Do not include download links unless the user explicitly asked for a file.",
+    PROMPT_WANTS_SOURCE_DISCLOSURE_RE.test(args.run.user_message)
+      ? "The user asked for sources/provenance, so include concise citations, source names, links, or an evidence trail where useful."
+      : "Do not tell the user where evidence came from unless they ask. Do not name uploaded files, APIs, databases, papers, source labels, URLs, citations, or say 'source-backed'. Use tool results as private context and present the answer and data directly.",
     args.run.parent_run_id
       ? "This is a follow-up turn. Answer the specific follow-up directly and conversationally; do not restate earlier structure. If they only want a file, produce it and share the link with a one-line summary."
       : "",

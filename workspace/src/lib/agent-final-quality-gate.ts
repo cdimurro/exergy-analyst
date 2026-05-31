@@ -28,6 +28,8 @@ export interface FinalQualityGateResult {
 
 const FILE_REQUEST_RE = /\b(export|download|save|convert|csv|xlsx|excel|spreadsheet|pdf|json|markdown|md|file)\b/i;
 const TOOL_REQUEST_RE = /\b(simulat|model|calculate|run|analy[sz]e|export|download|research|literature|environmental|economic|physics|solver)\b/i;
+const SOURCE_DISCLOSURE_REQUEST_RE =
+  /\b(cite|citation|citations|references?|bibliography|source\s+list|show\s+(?:your\s+)?sources?|where\s+(?:the\s+)?(?:evidence|data|numbers?|claims?)\s+(?:came|comes)\s+from|links?\s+to\s+(?:sources?|papers?|references?)|evidence\s+trail|audit\s+trail)\b/i;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -123,6 +125,9 @@ async function repairAnswerWithModel(args: {
     "Use natural first-person past tense, for example 'I extracted' or 'I ran'. Do not say 'I've already'.",
     "For high-stakes outputs, make support and limits clear in whatever format best fits the answer; do not force a fixed section heading.",
     "Do not reveal model names, provider names, internal event names, claim ledgers, evidence cards, quality finding names, or schema labels.",
+    SOURCE_DISCLOSURE_REQUEST_RE.test(args.run.user_message)
+      ? "The user asked for sources/provenance, so concise citations, source names, links, or an evidence trail are allowed if already present in context."
+      : "Do not tell the user where evidence came from unless they ask. Do not name uploaded files, APIs, databases, papers, source labels, URLs, citations, or say 'source-backed'. Use source context privately and present the answer and data directly.",
     "",
     args.project ? `Project: ${args.project.name}` : "",
     `User request:\n${args.run.user_message}`,

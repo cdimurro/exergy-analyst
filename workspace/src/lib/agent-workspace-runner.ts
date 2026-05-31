@@ -5,7 +5,10 @@ import { basename, extname, join } from "path";
 import { promisify } from "util";
 
 import { evaluateAgentQuality } from "@/lib/agent-quality-evaluator";
+import { sanitizeUserFacingAgentText } from "@/lib/agent-output";
 import { callDeepSeekV3, callGeminiPdfVision, getEnvVar, RUNTIME_DIR } from "@/lib/backend";
+import { buildTechnicalDomainGuidance } from "@/lib/technical-domain-adapters";
+import { technicalConsistencyFindings } from "@/lib/technical-consistency";
 
 const execFileAsync = promisify(execFile);
 
@@ -56,6 +59,8 @@ const DEFAULT_AGENT_CONTAINER_IMAGE = "exergy-agent-workspace:2026-05-24";
 const PDF_TEXT_SIDECAR_SUFFIXES = [".gemini.md", ".gemini.json", ".mineru.md", ".mineru.json"];
 const FILE_OUTPUT_REQUEST_RE =
   /\b(export|download|save|convert|attach|attachment|file|csv|xlsx|excel|spreadsheet|pdf|json|markdown|md|ppt|pptx|presentation|deck|slide|slides)\b/i;
+const SOURCE_DISCLOSURE_REQUEST_RE =
+  /\b(cite|citation|citations|references?|bibliography|source\s+list|show\s+(?:your\s+)?sources?|where\s+(?:the\s+)?(?:evidence|data|numbers?|claims?)\s+(?:came|comes)\s+from|links?\s+to\s+(?:sources?|papers?|references?)|evidence\s+trail|audit\s+trail)\b/i;
 
 export interface AgentWorkspaceRunInput {
   projectId: string;
@@ -108,6 +113,33 @@ export interface SandboxPolicy {
   maxFileBytes: number;
   maxFiles: number;
   maxInputFiles: number;
+}
+
+function userRequestedSourceDisclosure(input: AgentWorkspaceRunInput): boolean {
+  return SOURCE_DISCLOSURE_REQUEST_RE.test([
+    input.task,
+    input.context || "",
+    input.requestedOutputs?.join(" ") || "",
+  ].join("\n"));
+}
+
+export function sanitizeWorkspaceReportForSourceDisclosure(input: AgentWorkspaceRunInput, report: string): string {
+  let clean = sanitizeUserFacingAgentText(report);
+  if (userRequestedSourceDisclosure(input)) return clean;
+  clean = clean
+    .replace(/\[([^\]\n]{1,100})\]\((?:https?:\/\/|file:)[^)]+\)/gi, "$1")
+    .replace(/https?:\/\/\S+/gi, "")
+    .replace(/\[(?:\d+|ref(?:erence)?\s*\d+)\]/gi, "")
+    .replace(/^#{1,6}\s*(?:Sources?|References?|Citations?|Bibliography|Evidence Trail|Audit Trail)\s*$/gim, "")
+    .replace(/^\s*[-*]\s*(?:https?:\/\/\S+|(?:Source|Reference|Citation)\b.*)$/gim, "")
+    .replace(/\b(?:Evidence trail|Audit trail|Bibliography|Citations?|References?|Sources?)\s*:/gi, "Basis:")
+    .replace(/\|\s*(?:Source|Sources|Citation|Reference|Provenance)\s*\|/gi, "| Basis |")
+    .replace(/\bfrom\s+(?:the\s+)?(?:uploaded|attached)\s+(?:file|document|datasheet|spreadsheet|pdf)\b/gi, "from the available context")
+    .replace(/\bfrom\s+[`'"]?[^`'"\s|()]+\.(?:pdf|docx|xlsx|xls|csv|json|md|txt|pptx|png|jpe?g|tiff?|ifc|dxf)[`'"]?/gi, "from the available context")
+    .replace(/\baccording to\s+[`'"]?[^`'"\n]{1,100}\.(?:pdf|docx|xlsx|xls|csv|json|md|txt|pptx|png|jpe?g|tiff?|ifc|dxf)[`'"]?/gi, "based on the available context")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return clean;
 }
 
 function pythonPath(): string {
@@ -281,6 +313,11 @@ export function workspaceConsistencyFindings(
       "The report contains an unresolved template placeholder. Treat the affected section as incomplete until the placeholder is replaced with the computed table or value.",
     );
   }
+  findings.push(...technicalConsistencyFindings({
+    task,
+    reportMarkdown,
+    results,
+  }).map((finding) => finding.message));
 
   if (
     /\btime\s+to\s+(?:failure|event|threshold|onset|runaway|shutdown|trip|breach|limit|critical|collapse)\b[\s\S]{0,160}\b10000(?:\.0)?\b/i.test(report) &&
@@ -632,7 +669,7 @@ function attachWorkspaceResultMetadata(args: {
       assumptions: resultHasAnyKey(args.results, [/assumptions?/i, /defaults?/i]),
       outputs: resultHasAnyKey(args.results, [/^outputs?$/i, /results?/i, /summary/i, /metrics?/i]),
       sensitivity: resultHasAnyKey(args.results, [/sensitivity/i, /scenario/i, /cases?/i]),
-      quality_checks: resultHasAnyKey(args.results, [/quality_checks?/i, /independent_checks?/i, /validation/i]),
+      quality_checks: resultHasAnyKey(args.results, [/quality_checks?/i, /independent_checks?/i, /technical_checks?/i, /validation/i]),
       limits: resultHasAnyKey(args.results, [/limits?/i, /limitations?/i, /cannot_prove/i, /uncertainty/i]),
     },
     validation_findings: args.consistencyFindings,
@@ -895,6 +932,7 @@ async function writeHelperModule(workDir: string) {
 import csv
 import html
 import json
+import math
 import os
 import re
 import urllib.parse
@@ -1194,6 +1232,87 @@ def search_literature(query, limit=8):
             break
     return {"query": query, "results": deduped, "errors": errors}
 
+def inspect_pypi_package(package_name):
+    """Fetch PyPI metadata for an exact package name when network is enabled."""
+    name = str(package_name or "").strip()
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", name):
+        raise ValueError("package_name must be a simple PyPI package name")
+    data = json.loads(fetch_url(f"https://pypi.org/pypi/{urllib.parse.quote(name)}/json"))
+    info = data.get("info") or {}
+    releases = data.get("releases") or {}
+    return {
+        "name": info.get("name") or name,
+        "version": info.get("version"),
+        "summary": info.get("summary"),
+        "project_url": info.get("project_url") or info.get("package_url"),
+        "home_page": info.get("home_page"),
+        "license": info.get("license"),
+        "requires_python": info.get("requires_python"),
+        "release_count": len(releases),
+    }
+
+def local_python_package_status(package_names):
+    """Return whether candidate Python packages are importable in the workspace."""
+    rows = []
+    for raw in package_names or []:
+        name = str(raw).strip()
+        if not name:
+            continue
+        module = name.replace("-", "_")
+        try:
+            __import__(module)
+            rows.append({"package": name, "module": module, "importable": True})
+        except Exception as exc:
+            rows.append({"package": name, "module": module, "importable": False, "error": str(exc)[:200]})
+    return rows
+
+def discover_open_source_tools(query, limit=6, package_candidates=None):
+    """Search public sources for likely tools/libraries for a technical domain."""
+    query = str(query or "").strip()
+    out = {"query": query, "github": [], "huggingface": [], "pypi": [], "local_imports": [], "errors": []}
+    if package_candidates:
+        out["local_imports"] = local_python_package_status(package_candidates)
+        for package in package_candidates:
+            try:
+                out["pypi"].append(inspect_pypi_package(package))
+            except Exception as exc:
+                out["errors"].append({"source": "pypi", "package": str(package), "error": str(exc)[:240]})
+    if not query:
+        return out
+    try:
+        out["github"] = search_github_repositories(query, limit=limit)
+    except Exception as exc:
+        out["errors"].append({"source": "github", "error": str(exc)[:240]})
+    try:
+        out["huggingface"] = search_huggingface_models(query, limit=min(limit, 5))
+    except Exception as exc:
+        out["errors"].append({"source": "huggingface", "error": str(exc)[:240]})
+    return out
+
+def build_domain_context(query, benchmark_query=None, package_candidates=None, limit=6):
+    """Build a temporary source-first domain context for unfamiliar technical requests."""
+    query = str(query or "").strip()
+    benchmark_query = str(benchmark_query or query).strip()
+    context = {
+        "query": query,
+        "benchmark_query": benchmark_query,
+        "literature": {"query": benchmark_query, "results": [], "errors": []},
+        "tools": {"query": query, "github": [], "huggingface": [], "pypi": [], "local_imports": [], "errors": []},
+        "source_first": True,
+        "network_allowed": os.environ.get("AGENT_ALLOW_NETWORK") == "1",
+    }
+    if not context["network_allowed"]:
+        context["limits"] = "Network is disabled, so domain context must come from uploaded files, prompt values, and built-in first-principles checks."
+        if package_candidates:
+            context["tools"]["local_imports"] = local_python_package_status(package_candidates)
+        return context
+    try:
+        context["literature"] = search_literature(benchmark_query, limit=limit)
+    except Exception as exc:
+        context["literature"] = {"query": benchmark_query, "results": [], "errors": [{"error": str(exc)[:240]}]}
+    context["tools"] = discover_open_source_tools(query, limit=limit, package_candidates=package_candidates)
+    return context
+
 def _zip_xml_text(path, member_patterns):
     parts = []
     try:
@@ -1491,7 +1610,7 @@ def parse_number(value):
     return float(match.group(0)) if match else None
 
 def source_value_table(text, labels=None, limit=120):
-    """Extract a source-backed parameter table with value, unit, label/context, and confidence hints."""
+    """Extract an input-supported parameter table with value, unit, label/context, and confidence hints."""
     evidence = extract_numeric_evidence(text, limit=limit)
     wanted = [str(label).lower() for label in (labels or []) if str(label).strip()]
     rows = []
@@ -1510,7 +1629,7 @@ def source_value_table(text, labels=None, limit=120):
             "unit": item.get("unit", ""),
             "context": context,
             "source": "uploaded_text_or_prompt",
-            "confidence": "source-backed" if item.get("unit") else "source-backed, unit not explicit",
+            "confidence": "input-supported" if item.get("unit") else "input-supported, unit not explicit",
         })
     return rows
 
@@ -1563,6 +1682,281 @@ def rank_sensitivity(cases, metric):
             "abs_delta": abs(value - base),
         })
     return sorted(rows, key=lambda row: row["abs_delta"], reverse=True)
+
+def gas_turbine_derated_capacity(iso_mw, ambient_c, altitude_m=0, temp_ref_c=15.0, temp_derate_pct_per_c=0.35, altitude_derate_pct_per_100m=1.0):
+    """First-pass simple-cycle gas turbine derating model.
+
+    Returns net capacity after ambient-temperature and altitude derates. Replace
+    coefficients with OEM curves when source data is available.
+    """
+    iso_mw = float(iso_mw)
+    temp_delta = max(0.0, float(ambient_c) - float(temp_ref_c))
+    temp_derate = temp_delta * float(temp_derate_pct_per_c) / 100.0
+    altitude_derate = max(0.0, float(altitude_m)) / 100.0 * float(altitude_derate_pct_per_100m) / 100.0
+    derate_fraction = min(0.95, max(0.0, temp_derate + altitude_derate))
+    return {
+        "iso_mw": iso_mw,
+        "ambient_c": float(ambient_c),
+        "altitude_m": float(altitude_m),
+        "temp_derate_fraction": temp_derate,
+        "altitude_derate_fraction": altitude_derate,
+        "total_derate_fraction": derate_fraction,
+        "net_mw": iso_mw * (1.0 - derate_fraction),
+    }
+
+def capacity_margin(load_mw, generation_mw=0.0, firm_grid_mw=0.0, storage_mw=0.0):
+    """Return capacity margin in MW and percent of load for planning checks."""
+    load = float(load_mw)
+    supply = float(generation_mw) + float(firm_grid_mw) + float(storage_mw)
+    margin = supply - load
+    return {
+        "load_mw": load,
+        "generation_mw": float(generation_mw),
+        "firm_grid_mw": float(firm_grid_mw),
+        "storage_mw": float(storage_mw),
+        "total_supply_mw": supply,
+        "margin_mw": margin,
+        "margin_pct_of_load": (margin / load * 100.0) if load else None,
+        "meets_load": margin >= 0,
+    }
+
+def binomial_at_least(total_units, required_units, unit_availability):
+    """Probability that at least required_units are available, assuming independent identical units."""
+    n = int(total_units)
+    k_required = int(required_units)
+    p = float(unit_availability)
+    probability = 0.0
+    for k in range(k_required, n + 1):
+        probability += math.comb(n, k) * (p ** k) * ((1.0 - p) ** (n - k))
+    return {
+        "total_units": n,
+        "required_units": k_required,
+        "unit_availability": p,
+        "probability": probability,
+        "probability_percent": probability * 100.0,
+    }
+
+def transformer_losses(load_mva, rating_mva, no_load_loss_kw, load_loss_kw):
+    """Transformer loss estimate using no-load plus load loss scaled by MVA loading squared."""
+    rating = float(rating_mva)
+    load = float(load_mva)
+    load_fraction = load / rating if rating else 0.0
+    copper_kw = float(load_loss_kw) * load_fraction ** 2
+    total_kw = float(no_load_loss_kw) + copper_kw
+    return {
+        "load_mva": load,
+        "rating_mva": rating,
+        "load_fraction": load_fraction,
+        "load_percent": load_fraction * 100.0,
+        "no_load_loss_kw": float(no_load_loss_kw),
+        "load_loss_kw_at_rating": float(load_loss_kw),
+        "scaled_load_loss_kw": copper_kw,
+        "total_loss_kw": total_kw,
+        "loss_mw": total_kw / 1000.0,
+    }
+
+def fault_current_from_mva(short_circuit_mva, voltage_kv):
+    """Three-phase fault current from short-circuit MVA and line-line kV."""
+    mva = float(short_circuit_mva)
+    kv = float(voltage_kv)
+    ka = mva / (math.sqrt(3.0) * kv) if kv else None
+    return {"short_circuit_mva": mva, "voltage_kv": kv, "fault_current_ka": ka}
+
+def fault_current_from_transformer(rating_mva, voltage_kv, impedance_pct):
+    """Approximate transformer-limited three-phase secondary fault current."""
+    z = float(impedance_pct) / 100.0
+    sc_mva = float(rating_mva) / z if z else None
+    result = fault_current_from_mva(sc_mva, voltage_kv) if sc_mva else {"fault_current_ka": None}
+    result.update({"rating_mva": float(rating_mva), "impedance_pct": float(impedance_pct), "short_circuit_mva": sc_mva})
+    return result
+
+def ride_through_energy(load_mw, duration_s, efficiency=0.95, reserve_fraction=0.15):
+    """Energy storage required for ride-through at fixed load and duration."""
+    load = float(load_mw)
+    duration = float(duration_s)
+    eff = float(efficiency)
+    reserve = float(reserve_fraction)
+    delivered_mwh = load * duration / 3600.0
+    required_mwh = delivered_mwh / eff * (1.0 + reserve) if eff else None
+    return {
+        "load_mw": load,
+        "duration_s": duration,
+        "delivered_mwh": delivered_mwh,
+        "efficiency": eff,
+        "reserve_fraction": reserve,
+        "required_storage_mwh": required_mwh,
+    }
+
+def battery_areal_metrics(cathode_loading_mg_cm2, specific_capacity_mah_g, c_rate, nominal_voltage_v=3.7):
+    """Convert cathode loading, specific capacity, and C-rate to areal capacity/current."""
+    loading = float(cathode_loading_mg_cm2)
+    capacity = float(specific_capacity_mah_g)
+    rate = float(c_rate)
+    areal_capacity = loading / 1000.0 * capacity
+    current_density = areal_capacity * rate
+    active_material_energy_wh_kg = capacity * float(nominal_voltage_v)
+    return {
+        "cathode_loading_mg_cm2": loading,
+        "specific_capacity_mah_g": capacity,
+        "c_rate": rate,
+        "nominal_voltage_v": float(nominal_voltage_v),
+        "areal_capacity_mah_cm2": areal_capacity,
+        "current_density_ma_cm2": current_density,
+        "active_material_energy_density_wh_kg": active_material_energy_wh_kg,
+    }
+
+def cycle_life_application_gap(cycle_life_to_80, application, target_cycles=None):
+    """Compare claimed cycle life with a simple application target."""
+    app = str(application or "").lower()
+    if target_cycles is None:
+        if "grid" in app or "storage" in app:
+            target_cycles = 4000
+        elif "ev" in app or "vehicle" in app:
+            target_cycles = 1500
+        else:
+            target_cycles = 1000
+    claimed = float(cycle_life_to_80)
+    target = float(target_cycles)
+    return {
+        "application": application,
+        "cycle_life_to_80": claimed,
+        "target_cycles": target,
+        "gap_cycles": claimed - target,
+        "meets_target": claimed >= target,
+        "fraction_of_target": claimed / target if target else None,
+    }
+
+def hydrogen_electrolyzer_metrics(power_mw=None, production_kg_h=None, specific_energy_kwh_kg=None, basis="LHV"):
+    """Hydrogen electrolysis sanity metrics against LHV/HHV energy bases."""
+    lhv_kwh_kg = 33.33
+    hhv_kwh_kg = 39.39
+    if specific_energy_kwh_kg is None and power_mw is not None and production_kg_h:
+        specific_energy_kwh_kg = float(power_mw) * 1000.0 / float(production_kg_h)
+    specific = float(specific_energy_kwh_kg) if specific_energy_kwh_kg is not None else None
+    basis_key = str(basis or "LHV").upper()
+    floor = hhv_kwh_kg if basis_key == "HHV" else lhv_kwh_kg
+    efficiency = (floor / specific * 100.0) if specific else None
+    return {
+        "power_mw": None if power_mw is None else float(power_mw),
+        "production_kg_h": None if production_kg_h is None else float(production_kg_h),
+        "specific_energy_kwh_kg": specific,
+        "basis": basis_key,
+        "thermodynamic_floor_kwh_kg": floor,
+        "efficiency_percent": efficiency,
+        "below_thermodynamic_floor": bool(specific is not None and specific < floor),
+    }
+
+def carnot_heat_pump_cop(source_c, sink_c, mode="heating"):
+    """Carnot COP limit for heat-pump heating or cooling between source and sink temperatures."""
+    cold_k = float(source_c) + 273.15
+    hot_k = float(sink_c) + 273.15
+    if hot_k <= cold_k:
+        return {
+            "source_c": float(source_c),
+            "sink_c": float(sink_c),
+            "mode": mode,
+            "carnot_cop": None,
+            "valid_temperature_lift": False,
+        }
+    mode_key = str(mode or "heating").lower()
+    cop = hot_k / (hot_k - cold_k) if "heat" in mode_key else cold_k / (hot_k - cold_k)
+    return {
+        "source_c": float(source_c),
+        "sink_c": float(sink_c),
+        "mode": mode_key,
+        "temperature_lift_c": float(sink_c) - float(source_c),
+        "carnot_cop": cop,
+        "valid_temperature_lift": True,
+    }
+
+def annual_generation_metrics(capacity_mw, capacity_factor=None, annual_generation_mwh=None, hours_per_year=8760):
+    """Compute annual generation and capacity factor with unit-safe bounds."""
+    capacity = float(capacity_mw)
+    hours = float(hours_per_year)
+    if annual_generation_mwh is None and capacity_factor is not None:
+        annual_generation_mwh = capacity * hours * float(capacity_factor)
+    annual = float(annual_generation_mwh) if annual_generation_mwh is not None else None
+    cf = (annual / (capacity * hours)) if annual is not None and capacity and hours else (float(capacity_factor) if capacity_factor is not None else None)
+    return {
+        "capacity_mw": capacity,
+        "hours_per_year": hours,
+        "annual_generation_mwh": annual,
+        "capacity_factor": cf,
+        "capacity_factor_percent": cf * 100.0 if cf is not None else None,
+        "above_physical_capacity_factor": bool(cf is not None and cf > 1.0),
+    }
+
+def process_fraction_check(name, value_percent):
+    """Check an ordinary conversion/yield/recovery/capture fraction against 0-100% bounds."""
+    value = float(value_percent)
+    return {
+        "name": str(name),
+        "value_percent": value,
+        "within_0_100_percent": 0.0 <= value <= 100.0,
+        "excess_percent_points": max(0.0, value - 100.0),
+    }
+
+def mechanical_safety_factor(stress_mpa, allowable_mpa):
+    """Simple stress safety factor check."""
+    stress = float(stress_mpa)
+    allowable = float(allowable_mpa)
+    safety_factor = allowable / stress if stress else None
+    return {
+        "stress_mpa": stress,
+        "allowable_mpa": allowable,
+        "safety_factor": safety_factor,
+        "passes_allowable": bool(safety_factor is not None and safety_factor >= 1.0),
+    }
+
+def pressure_vessel_hoop_stress(pressure_bar, radius_m, thickness_mm, allowable_mpa=None):
+    """Thin-wall pressure-vessel hoop stress screening check."""
+    p_pa = float(pressure_bar) * 100000.0
+    radius = float(radius_m)
+    thickness_m = float(thickness_mm) / 1000.0
+    hoop_mpa = p_pa * radius / thickness_m / 1_000_000.0 if thickness_m else None
+    result = {
+        "pressure_bar": float(pressure_bar),
+        "radius_m": radius,
+        "thickness_mm": float(thickness_mm),
+        "hoop_stress_mpa": hoop_mpa,
+        "allowable_mpa": None if allowable_mpa is None else float(allowable_mpa),
+    }
+    if allowable_mpa is not None and hoop_mpa is not None:
+        result["safety_factor"] = float(allowable_mpa) / hoop_mpa if hoop_mpa else None
+        result["passes_allowable"] = hoop_mpa <= float(allowable_mpa)
+    return result
+
+def pump_hydraulic_power(flow_m3_s, head_m, density_kg_m3=1000.0, efficiency=None):
+    """Hydraulic and required pump power from flow and head."""
+    flow = float(flow_m3_s)
+    head = float(head_m)
+    density = float(density_kg_m3)
+    hydraulic_kw = density * 9.80665 * flow * head / 1000.0
+    result = {
+        "flow_m3_s": flow,
+        "head_m": head,
+        "density_kg_m3": density,
+        "hydraulic_power_kw": hydraulic_kw,
+    }
+    if efficiency is not None:
+        eff = float(efficiency)
+        result["efficiency"] = eff
+        result["required_shaft_power_kw"] = hydraulic_kw / eff if eff else None
+    return result
+
+def carbon_capture_balance(inlet_co2, captured_co2, unit="same"):
+    """CO2 capture mass-balance screen."""
+    inlet = float(inlet_co2)
+    captured = float(captured_co2)
+    fraction = captured / inlet if inlet else None
+    return {
+        "inlet_co2": inlet,
+        "captured_co2": captured,
+        "unit": unit,
+        "capture_fraction": fraction,
+        "capture_percent": fraction * 100.0 if fraction is not None else None,
+        "captured_exceeds_inlet": bool(fraction is not None and fraction > 1.0),
+    }
 
 def extract_markdown_tables(text):
     text = "" if text is None else str(text)
@@ -2150,7 +2544,7 @@ write_xlsx("input_manifest.xlsx", manifest_rows)
 report_lines = [
     "# Workspace Diagnostic",
     "",
-    "The executable model did not run, so I am not presenting calculated results as completed analysis. This fallback preserves the source evidence, extracted numeric inputs, and the model structure that the next workspace tool run should execute.",
+    "The executable model did not run, so I am not presenting calculated results as completed analysis. This fallback preserves the internal input context, extracted numeric inputs, and the model structure that the next workspace tool run should execute.",
     "",
     "## Received Inputs",
 ]
@@ -2176,9 +2570,9 @@ report_lines.extend([
     "",
     "## Model Structure To Run",
     "- Define the decision question, system boundary, unit basis, and time basis.",
-    "- Convert uploaded evidence into a parameter table with source, value, unit, and confidence.",
+    "- Convert available inputs into an internal parameter table with value, unit, basis, and confidence.",
     "- Build task-specific performance, physics, economics, or risk equations from those parameters.",
-    "- Separate source-backed values from assumptions and run low/base/high cases where important values are missing.",
+    "- Separate measured values from assumptions internally and run low/base/high cases where important values are missing.",
     "- Report final outputs with units, uncertainty drivers, and what the data cannot prove.",
     "",
     "## Why No Final Calculation Is Claimed",
@@ -2255,19 +2649,20 @@ async function buildExecutionFallbackReport(input: AgentWorkspaceRunInput, copie
     .filter((file) => typeof file.filename === "string" && !isPdfTextSidecarName(String(file.filename)))
     .slice(0, 12)
     .map((file) => `- ${file.filename} (${Math.max(1, Math.round(Number(file.bytes || 0) / 1024))} KB)`);
+  const showSources = userRequestedSourceDisclosure(input);
   const lines = [
     "# Analysis Result",
     "",
-    "I could not complete the executable workspace model, so I am not treating the requested calculation as successfully run. I preserved the readable source evidence below, extracted the usable numeric inputs, and separated what the file can support from what still needs data.",
+    "I could not complete the executable workspace model, so I am not treating the requested calculation as successfully run. I preserved the readable inputs internally, extracted the usable numeric values, and separated what the data can support from what still needs data.",
     "",
     "## Requested analysis",
     input.task,
     input.context ? `\nRelevant run context:\n${input.context}` : "",
     "",
     "## What the package appears to cover",
-    previews.length
+    showSources && previews.length
       ? previews.map((item) => `- ${item.filename}: ${item.text.replace(/\s+/g, " ").slice(0, 260)}${item.text.length > 260 ? "..." : ""}`).join("\n")
-      : "- The files were received, but no parser-ready text preview was available inside the execution workspace.",
+      : "- The workspace had readable context for the requested analysis path, but the executable model did not complete.",
     "",
     keywords.length ? `Key technical signals detected: ${keywords.join(", ")}.` : "",
     "",
@@ -2278,7 +2673,7 @@ async function buildExecutionFallbackReport(input: AgentWorkspaceRunInput, copie
     "",
     "## Model structure to run",
     "- Define the system boundary, operating basis, units, capacity basis, and reference environment.",
-    "- Convert the uploaded evidence into a parameter table with source, value, unit, and confidence.",
+    "- Convert the available inputs into an internal parameter table with value, unit, basis, and confidence.",
     "- Build the requested physics, performance, environmental, or economic equations from those parameters.",
     "- Normalize outputs to the user's requested basis, such as hourly, daily, annual, per-unit, per-tonne, per-MWh, or per-dollar metrics.",
     "- Run low/base/high cases and sensitivities for the variables that control the result.",
@@ -2289,7 +2684,7 @@ async function buildExecutionFallbackReport(input: AgentWorkspaceRunInput, copie
     "The correct scale or recommendation depends on what risk the user is trying to retire: technical feasibility, operations, permitting, financeability, product qualification, emissions, reliability, or commercial margin.",
     "",
     "## Recommendation",
-    "Use this as a diagnostic package for the failed run: the next successful model should compute from the extracted parameter table and explicitly cite which values came from the upload versus which values are assumptions.",
+    "Use this as a diagnostic package for the failed run: the next successful model should compute from the extracted parameter table and keep provenance internal unless the user asks for it.",
     "",
     "## Inputs that usually control accuracy",
     "- System boundary and operating basis",
@@ -2342,11 +2737,18 @@ async function generatePythonForTask(input: AgentWorkspaceRunInput, copiedFiles:
     ? Math.max(10_000, Math.min(90_000, Math.trunc(timeoutRaw)))
     : 45_000;
   const sourcePreview = await sourcePreviewForSynthesis(copiedFiles);
+  const domainGuidance = buildTechnicalDomainGuidance([
+    input.task,
+    input.context || "",
+    input.requestedOutputs?.join(" ") || "",
+    sourcePreview || "",
+  ].join("\n"));
+  const showSourceProvenance = userRequestedSourceDisclosure(input);
 
   const prompt = [
     "Write a Python 3 script for a project-local agent workspace run. You are the planner and analyst for any technical, scientific, economic, or research domain the user requests.",
     "The script will run in WORK_DIR. It must write all outputs under OUTPUT_DIR.",
-    "Available helper functions from agent_workspace_helpers: write_json, write_markdown, write_csv, write_xlsx, write_pdf, fetch_url, search_github_repositories, search_huggingface_models, search_crossref_works, search_openalex_works, search_literature, extract_text, extract_all_input_texts, extract_all_input_documents, summarize_documents, extract_numeric_evidence, source_value_table, extract_markdown_tables, load_tabular_inputs, run_sensitivity_grid, rank_sensitivity, capital_recovery_factor, npv, irr, financial_metrics, pvlib_cell_temperature, pvlib_fixed_tilt_day.",
+    "Available helper functions from agent_workspace_helpers: write_json, write_markdown, write_csv, write_xlsx, write_pdf, fetch_url, search_github_repositories, search_huggingface_models, search_crossref_works, search_openalex_works, search_literature, discover_open_source_tools, inspect_pypi_package, local_python_package_status, build_domain_context, extract_text, extract_all_input_texts, extract_all_input_documents, summarize_documents, extract_numeric_evidence, source_value_table, extract_markdown_tables, load_tabular_inputs, run_sensitivity_grid, rank_sensitivity, capital_recovery_factor, npv, irr, financial_metrics, gas_turbine_derated_capacity, capacity_margin, binomial_at_least, transformer_losses, fault_current_from_mva, fault_current_from_transformer, ride_through_energy, battery_areal_metrics, cycle_life_application_gap, hydrogen_electrolyzer_metrics, carnot_heat_pump_cop, annual_generation_metrics, process_fraction_check, mechanical_safety_factor, pressure_vessel_hoop_stress, pump_hydraulic_power, carbon_capture_balance, pvlib_cell_temperature, pvlib_fixed_tilt_day.",
     "Output helper signatures: write_json(name, data); write_markdown(name, text); write_csv(name, rows) or write_csv(name, headers, rows); write_xlsx(name, rows) or write_xlsx(name, headers, rows); write_pdf(name, text). Underscore-free aliases such as writecsv and writepdf are also available.",
     "PV helper signatures: pvlib_fixed_tilt_day(latitude, longitude, pdc0_w, gamma_pdc_per_c=-0.0037, date=\"2023-03-20\", tz=None, tilt_deg=None, azimuth_deg=180, albedo=0.2, temp_air_c=25.0, wind_speed_mps=1.0, inverter_efficiency=0.96, system_losses=0.14, module_efficiency=0.18) and pvlib_cell_temperature(poa_global, temp_air=25.0, wind_speed=1.0, module_efficiency=0.18). The third argument is module STC power in W, not a day number. pvlib_fixed_tilt_day returns summary, hourly, and top-level aliases including peak_power_w, daily_energy_wh, daily_ac_energy_kwh, poa, cell_temp, dc_power, and ac_power.",
     "Always create report.md and results.json as internal workspace outputs. Create user-downloadable CSV/XLSX/PDF/PNG/JSON/Markdown/PPTX files only when the user explicitly requests that output type.",
@@ -2354,21 +2756,32 @@ async function generatePythonForTask(input: AgentWorkspaceRunInput, copiedFiles:
     "Do not read outside the input file paths provided in INPUT_FILES. Do not write outside OUTPUT_DIR.",
     input.allowNetwork ? "Network is allowed for public URLs/APIs if relevant." : "Network is not allowed; do not fetch internet resources.",
     "If inputs include PDFs, Office documents, spreadsheets, CAD/BIM files, images, or scientific data files, first use extract_all_input_texts(), extract_all_input_documents(), and load_tabular_inputs() so sidecars and parser-specific extraction paths are used before falling back to assumptions. extract_all_input_texts() returns a list of strings suitable for '\\n'.join(...). Use extract_all_input_documents() when you need filename/path/text metadata records. Sidecar .gemini.json files usually contain text/markdown fields, not a normalized parameter schema; parse their text/markdown content unless you have verified specific structured keys exist.",
-    "Use a domain-agnostic tool workflow: inspect documents, extract tables and numeric evidence, infer the task-specific physics/economics equations from the prompt and evidence, run calculations, and synthesize a direct answer. Do not assume the platform only supports a fixed list of domains.",
+    "Use a domain-agnostic tool workflow: inspect documents, extract tables and numeric evidence, build a temporary domain context when needed, infer the task-specific physics/economics equations from the prompt and evidence, run calculations, and synthesize a direct answer. Do not assume the platform only supports a fixed list of domains.",
+    `TECHNICAL_CHECK_GUIDANCE:\n${domainGuidance}`,
+    showSourceProvenance
+      ? "The user asked for sources/provenance, so the visible report may include concise source names, citations, links, or an evidence trail where useful."
+      : "Use files, retrieved references, benchmarks, and domain context internally, but do not tell the user where evidence came from unless they ask. In report.md, do not name uploaded files, APIs, databases, papers, source labels, URLs, citations, or say 'source-backed'; present the answer and data directly. Keep provenance, citations, and source labels in results.json only.",
     "If a request is too under-specified for meaningful execution, write a concise clarification request instead of inventing decisive inputs. If a request is dangerous to execute or physically impossible as stated, politely refuse in report.md and explain the specific reason.",
     "Do not use canned application templates or domain-specific shortcuts. Treat the prompt and uploaded files as the source of truth, then write task-specific code with the helper tools.",
-    "Never substitute generic placeholder inputs when source previews or uploaded files contain specific values. The first section of report.md must show the source-backed inputs actually used; any invented or assumed value must be labeled as an assumption and kept separate.",
-    "Before modeling, parse extract_all_input_texts() and extract_numeric_evidence(...) for the uploaded files. If source-backed values conflict with generic examples or prior defaults, use the source-backed values. Use permissive context regexes that capture forms like '<label> ... 440 W' or '<label> ... -0.37 percent', not only colon-separated fields.",
+    "Never substitute generic placeholder inputs when source previews or uploaded files contain specific values. The report should show the values and assumptions used, but provenance labels must stay internal unless the user requested sources.",
+    "Before modeling, parse extract_all_input_texts() and extract_numeric_evidence(...) for the uploaded files. If input-supported values conflict with generic examples or prior defaults, use the input-supported values. Use permissive context regexes that capture forms like '<label> ... 440 W' or '<label> ... -0.37 percent', not only colon-separated fields.",
     "For simulation/economics requests in any domain, build a transparent calculation model from extracted numeric values. If key values are missing, use clearly named assumption variables, run at least low/base/high cases, and state which assumptions control the result.",
-    "For literature or benchmark requests, use search_literature(), search_crossref_works(), or search_openalex_works() when network is enabled. If network is disabled or sources are missing, benchmark against supplied evidence and clearly separate source-backed benchmarks from assumptions.",
-    "For source extraction, use source_value_table() to build parameter rows with context and confidence before modeling. For sensitivities, prefer run_sensitivity_grid() and rank_sensitivity() so rankings come from numeric deltas instead of narrative guesses.",
+    "For literature, benchmark, standards, commercial-readiness, or unfamiliar-domain requests, use build_domain_context(), search_literature(), search_crossref_works(), search_openalex_works(), discover_open_source_tools(), inspect_pypi_package(), or local_python_package_status() when relevant. If network is disabled or sources are missing, benchmark against supplied evidence and clearly separate benchmark values from assumptions internally.",
+    "For complex solvers, first use discover_open_source_tools() or local_python_package_status() to see whether a known library/tool should be used. If no suitable tool is available, implement a bounded first-principles approximation and state that it is not a substitute for the specialized solver.",
+    "For source-first work, write results.json.domain_context with retrieved references, benchmark ranges, tool candidates considered, chosen modeling approach, and source limitations whenever the prompt asks for benchmarks, literature, standards, deployment readiness, or comparison to published performance. Do not include that provenance in report.md unless the user asked for sources.",
+    "For source extraction, use source_value_table() internally to build parameter rows with context and confidence before modeling. For sensitivities, prefer run_sensitivity_grid() and rank_sensitivity() so rankings come from numeric deltas instead of narrative guesses.",
     "For physics or conceptual simulation requests, prefer a lightweight standard-library or numpy script, bounded sample counts, and tabular numeric outputs. Avoid slow dependency installs or heavy plotting unless the user explicitly asked for plots.",
     "For PV module/site simulations, prefer pvlib_fixed_tilt_day(...) and pvlib_cell_temperature(...) from the helper module. Do not call deprecated/missing pvlib temperature APIs such as temperature.pvwatts_cell or temperature.sapm_celltemp. If you call temperature.sapm_cell directly, pass a, b, and deltaT from pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS.",
+    "For data-center, behind-the-meter, turbine, transformer, switchgear, or electrical reliability requests, use gas_turbine_derated_capacity(), capacity_margin(), binomial_at_least(), transformer_losses(), fault_current_from_mva(), fault_current_from_transformer(), and ride_through_energy() when those checks apply. Separate steady-state capacity, contingency availability, fault-current duty, ride-through energy, heat-rate penalty, and heat-recovery tradeoffs; do not treat one as proof of the others.",
+    "For battery, electrochemical, or materials-readiness requests, use battery_areal_metrics() and cycle_life_application_gap() when loading, specific capacity, C-rate, energy density, or cycle life are present. Keep cell-level, pack-level, electrode-level, and active-material energy density bases separate.",
+    "For hydrogen, heat-pump, and generation requests, use hydrogen_electrolyzer_metrics(), carnot_heat_pump_cop(), and annual_generation_metrics() when relevant. Check thermodynamic floors, Carnot limits, and capacity-factor bounds before making feasibility claims.",
+    "For process, structural, fluids, water, mining, biotech, or carbon-capture requests, use process_fraction_check(), mechanical_safety_factor(), pressure_vessel_hoop_stress(), pump_hydraulic_power(), and carbon_capture_balance() when relevant. Check ordinary fraction bounds, material/CO2 balances, stress margins, pressure-vessel hoop stress, and hydraulic power floors before readiness claims.",
     "For Monte Carlo or stochastic simulations, cap runtime intentionally: set a fixed seed, use enough trajectories for a stable directional result, and write a convergence or sensitivity note instead of running an open-ended simulation.",
     "Keep scenario definitions isolated and explicit. A scenario named low-cost should not also change production, capacity factor, output, or utilization unless the user explicitly asked for a combined low-cost/high-output case. State every changed variable in the scenario table.",
     "Before writing the final narrative, compare every conclusion against computed result signs and ranges. Do not say positive NPV, viable, lower cost, within payback, or best case unless the computed table supports that exact claim.",
-    "Before exiting, run a self-check in code: verify source-backed inputs against extracted text, verify simple derived values with independent formulas where possible, and write those checks into results.json under quality_checks or independent_checks.",
-    "Structure results.json for backend validation with clear inputs or parameters, assumptions, outputs or metrics, sensitivity/scenario data when applicable, quality_checks or independent_checks, and limits/uncertainty. Keep source-backed values separate from assumed values.",
+    "Before exiting, run a self-check in code: verify inputs against extracted text internally, verify simple derived values with independent formulas where possible, and write those checks into results.json under technical_checks, quality_checks, or independent_checks.",
+    "Each technical check should include name, passed/status, formula_or_basis, expected_range_or_bound, observed_value, and implication. Failed checks must be reflected in the narrative by downgrading or correcting the conclusion.",
+    "Structure results.json for backend validation with clear inputs or parameters, assumptions, outputs or metrics, sensitivity/scenario data when applicable, technical_checks, quality_checks or independent_checks, domain_context, provenance, and limits/uncertainty. Keep provenance internal by default.",
     "Check physical bounds before writing the narrative. Efficiency metrics should not exceed 100% unless explicitly defined as a ratio outside ordinary efficiency; if a computed efficiency exceeds its bound, flag it as a calculation/unit issue instead of treating it as valid.",
     "Never leave unresolved self-review language such as '[check]', '[verify]', TODO, or 'Actually check' in report.md. Resolve the inconsistency or state the result as uncertain.",
     "For unfamiliar domains, still proceed: identify governing variables, construct a first-pass model with equations and assumptions, show ranges/sensitivities, and explain which measured inputs would improve the result.",
@@ -2441,13 +2854,14 @@ async function repairPythonAfterExecutionFailure(args: {
   attempt: number;
 }): Promise<{ code: string; requirements: string[] } | null> {
   if (!getEnvVar("DEEPSEEK_API_KEY") && !getEnvVar("DEEPSEEK_V3_API_KEY")) return null;
+  const showSourceProvenance = userRequestedSourceDisclosure(args.input);
   const prompt = [
     "Repair this generated Python workspace script so it completes successfully.",
     "Return only strict JSON with keys: requirements (array), code (string), expected_outputs (array).",
     "Do not answer the analysis request in prose. Return a full replacement script.",
     "",
     "Helper contract:",
-    "- from agent_workspace_helpers import write_json, write_markdown, write_csv, write_xlsx, write_pdf, extract_all_input_texts, extract_all_input_documents, summarize_documents, extract_numeric_evidence, extract_markdown_tables, load_tabular_inputs, capital_recovery_factor, npv, irr, financial_metrics, pvlib_cell_temperature, pvlib_fixed_tilt_day",
+    "- from agent_workspace_helpers import write_json, write_markdown, write_csv, write_xlsx, write_pdf, extract_all_input_texts, extract_all_input_documents, summarize_documents, extract_numeric_evidence, extract_markdown_tables, load_tabular_inputs, build_domain_context, discover_open_source_tools, inspect_pypi_package, local_python_package_status, capital_recovery_factor, npv, irr, financial_metrics, gas_turbine_derated_capacity, capacity_margin, binomial_at_least, transformer_losses, fault_current_from_mva, fault_current_from_transformer, ride_through_energy, battery_areal_metrics, cycle_life_application_gap, hydrogen_electrolyzer_metrics, carnot_heat_pump_cop, annual_generation_metrics, process_fraction_check, mechanical_safety_factor, pressure_vessel_hoop_stress, pump_hydraulic_power, carbon_capture_balance, pvlib_cell_temperature, pvlib_fixed_tilt_day",
     "- write_json(name, data)",
     "- write_markdown(name, text)",
     "- write_csv(name, rows) or write_csv(name, headers, rows)",
@@ -2457,6 +2871,9 @@ async function repairPythonAfterExecutionFailure(args: {
     "- underscore-free aliases writejson, writemarkdown, writecsv, writexlsx, writepdf are available",
     "The script must always create report.md and results.json before exiting.",
     "report.md must include inline key result tables in valid Markdown when useful, and high-stakes work must clearly explain what the supplied data supports and cannot prove.",
+    showSourceProvenance
+      ? "The user asked for sources/provenance, so report.md may include concise source names, citations, links, or an evidence trail where useful."
+      : "Use files, references, benchmarks, and source context internally, but do not tell the user where evidence came from unless they ask. In report.md, do not name uploaded files, APIs, databases, papers, source labels, URLs, citations, or say 'source-backed'. Keep provenance in results.json only.",
     "If a requested export is missing, repair the script to create it before returning. If executable verification cannot pass, label the report best-effort and do not claim normal success.",
     "Remove unresolved self-review language such as '[check]', TODO, or 'Actually check' before writing outputs.",
     "Keep all file writes under OUTPUT_DIR. Prefer standard library.",
@@ -2510,13 +2927,17 @@ async function synthesizeBestEffortWorkspaceReport(args: {
   outputDir: string;
 }): Promise<{ reportMarkdown: string; results: Record<string, unknown> }> {
   const sourcePreview = await sourcePreviewForSynthesis(args.copiedFiles);
+  const showSources = userRequestedSourceDisclosure(args.input);
   const prompt = [
     "You are Exergy Analyst. The workspace tool could not complete after repair attempts.",
     "Write the best useful final answer anyway, in polished Markdown, using the user's request, project context, source previews, and attempt diagnostics.",
     "Do not claim that a failed calculation, simulation, export, or code run succeeded.",
     "If attempted stdout/stderr contains usable computed numbers, you may present them only as attempted intermediate outputs and say they need verification because the tool run failed.",
     "Give the user a valuable answer with clear sections: Executive Summary, What I Could Use, Best-Effort Analysis, What Is Not Proven, Recommended Next Steps.",
-    "For high-stakes outputs, clearly separate source-backed facts from assumptions or attempted calculations.",
+    "For high-stakes outputs, clearly separate measured/input values from assumptions or attempted calculations without naming evidence origins.",
+    showSources
+      ? "The user asked for sources/provenance, so you may include concise source names, citations, links, or an evidence trail where useful."
+      : "Do not tell the user where evidence came from unless they ask. Do not name uploaded files, APIs, databases, papers, source labels, URLs, citations, or say 'source-backed'. Use the source previews only as private context.",
     "Do not mention internal route names, evidence cards, View Details, or schema fields.",
     "",
     `USER REQUEST:\n${args.input.task}`,
@@ -2537,6 +2958,7 @@ async function synthesizeBestEffortWorkspaceReport(args: {
   if (!reportMarkdown) {
     reportMarkdown = await buildExecutionFallbackReport(args.input, args.copiedFiles);
   }
+  reportMarkdown = sanitizeWorkspaceReportForSourceDisclosure(args.input, reportMarkdown);
   const results = {
     summary: reportMarkdown.split(/\n+/).find((line) => line.trim() && !line.startsWith("#"))?.trim()
       || "Best-effort answer produced after workspace execution could not complete.",
@@ -2935,7 +3357,7 @@ export async function runAgentWorkspaceTask(input: AgentWorkspaceRunInput): Prom
     return {
       workDir,
       outputDir,
-      reportMarkdown: bestEffort.reportMarkdown,
+      reportMarkdown: sanitizeWorkspaceReportForSourceDisclosure(input, bestEffort.reportMarkdown),
       summary: String(bestEffort.results.summary || "Best-effort answer produced after workspace code generation failed."),
       generatedCode: "",
       requirements: [],
@@ -3091,7 +3513,7 @@ export async function runAgentWorkspaceTask(input: AgentWorkspaceRunInput): Prom
     reportMarkdown = appendWorkspaceConsistencyChecks(reportMarkdown, results, input.task);
     await writeFile(join(outputDir, "report.md"), reportMarkdown, "utf-8");
   }
-  reportMarkdown = normalizeLongMarkdownTableCells(reportMarkdown);
+  reportMarkdown = sanitizeWorkspaceReportForSourceDisclosure(input, normalizeLongMarkdownTableCells(reportMarkdown));
   await writeFile(join(outputDir, "report.md"), reportMarkdown, "utf-8");
   let finalFiles = await listFiles(outputDir, outputDir, policy);
   const sourcePreviewForQuality = await sourcePreviewForSynthesis(copiedFiles);
@@ -3136,7 +3558,7 @@ export async function runAgentWorkspaceTask(input: AgentWorkspaceRunInput): Prom
   finalFiles = await listFiles(outputDir, outputDir, policy);
   const selectedReportMarkdown = await selectPrimaryWorkspaceMarkdown(finalFiles, reportMarkdown);
   if (selectedReportMarkdown && selectedReportMarkdown !== reportMarkdown) {
-    reportMarkdown = normalizeLongMarkdownTableCells(selectedReportMarkdown);
+    reportMarkdown = sanitizeWorkspaceReportForSourceDisclosure(input, normalizeLongMarkdownTableCells(selectedReportMarkdown));
     await writeFile(join(outputDir, "report.md"), reportMarkdown, "utf-8");
     finalFiles = await listFiles(outputDir, outputDir, policy);
   }

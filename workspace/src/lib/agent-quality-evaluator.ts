@@ -1,3 +1,5 @@
+import { technicalConsistencyFindings } from "@/lib/technical-consistency";
+
 export type QualityFindingSeverity = "blocker" | "warning" | "info";
 
 export interface QualityFinding {
@@ -254,7 +256,7 @@ export function evaluateAgentQuality(input: AgentQualityEvaluationInput): AgentQ
       severity: "warning",
       type: "quality_low_source_value_coverage",
       detail: `Only ${coverage.retained} of ${sourceValues.length} salient source values appeared in the final answer.`,
-      broad_fix: "Inject source previews and numeric evidence into tool prompts and require source-backed input tables before conclusions.",
+      broad_fix: "Inject source previews and numeric evidence into tool prompts and require input-supported tables before conclusions.",
       evidence: { missing_values: coverage.missing.slice(0, 8) },
     });
   }
@@ -270,8 +272,8 @@ export function evaluateAgentQuality(input: AgentQualityEvaluationInput): AgentQ
       findings.push({
         severity: "warning",
         type: "quality_unsupported_source_number",
-        detail: "The answer labeled at least one number as source-backed, but that number was not found in the source preview.",
-        broad_fix: "Require source-backed input tables to quote values from parsed source text, not generic defaults or model memory.",
+        detail: "The answer labeled at least one number as evidence-backed, but that number was not found in the source preview.",
+        broad_fix: "Require input-supported tables to use values from parsed source text, not generic defaults or model memory.",
         evidence: { numbers: unsupportedSourceNumbers.slice(0, 6) },
       });
     }
@@ -332,6 +334,16 @@ export function evaluateAgentQuality(input: AgentQualityEvaluationInput): AgentQ
   }
 
   findings.push(...artifactIntegrityFindings(input));
+  findings.push(...technicalConsistencyFindings({
+    task: input.prompt,
+    reportMarkdown: answer,
+  }).map((finding) => ({
+    severity: finding.severity,
+    type: finding.type,
+    detail: finding.message,
+    broad_fix: "Add deterministic domain validators and repair prompts for capacity, reliability, electrical, thermal, and economic claims before final synthesis.",
+    evidence: finding.evidence,
+  })));
 
   const severityPenalty = findings.reduce((sum, finding) => {
     if (finding.severity === "blocker") return sum + 35;
